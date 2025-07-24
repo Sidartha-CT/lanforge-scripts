@@ -148,7 +148,7 @@ class FtpTest(LFCliBase):
                  profile_name=None, group_name=None,
                  sixg_radio=None, fiveg_radio=None, upstream="eth1", _debug_on=False, _exit_on_error=False, _exit_on_fail=False, ap_name="",
                  direction=None, duration=None, traffic_duration=None, ssh_port=None, kpi_csv=None, kpi_results=None,
-                 lf_username="lanforge", lf_password="lanforge", clients_type="Virtual", dowebgui=False, device_list=[], test_name=None, result_dir=None,
+                 lf_username="lanforge", lf_password="lanforge", clients_type="Virtual", dowebgui=False, device_list=None, test_name=None, result_dir=None,
                  eap_method=None,
                  eap_identity=None,
                  ieee80211=None,
@@ -987,11 +987,14 @@ class FtpTest(LFCliBase):
 
             rx_rate_val.append(list(self.rx_rate))
             for i, port in enumerate(self.input_devices_list):
-                logger.info(f"http0 iii {i}")
-                logger.info(f"row data HTTP0: {current_time}, {self.bytes_rd}, {self.url_data}, {self.rx_rate}, {self.port_rx_rate}, {self.tx_rate}, {self.rssi_list}")
-
-                row_data = [current_time, self.bytes_rd[i], self.url_data[i], self.rx_rate[i], self.port_rx_rate[i], self.tx_rate[i], self.rssi_list[i]]
-                individual_device_data[port].loc[len(individual_device_data[port])] = row_data
+                try:
+                    row_data = [current_time, self.bytes_rd[i], self.url_data[i], self.rx_rate[i], self.port_rx_rate[i], self.tx_rate[i], self.rssi_list[i]]
+                    individual_device_data[port].loc[len(individual_device_data[port])] = row_data
+                except:
+                    logger.info(f"ftp0 iii {i}")
+                    logger.info(f"row data HTTP0: {current_time}, {self.bytes_rd}, {self.url_data}, {self.rx_rate}, {self.port_rx_rate}, {self.tx_rate}, {self.rssi_list}")
+                    traceback.print_exc()
+                    exit(1)
             # calculating average for rx_rate
             for j in range(len(rx_rate_val[0])):
                 rx_rate_sum = 0
@@ -1048,6 +1051,7 @@ class FtpTest(LFCliBase):
                 except:
                     logger.info(f'error error data {self.data}')
                     traceback.print_exc()
+                    exit(1)
                 if self.dowebgui:
                     df1.to_csv('{}/ftp_datavalues.csv'.format(self.result_dir), index=False)
                 if self.clients_type == 'Real':

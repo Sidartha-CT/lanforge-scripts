@@ -116,10 +116,10 @@ logger = logging.getLogger(__name__)
 class HttpDownload(Realm):
     def __init__(self, lfclient_host, lfclient_port, upstream, num_sta, security, ssid, password, ap_name,
                  target_per_ten, file_size, bands, start_id=0, twog_radio=None, fiveg_radio=None, sixg_radio=None, _debug_on=False, _exit_on_error=False,
-                 test_name=None, _exit_on_fail=False, client_type="", port_list=[], devices_list=[], macid_list=[], lf_username="lanforge", lf_password="lanforge", result_dir="", dowebgui=False,
-                 device_list=[], get_url_from_file=None, file_path=None, device_csv_name='', expected_passfail_value=None, file_name=None, group_name=None, profile_name=None, eap_method=None,
+                 test_name=None, _exit_on_fail=False, client_type="", port_list=None, devices_list=None, macid_list=None, lf_username="lanforge", lf_password="lanforge", result_dir="", dowebgui=False,
+                 device_list=None, get_url_from_file=None, file_path=None, device_csv_name='', expected_passfail_value=None, file_name=None, group_name=None, profile_name=None, eap_method=None,
                  eap_identity=None, ieee80211=None, ieee80211u=None, ieee80211w=None, enable_pkc=None, bss_transition=None, power_save=None, disable_ofdma=None, roam_ft_ds=None, key_management=None,
-                 pairwise=None, private_key=None, ca_cert=None, client_cert=None, pk_passwd=None, pac_file=None, config=False, wait_time=60,get_live_view=False,total_floors=0,):
+                 pairwise=None, private_key=None, ca_cert=None, client_cert=None, pk_passwd=None, pac_file=None, config=False, wait_time=60, get_live_view=False, total_floors=0,):
         # super().__init__(lfclient_host=lfclient_host,
         #                  lfclient_port=lfclient_port)
         self.ssid_list = []
@@ -683,12 +683,15 @@ class HttpDownload(Realm):
             individual_rx_data.extend([current_time])
             for i, port in enumerate(self.port_list):
                 # logger.info(f"row data HTTP",row_data)
-                logger.info(f'FTP0 iii {i}')
-                logger.info(f"row data FTP0: {current_time}, {bytes_rd}, {url_times}, {rx_rate}, {rx_rate_list}, {tx_rate_list}, {rssi_list}")
-
-                row_data = [current_time, bytes_rd[i], url_times[i], rx_rate[i], rx_rate_list[i], tx_rate_list[i], rssi_list[i]]
-                individual_device_data[port].loc[len(individual_device_data[port])] = row_data
-
+                
+                try:
+                    row_data = [current_time, bytes_rd[i], url_times[i], rx_rate[i], rx_rate_list[i], tx_rate_list[i], rssi_list[i]]
+                    individual_device_data[port].loc[len(individual_device_data[port])] = row_data
+                except:
+                    logger.info(f'http0 iii {i}')
+                    logger.info(f"row data FTP0: {current_time}, {bytes_rd}, {url_times}, {rx_rate}, {rx_rate_list}, {tx_rate_list}, {rssi_list}")
+                    traceback.print_exc()
+                    exit(1)
             if len(max_bytes_rd) == 0:
                 max_bytes_rd = list(bytes_rd)
             for i in range(len(max_bytes_rd)):
@@ -740,6 +743,7 @@ class HttpDownload(Realm):
             except:
                 logger.info(f'error error http data {self.data}')
                 traceback.print_exc()
+                exit(1)
             if self.dowebgui:
                 df1.to_csv('{}/http_datavalues.csv'.format(self.result_dir), index=False)
             elif self.client_type == 'Real':
@@ -2081,7 +2085,7 @@ times the file is downloaded.
             uc_avg_val = http.data['uc_avg']
             url_times = http.data['url_data']
             rx_bytes_val = http.data['bytes_rd']
-            print('rx_rate_Val',http.data['rx rate (1m)'])
+            # print('rx_rate_Val',http.data['rx rate (1m)'])
             rx_rate_val = list(http.data['rx rate (1m)'])
         else:
             uc_avg_val = http.my_monitor('uc-avg')
