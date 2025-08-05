@@ -1195,6 +1195,7 @@ class HttpDownload(Realm):
             except:
                 logging.info("failed to generate all l4 data")
             # Moving indiviudal csv's to report directory
+            print('where is the path',os.getcwd())
             for csv_name in self.individual_device_csv_names:
                 shutil.move(f"{csv_name}.csv", report_path_date_time)
         if bands == "Both":
