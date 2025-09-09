@@ -554,13 +554,22 @@ class Candela(Realm):
                 debug:                    {}
                 '''.format(mgr_ip, mgr_port, ssid, security, password, target, interval, duration, virtual, num_sta, radio, real, debug))
 
+        ce = self.current_exec #seires
+        if ce == "parallel":
+            obj_name = "ping_test"
+        else:
+            obj_no = 1
+            while f"ping_test_{obj_no}" in self.ping_obj_dict[ce]:
+                obj_no+=1 
+            obj_name = f"ping_test_{obj_no}" 
+        self.ping_obj_dict[ce][obj_name] = {"obj":None,"data":None}
         # ping object creation
-        ping = Ping(host=mgr_ip, port=mgr_port, ssid=ssid, security=security, password=password, radio=radio,
+        self.ping_obj_dict[ce][obj_name]["obj"] = Ping(host=mgr_ip, port=mgr_port, ssid=ssid, security=security, password=password, radio=radio,
                     lanforge_password=mgr_password, target=target, interval=interval, sta_list=[], virtual=virtual, real=real, duration=duration, debug=debug, csv_name=device_csv_name,
                     expected_passfail_val=expected_passfail_value, wait_time=wait_time, group_name=group_name)
 
         # changing the target from port to IP
-        ping.change_target_to_ip()
+        self.ping_obj_dict[ce][obj_name]["obj"].change_target_to_ip()
 
         # creating virtual stations if --virtual flag is specified
         if (virtual):
@@ -568,7 +577,7 @@ class Candela(Realm):
             logging.info('Proceeding to create {} virtual stations on {}'.format(num_sta, radio))
             station_list = LFUtils.portNameSeries(
                 prefix_='sta', start_id_=0, end_id_=num_sta - 1, padding_number_=100000, radio=radio)
-            ping.sta_list = station_list
+            self.ping_obj_dict[ce][obj_name]["obj"].sta_list = station_list
             if (debug):
                 logging.info('Virtual Stations: {}'.format(station_list).replace(
                     '[', '').replace(']', '').replace('\'', ''))
@@ -577,8 +586,8 @@ class Candela(Realm):
         if (real):
             Devices = RealDevice(manager_ip=mgr_ip, selected_bands=[])
             Devices.get_devices()
-            ping.Devices = Devices
-            # ping.select_real_devices(real_devices=Devices)
+            self.ping_obj_dict[ce][obj_name]["obj"].Devices = Devices
+            # self.ping_obj_dict[ce][obj_name]["obj"].select_real_devices(real_devices=Devices)
             # If config is True, attempt to bring up all devices in the list and perform tests on those that become active
             if (configure):
                 config_devices = {}
@@ -594,7 +603,7 @@ class Candela(Realm):
                     # Configure devices in the selected group with the selected profile
                     eid_list = asyncio.run(obj.connectivity(config=config_devices, upstream=server_ip))
                     Devices.get_devices()
-                    ping.select_real_devices(real_devices=Devices, device_list=eid_list)
+                    self.ping_obj_dict[ce][obj_name]["obj"].select_real_devices(real_devices=Devices, device_list=eid_list)
                 # Case 2: Device list is empty but config flag is True — prompt the user to input device details for configuration
                 else:
                     all_devices = obj.get_all_devices()
@@ -633,44 +642,44 @@ class Candela(Realm):
                     dev_list = dev_list.split(',')
                     dev_list = asyncio.run(obj.connectivity(device_list=dev_list, wifi_config=config_dict))
                     Devices.get_devices()
-                    ping.select_real_devices(real_devices=Devices, device_list=dev_list)
+                    self.ping_obj_dict[ce][obj_name]["obj"].select_real_devices(real_devices=Devices, device_list=dev_list)
             # Case 3: Config is False, no device list is provided, and no group is selected
             # Prompt the user to manually input devices for running the test
             else:
-                device_list = ping.Devices.get_devices()
+                device_list = self.ping_obj_dict[ce][obj_name]["obj"].Devices.get_devices()
                 logger.info(f"Available devices: {device_list}")
                 if dev_list is None:
                     dev_list = input("Enter the desired resources to run the test:")
                 dev_list = dev_list.split(',')
                 # dev_list = input("Enter the desired resources to run the test:").split(',')
-                ping.select_real_devices(real_devices=Devices, device_list=dev_list)
+                self.ping_obj_dict[ce][obj_name]["obj"].select_real_devices(real_devices=Devices, device_list=dev_list)
 
         # station precleanup
-        ping.cleanup() #11 change
+        self.ping_obj_dict[ce][obj_name]["obj"].cleanup() #11 change
 
         # building station if virtual
         if (virtual):
-            ping.buildstation()
+            self.ping_obj_dict[ce][obj_name]["obj"].buildstation()
 
         # check if generic tab is enabled or not
-        if (not ping.check_tab_exists()):
+        if (not self.ping_obj_dict[ce][obj_name]["obj"].check_tab_exists()):
             logging.error('Generic Tab is not available.\nAborting the test.')
             return False
 
-        ping.sta_list += ping.real_sta_list
+        self.ping_obj_dict[ce][obj_name]["obj"].sta_list += self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list
 
         # creating generic endpoints
-        ping.create_generic_endp()
+        self.ping_obj_dict[ce][obj_name]["obj"].create_generic_endp()
 
-        logging.info(ping.generic_endps_profile.created_cx)
+        logging.info(self.ping_obj_dict[ce][obj_name]["obj"].generic_endps_profile.created_cx)
 
         # run the test for the given duration
         logging.info('Running the ping test for {} minutes'.format(duration))
 
         # start generate endpoint
-        ping.start_generic()
+        self.ping_obj_dict[ce][obj_name]["obj"].start_generic()
         # time_counter = 0
-        ports_data_dict = ping.json_get('/ports/all/')['interfaces']
+        ports_data_dict = self.ping_obj_dict[ce][obj_name]["obj"].json_get('/ports/all/')['interfaces']
         ports_data = {}
         for ports in ports_data_dict:
             port, port_data = list(ports.keys())[0], list(ports.values())[0]
@@ -679,24 +688,24 @@ class Candela(Realm):
         time.sleep(duration * 60)
 
         logging.info('Stopping the test')
-        ping.stop_generic()
+        self.ping_obj_dict[ce][obj_name]["obj"].stop_generic()
 
-        result_data = ping.get_results()
+        result_data = self.ping_obj_dict[ce][obj_name]["obj"].get_results()
         # logging.info(result_data)
-        logging.info(ping.result_json)
+        logging.info(self.ping_obj_dict[ce][obj_name]["obj"].result_json)
         if (virtual):
-            ports_data_dict = ping.json_get('/ports/all/')['interfaces']
+            ports_data_dict = self.ping_obj_dict[ce][obj_name]["obj"].json_get('/ports/all/')['interfaces']
             ports_data = {}
             for ports in ports_data_dict:
                 port, port_data = list(ports.keys())[0], list(ports.values())[0]
                 ports_data[port] = port_data
             if (isinstance(result_data, dict)):
-                for station in ping.sta_list:
-                    if (station not in ping.real_sta_list):
+                for station in self.ping_obj_dict[ce][obj_name]["obj"].sta_list:
+                    if (station not in self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list):
                         current_device_data = ports_data[station]
                         if (station.split('.')[2] in result_data['name']):
                             try:
-                                ping.result_json[station] = {
+                                self.ping_obj_dict[ce][obj_name]["obj"].result_json[station] = {
                                     'command': result_data['command'],
                                     'sent': result_data['tx pkts'],
                                     'recv': result_data['rx pkts'],
@@ -713,20 +722,20 @@ class Candela(Realm):
                                     'remarks': [],
                                     'last_result': [result_data['last results'].split('\n')[-2] if len(result_data['last results']) != 0 else ""][0]
                                 }
-                                ping.result_json[station]['remarks'] = ping.generate_remarks(ping.result_json[station])
+                                self.ping_obj_dict[ce][obj_name]["obj"].result_json[station]['remarks'] = self.ping_obj_dict[ce][obj_name]["obj"].generate_remarks(self.ping_obj_dict[ce][obj_name]["obj"].result_json[station])
                             except BaseException:
                                 logging.error('Failed parsing the result for the station {}'.format(station))
 
             else:
-                for station in ping.sta_list:
-                    if (station not in ping.real_sta_list):
+                for station in self.ping_obj_dict[ce][obj_name]["obj"].sta_list:
+                    if (station not in self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list):
                         current_device_data = ports_data[station]
                         for ping_device in result_data:
                             ping_endp, ping_data = list(ping_device.keys())[
                                 0], list(ping_device.values())[0]
                             if (station.split('.')[2] in ping_endp):
                                 try:
-                                    ping.result_json[station] = {
+                                    self.ping_obj_dict[ce][obj_name]["obj"].result_json[station] = {
                                         'command': ping_data['command'],
                                         'sent': ping_data['tx pkts'],
                                         'recv': ping_data['rx pkts'],
@@ -743,19 +752,19 @@ class Candela(Realm):
                                         'remarks': [],
                                         'last_result': [ping_data['last results'].split('\n')[-2] if len(ping_data['last results']) != 0 else ""][0]
                                     }
-                                    ping.result_json[station]['remarks'] = ping.generate_remarks(ping.result_json[station])
+                                    self.ping_obj_dict[ce][obj_name]["obj"].result_json[station]['remarks'] = self.ping_obj_dict[ce][obj_name]["obj"].generate_remarks(self.ping_obj_dict[ce][obj_name]["obj"].result_json[station])
                                 except BaseException:
                                     logging.error('Failed parsing the result for the station {}'.format(station))
 
         if (real):
             if (isinstance(result_data, dict)):
-                for station in ping.real_sta_list:
+                for station in self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list:
                     current_device_data = Devices.devices_data[station]
                     # logging.info(current_device_data)
                     if (station in result_data['name']):
                         try:
                             # logging.info(result_data['last results'].split('\n'))
-                            ping.result_json[station] = {
+                            self.ping_obj_dict[ce][obj_name]["obj"].result_json[station] = {
                                 'command': result_data['command'],
                                 'sent': result_data['tx pkts'],
                                 'recv': result_data['rx pkts'],
@@ -772,18 +781,18 @@ class Candela(Realm):
                                 'remarks': [],
                                 'last_result': [result_data['last results'].split('\n')[-2] if len(result_data['last results']) != 0 else ""][0]
                             }
-                            ping.result_json[station]['remarks'] = ping.generate_remarks(ping.result_json[station])
+                            self.ping_obj_dict[ce][obj_name]["obj"].result_json[station]['remarks'] = self.ping_obj_dict[ce][obj_name]["obj"].generate_remarks(self.ping_obj_dict[ce][obj_name]["obj"].result_json[station])
                         except BaseException:
                             logging.error('Failed parsing the result for the station {}'.format(station))
             else:
-                for station in ping.real_sta_list:
+                for station in self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list:
                     current_device_data = Devices.devices_data[station]
                     for ping_device in result_data:
                         ping_endp, ping_data = list(ping_device.keys())[
                             0], list(ping_device.values())[0]
                         if (station in ping_endp):
                             try:
-                                ping.result_json[station] = {
+                                self.ping_obj_dict[ce][obj_name]["obj"].result_json[station] = {
                                     'command': ping_data['command'],
                                     'sent': ping_data['tx pkts'],
                                     'recv': ping_data['rx pkts'],
@@ -800,29 +809,44 @@ class Candela(Realm):
                                     'remarks': [],
                                     'last_result': [ping_data['last results'].split('\n')[-2] if len(ping_data['last results']) != 0 else ""][0]
                                 }
-                                ping.result_json[station]['remarks'] = ping.generate_remarks(ping.result_json[station])
+                                self.ping_obj_dict[ce][obj_name]["obj"].result_json[station]['remarks'] = self.ping_obj_dict[ce][obj_name]["obj"].generate_remarks(self.ping_obj_dict[ce][obj_name]["obj"].result_json[station])
                             except BaseException:
                                 logging.error('Failed parsing the result for the station {}'.format(station))
 
-        logging.info(ping.result_json)
+        logging.info(self.ping_obj_dict[ce][obj_name]["obj"].result_json)
 
         # station post cleanup
-        ping.cleanup() #12 change
+        self.ping_obj_dict[ce][obj_name]["obj"].cleanup() #12 change
 
         if local_lf_report_dir == "":
             # Report generation when groups are specified but no custom report path is provided
             if group_name:
-                ping.generate_report(config_devices=config_devices, group_device_map=group_device_map)
+                self.ping_obj_dict[ce][obj_name]["obj"].generate_report(config_devices=config_devices, group_device_map=group_device_map)
             # Report generation when no group is specified and no custom report path is provided
             else:
-                ping.generate_report()
+                self.ping_obj_dict[ce][obj_name]["obj"].generate_report()
         else:
             # Report generation when groups are specified and a custom report path is provided
             if group_name:
-                ping.generate_report(config_devices=config_devices, group_device_map=group_device_map, report_path=local_lf_report_dir)
+                self.ping_obj_dict[ce][obj_name]["obj"].generate_report(config_devices=config_devices, group_device_map=group_device_map, report_path=local_lf_report_dir)
             # Report generation when no group is specified but a custom report path is provided
             else:
-                ping.generate_report(report_path=local_lf_report_dir)
+                self.ping_obj_dict[ce][obj_name]["obj"].generate_report(report_path=local_lf_report_dir)
+        params = {
+            "result_json": None,
+            "result_dir": "Ping_Test_Report",
+            "report_path": "",
+            "config_devices": "",
+            "group_device_map": {}
+        }
+        
+        if local_lf_report_dir != "":
+            params["report_path"] = local_lf_report_dir
+
+        if group_name:
+            params["config_devices"] = config_devices
+            params["group_device_map"] = group_device_map
+        self.ping_obj_dict[ce][obj_name]["data"] = params.copy()
         return True
 
     def run_http_test(
@@ -6250,6 +6274,255 @@ class Candela(Realm):
                     if ce == "series":
                         obj_no += 1
                         obj_name = f"ftp_test_{obj_no}"
+                    else:
+                        break
+            
+            elif test_name == "ping_test":
+                obj_no = 1
+                obj_name = 'ping_test'
+                if ce == "series":
+                    obj_name += "_1" 
+                while obj_name in self.ping_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    params = self.ping_obj_dict[ce][obj_name]["data"].copy()
+                    result_json = params["result_json"]
+                    result_dir = params["result_dir"]
+                    report_path = params["report_path"]
+                    config_devices = params["config_devices"]
+                    group_device_map = params["group_device_map"]
+                    if result_json is not None:
+                        self.ping_obj_dict[ce][obj_name]["obj"].result_json = result_json
+                    # Test setup information table for devices in device list
+                    if config_devices == '':
+                        test_setup_info = {
+                            'SSID': self.ping_obj_dict[ce][obj_name]["obj"].ssid,
+                            'Security': self.ping_obj_dict[ce][obj_name]["obj"].security,
+                            'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
+                            'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
+                            'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
+                        }
+                    # Test setup information table for devices in groups
+                    else:
+                        group_names = ', '.join(config_devices.keys())
+                        profile_names = ', '.join(config_devices.values())
+                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                        test_setup_info = {
+                            'Configuration': configmap,
+                            'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
+                            'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
+                            'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
+                        }
+                    self.overall_report.test_setup_table(
+                        test_setup_data=test_setup_info, value='Test Setup Information')
+
+                    # packets sent vs received vs dropped
+                    self.overall_report.set_table_title(
+                        'Packets sent vs packets received vs packets dropped')
+                    self.overall_report.build_table_title()
+                    # graph for the above
+                    self.ping_obj_dict[ce][obj_name]["obj"].packets_sent = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].packets_received = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_names = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_modes = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_channels = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_min = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_max = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_avg = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_mac = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].report_names = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].remarks = []
+                    self.ping_obj_dict[ce][obj_name]["obj"].device_ssid = []
+                    # packet_count_data = {}
+                    os_type = []
+                    for device, device_data in self.ping_obj_dict[ce][obj_name]["obj"].result_json.items():
+                        logging.info('Device data: {} {}'.format(device, device_data))
+                        os_type.append(device_data['os'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_sent.append(int(device_data['sent']))
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_received.append(int(device_data['recv']))
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped.append(int(device_data['dropped']))
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_names.append(device_data['name'] + ' ' + device_data['os'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes.append(device_data['mode'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_channels.append(device_data['channel'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_mac.append(device_data['mac'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_ssid.append(device_data['ssid'])
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_min.append(float(device_data['min_rtt'].replace(',', '')))
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_max.append(float(device_data['max_rtt'].replace(',', '')))
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_avg.append(float(device_data['avg_rtt'].replace(',', '')))
+                        if (device_data['os'] == 'Virtual'):
+                            self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {}'.format(device, device_data['os'])[0:25])
+                        else:
+                            self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {} {}'.format(device, device_data['os'], device_data['name']))
+                        if (device_data['remarks'] != []):
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors.append(device_data['name'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors.append(device)
+                            self.ping_obj_dict[ce][obj_name]["obj"].remarks.append(','.join(device_data['remarks']))
+                    x_fig_size = 15
+                    y_fig_size = len(self.ping_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
+                    graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent],
+                                                    _xaxis_name='Packets Count',
+                                                    _yaxis_name='Wireless Clients',
+                                                    _label=[
+                                                        'Packets Loss', 'Packets Received', 'Packets Sent'],
+                                                    _graph_image_name=f'Packets sent vs received vs dropped {obj_no}',
+                                                    _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                    _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                    _yaxis_step=1,
+                                                    _yticks_font=8,
+                                                    _graph_title='Packets sent vs received vs dropped',
+                                                    _title_size=16,
+                                                    _color=['lightgrey',
+                                                            'orange', 'steelblue'],
+                                                    _color_edge=['black'],
+                                                    _bar_height=0.15,
+                                                    _figsize=(x_fig_size, y_fig_size),
+                                                    _legend_loc="best",
+                                                    _legend_box=(1.0, 1.0),
+                                                    _dpi=96,
+                                                    _show_bar_value=False,
+                                                    _enable_csv=True,
+                                                    _color_name=['lightgrey', 'orange', 'steelblue'])
+
+                    graph_png = graph.build_bar_graph_horizontal()
+                    logging.info('graph name {}'.format(graph_png))
+                    self.overall_report.set_graph_image(graph_png)
+                    # need to move the graph image to the results directory
+                    self.overall_report.move_graph_image()
+                    self.overall_report.set_csv_filename(graph_png)
+                    self.overall_report.move_csv_file()
+                    self.overall_report.build_graph()
+                    if self.ping_obj_dict[ce][obj_name]["obj"].real:
+                        # Calculating the pass/fail criteria when either expected_passfail_val or csv_name is provided
+                        if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                            self.ping_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(os_type)
+                        # When groups are provided a seperate table will be generated for each group using generate_dataframe
+                        if self.ping_obj_dict[ce][obj_name]["obj"].group_name:
+                            for key, val in group_device_map.items():
+                                if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                                    dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                        val,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].test_input_list,
+                                        self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list)
+                                else:
+                                    dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, self.ping_obj_dict[ce][obj_name]["obj"].device_names, self.ping_obj_dict[ce][obj_name]["obj"].device_mac, self.ping_obj_dict[ce][obj_name]["obj"].device_channels, self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                                                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, [], [], [])
+                                if dataframe:
+                                    self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                    self.overall_report.build_objective()
+                                    dataframe1 = pd.DataFrame(dataframe)
+                                    self.overall_report.set_table_dataframe(dataframe1)
+                                    self.overall_report.build_table()
+
+                        else:
+                            dataframe1 = pd.DataFrame({
+                                'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                                'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                                'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                                'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                                'Packets Sent': self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
+                                'Packets Received': self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
+                                'Packets Loss': self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                            })
+                            if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                                dataframe1[" Percentage of Packet loss %"] = self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss
+                                dataframe1['Expected Packet loss %'] = self.ping_obj_dict[ce][obj_name]["obj"].test_input_list
+                                dataframe1['Status'] = self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list
+                            self.overall_report.set_table_dataframe(dataframe1)
+                            self.overall_report.build_table()
+                    else:
+                        dataframe1 = pd.DataFrame({
+                            'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                            'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                            'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                            'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                            'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                            'Packets Sent': self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
+                            'Packets Received': self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
+                            'Packets Loss': self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                        })
+                        self.overall_report.set_table_dataframe(dataframe1)
+                        self.overall_report.build_table()
+
+                    # packets latency graph
+                    self.overall_report.set_table_title('Ping Latency Graph')
+                    self.overall_report.build_table_title()
+
+                    graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].device_min, self.ping_obj_dict[ce][obj_name]["obj"].device_avg, self.ping_obj_dict[ce][obj_name]["obj"].device_max],
+                                                    _xaxis_name='Time (ms)',
+                                                    _yaxis_name='Wireless Clients',
+                                                    _label=[
+                                                        'Min Latency (ms)', 'Average Latency (ms)', 'Max Latency (ms)'],
+                                                    _graph_image_name=f'Ping Latency per client {obj_no}',
+                                                    _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                    _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                    _yaxis_step=1,
+                                                    _yticks_font=8,
+                                                    _graph_title='Ping Latency per client',
+                                                    _title_size=16,
+                                                    _color=['lightgrey',
+                                                            'orange', 'steelblue'],
+                                                    _color_edge='black',
+                                                    _bar_height=0.15,
+                                                    _figsize=(x_fig_size, y_fig_size),
+                                                    _legend_loc="best",
+                                                    _legend_box=(1.0, 1.0),
+                                                    _dpi=96,
+                                                    _show_bar_value=False,
+                                                    _enable_csv=True,
+                                                    _color_name=['lightgrey', 'orange', 'steelblue'])
+
+                    graph_png = graph.build_bar_graph_horizontal()
+                    logging.info('graph name {}'.format(graph_png))
+                    self.overall_report.set_graph_image(graph_png)
+                    # need to move the graph image to the results directory
+                    self.overall_report.move_graph_image()
+                    self.overall_report.set_csv_filename(graph_png)
+                    self.overall_report.move_csv_file()
+                    self.overall_report.build_graph()
+
+                    dataframe2 = pd.DataFrame({
+                        'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                        'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                        'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                        'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                        'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                        'Min Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_min,
+                        'Average Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_avg,
+                        'Max Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_max
+                    })
+                    self.overall_report.set_table_dataframe(dataframe2)
+                    self.overall_report.build_table()
+
+                    # check if there are remarks for any device. If there are remarks, build table else don't
+                    if (self.ping_obj_dict[ce][obj_name]["obj"].remarks != []):
+                        self.overall_report.set_table_title('Notes')
+                        self.overall_report.build_table_title()
+                        dataframe3 = pd.DataFrame({
+                            'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors,
+                            'Port': self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors,
+                            'Remarks': self.ping_obj_dict[ce][obj_name]["obj"].remarks
+                        })
+                        self.overall_report.set_table_dataframe(dataframe3)
+                        self.overall_report.build_table()
+
+                    # closing
+                    self.overall_report.build_custom()
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"ping_test_{obj_no}"
                     else:
                         break
 
