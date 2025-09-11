@@ -5874,7 +5874,7 @@ class L3VariableTime(Realm):
                 resource_kernels = []
                 offered_dl_rates = []
                 offered_ul_rates = []
-
+                total_clients = 0
                 # Process A side
                 for client_index in range(len(self.client_dict_A[tos]["clients_A"])):
                     if self.client_dict_A[tos]["clients_A"][client_index].startswith('MLT'):

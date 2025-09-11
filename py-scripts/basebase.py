@@ -9,7 +9,7 @@ import requests
 import paramiko
 import threading
 import logging
-from lf_graph import lf_bar_graph_horizontal
+from lf_graph import lf_bar_graph_horizontal,lf_bar_graph,lf_line_graph
 import pandas as pd
 from lf_base_interop_profile import RealDevice
 from lf_ftp import FtpTest
@@ -129,6 +129,10 @@ class Candela(Realm):
         self.thput_obj_dict = {"parallel":{},"series":{}}
         self.qos_obj_dict = {"parallel":{},"series":{}}
         self.ping_obj_dict = {"parallel":{},"series":{}}
+        self.mcast_obj_dict = {"parallel":{},"series":{}}
+        self.vs_obj_dict = {"parallel":{},"series":{}}
+
+
         self.series_tests = []
         self.parallel_tests = []
 
@@ -250,6 +254,9 @@ class Candela(Realm):
         layer3: (Boolean : optional) Default : False To Delete all layer3 connections
         layer4: (Boolean : optional) Default : False To Delete all layer4 connections
         """
+        layer3 = False
+        layer4 = False
+        generic = False
         if layer3:
             self.cleanup.cxs_clean()
             self.cleanup.layer3_endp_clean()
@@ -2240,9 +2247,17 @@ class Candela(Realm):
             test_duration = int(test_duration[0:-1]) * 60 * 60
         elif test_duration.endswith(''):
             test_duration = int(test_duration)
-
+        ce = self.current_exec #seires
+        if ce == "parallel":
+            obj_name = "qos_test"
+        else:
+            obj_no = 1
+            while f"qos_test_{obj_no}" in self.qos_obj_dict[ce]:
+                obj_no+=1 
+            obj_name = f"qos_test_{obj_no}" 
+        self.qos_obj_dict[ce][obj_name] = {"obj":None,"data":None}
         for index in range(len(loads_data)):
-            throughput_qos = qos_test.ThroughputQOS(host=self.lanforge_ip,
+            self.qos_obj_dict[ce][obj_name]["obj"] = qos_test.ThroughputQOS(host=self.lanforge_ip,
                                             ip=self.lanforge_ip,
                                             port=self.port,
                                             number_template="0000",
@@ -2291,8 +2306,8 @@ class Candela(Realm):
                                             get_live_view=get_live_view,
                                             total_floors=total_floors
                                             )
-            throughput_qos.os_type()
-            _, configured_device, _, configuration = throughput_qos.phantom_check()
+            self.qos_obj_dict[ce][obj_name]["obj"].os_type()
+            _, configured_device, _, configuration = self.qos_obj_dict[ce][obj_name]["obj"].phantom_check()
             if dowebgui and group_name:
                 if len(configured_device) == 0:
                     logger.warning("No device is available to run the test")
@@ -2300,17 +2315,17 @@ class Candela(Realm):
                         "status": "Stopped",
                         "configuration_status": "configured"
                     }
-                    throughput_qos.updating_webui_runningjson(obj1)
+                    self.qos_obj_dict[ce][obj_name]["obj"].updating_webui_runningjson(obj1)
                     return
                 else:
                     obj1 = {
                         "configured_devices": configured_device,
                         "configuration_status": "configured"
                     }
-                    throughput_qos.updating_webui_runningjson(obj1)
+                    self.qos_obj_dict[ce][obj_name]["obj"].updating_webui_runningjson(obj1)
             # checking if we have atleast one device available for running test
-            if throughput_qos.dowebgui == "True":
-                if throughput_qos.device_found is False:
+            if self.qos_obj_dict[ce][obj_name]["obj"].dowebgui == "True":
+                if self.qos_obj_dict[ce][obj_name]["obj"].device_found is False:
                     logger.warning("No Device is available to run the test hence aborting the test")
                     df1 = pd.DataFrame([{
                         "BE_dl": 0,
@@ -2325,18 +2340,18 @@ class Candela(Realm):
                         'status': 'Stopped'
                     }]
                     )
-                    df1.to_csv('{}/overall_throughput.csv'.format(throughput_qos.result_dir), index=False)
+                    df1.to_csv('{}/overall_throughput.csv'.format(self.qos_obj_dict[ce][obj_name]["obj"].result_dir), index=False)
                     raise ValueError("Aborting the test....")
-            throughput_qos.build()
-            throughput_qos.monitor_cx()
-            throughput_qos.start(False, False)
+            self.qos_obj_dict[ce][obj_name]["obj"].build()
+            self.qos_obj_dict[ce][obj_name]["obj"].monitor_cx()
+            self.qos_obj_dict[ce][obj_name]["obj"].start(False, False)
             time.sleep(10)
-            connections_download, connections_upload, drop_a_per, drop_b_per, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b = throughput_qos.monitor()
+            connections_download, connections_upload, drop_a_per, drop_b_per, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b = self.qos_obj_dict[ce][obj_name]["obj"].monitor()
             logger.info("connections download {}".format(connections_download))
             logger.info("connections upload {}".format(connections_upload))
-            throughput_qos.stop()
+            self.qos_obj_dict[ce][obj_name]["obj"].stop()
             time.sleep(5)
-            test_results['test_results'].append(throughput_qos.evaluate_qos(connections_download, connections_upload, drop_a_per, drop_b_per))
+            test_results['test_results'].append(self.qos_obj_dict[ce][obj_name]["obj"].evaluate_qos(connections_download, connections_upload, drop_a_per, drop_b_per))
             data.update(test_results)
         test_end_time = datetime.now().strftime("%Y %d %H:%M:%S")
         print("Test ended at: ", test_end_time)
@@ -2344,41 +2359,70 @@ class Candela(Realm):
         input_setup_info = {
             "contact": "support@candelatech.com"
         }
-        throughput_qos.cleanup()
+        self.qos_obj_dict[ce][obj_name]["obj"].cleanup()
 
         # Update webgui running json with latest entry and test status completed
-        if throughput_qos.dowebgui == "True":
-            last_entry = throughput_qos.overall[len(throughput_qos.overall) - 1]
+        if self.qos_obj_dict[ce][obj_name]["obj"].dowebgui == "True":
+            last_entry = self.qos_obj_dict[ce][obj_name]["obj"].overall[len(self.qos_obj_dict[ce][obj_name]["obj"].overall) - 1]
             last_entry["status"] = "Stopped"
             last_entry["timestamp"] = datetime.now().strftime("%d/%m %I:%M:%S %p")
             last_entry["remaining_time"] = "0"
             last_entry["end_time"] = last_entry["timestamp"]
-            throughput_qos.df_for_webui.append(
+            self.qos_obj_dict[ce][obj_name]["obj"].df_for_webui.append(
                 last_entry
             )
-            df1 = pd.DataFrame(throughput_qos.df_for_webui)
+            df1 = pd.DataFrame(self.qos_obj_dict[ce][obj_name]["obj"].df_for_webui)
             df1.to_csv('{}/overall_throughput.csv'.format(result_dir, ), index=False)
 
             # copying to home directory i.e home/user_name
-            throughput_qos.copy_reports_to_home_dir()
+            self.qos_obj_dict[ce][obj_name]["obj"].copy_reports_to_home_dir()
         if group_name:
-            throughput_qos.generate_report(
+            self.qos_obj_dict[ce][obj_name]["obj"].generate_report(
                 data=data,
                 input_setup_info=input_setup_info,
-                report_path=throughput_qos.result_dir if throughput_qos.dowebgui else self.result_path,
+                report_path=self.qos_obj_dict[ce][obj_name]["obj"].result_dir if self.qos_obj_dict[ce][obj_name]["obj"].dowebgui else self.result_path,
                 connections_upload_avg=connections_upload_avg,
                 connections_download_avg=connections_download_avg,
                 avg_drop_a=avg_drop_a,
                 avg_drop_b=avg_drop_b, config_devices=configuration)
         else:
-            throughput_qos.generate_report(
+            self.qos_obj_dict[ce][obj_name]["obj"].generate_report(
                 data=data,
                 input_setup_info=input_setup_info,
-                report_path=throughput_qos.result_dir if throughput_qos.dowebgui else self.result_path,
+                report_path=self.qos_obj_dict[ce][obj_name]["obj"].result_dir if self.qos_obj_dict[ce][obj_name]["obj"].dowebgui else self.result_path,
                 connections_upload_avg=connections_upload_avg,
                 connections_download_avg=connections_download_avg,
                 avg_drop_a=avg_drop_a,
                 avg_drop_b=avg_drop_b)
+        params = {
+            "data": None,
+            "input_setup_info": None,
+            "connections_download_avg": None,
+            "connections_upload_avg": None,
+            "avg_drop_a": None,
+            "avg_drop_b": None,
+            "report_path": "",
+            "result_dir_name": "Qos_Test_report",
+            "selected_real_clients_names": None,
+            "config_devices": ""
+        }
+
+        params.update({
+            "data": data,
+            "input_setup_info": input_setup_info,
+            "report_path": (
+                self.qos_obj_dict[ce][obj_name]["obj"].result_dir
+                if self.qos_obj_dict[ce][obj_name]["obj"].dowebgui else self.result_path
+            ),
+            "connections_upload_avg": connections_upload_avg,
+            "connections_download_avg": connections_download_avg,
+            "avg_drop_a": avg_drop_a,
+            "avg_drop_b": avg_drop_b
+        })
+
+        if group_name:
+            params["config_devices"] = configuration
+        self.qos_obj_dict[ce][obj_name]["data"] = params.copy()
         return True
 
     def run_vs_test(self,args):
@@ -2421,8 +2465,16 @@ class Candela(Realm):
             logger_config.load_lf_logger_config()
 
         logger = logging.getLogger(__name__)
-
-        obj = VideoStreamingTest(host=args.host, ssid=args.ssid, passwd=args.passwd, encryp=args.encryp,
+        ce = self.current_exec #seires
+        if ce == "parallel":
+            obj_name = "vs_test"
+        else:
+            obj_no = 1
+            while f"vs_test_{obj_no}" in self.vs_obj_dict[ce]:
+                obj_no+=1 
+            obj_name = f"vs_test_{obj_no}" 
+        self.vs_obj_dict[ce][obj_name] = {"obj":None,"data":None}
+        self.vs_obj_dict[ce][obj_name]["obj"] = VideoStreamingTest(host=args.host, ssid=args.ssid, passwd=args.passwd, encryp=args.encryp,
                                 suporrted_release=["7.0", "10", "11", "12"], max_speed=args.max_speed,
                                 url=args.url, urls_per_tenm=args.urls_per_tenm, duration=args.duration,
                                 resource_ids=args.device_list, dowebgui=args.dowebgui, media_quality=args.media_quality, media_source=args.media_source,
@@ -2437,8 +2489,8 @@ class Candela(Realm):
                                 floors=args.floors,
                                 get_live_view=args.get_live_view
                                 )
-        args.upstream_port = obj.change_port_to_ip(args.upstream_port)
-        obj.validate_args()
+        args.upstream_port = self.vs_obj_dict[ce][obj_name]["obj"].change_port_to_ip(args.upstream_port)
+        self.vs_obj_dict[ce][obj_name]["obj"].validate_args()
         config_obj = DeviceConfig.DeviceConfig(lanforge_ip=args.host, file_name=args.file_name)
         # if not args.expected_passfail_value and args.device_csv_name is None:
         #     config_obj.device_csv_file(csv_name="device.csv")
@@ -2524,16 +2576,16 @@ class Candela(Realm):
                     dev1_list = args.device_list.split(',')
                     asyncio.run(config_obj.connectivity(device_list=dev1_list, wifi_config=config_dict))
                 else:
-                    obj.android_devices = obj.devices.get_devices(only_androids=True)
-                    selected_devices, report_labels, selected_macs = obj.devices.query_user()
+                    self.vs_obj_dict[ce][obj_name]["obj"].android_devices = self.vs_obj_dict[ce][obj_name]["obj"].devices.get_devices(only_androids=True)
+                    selected_devices, report_labels, selected_macs = self.vs_obj_dict[ce][obj_name]["obj"].devices.query_user()
                     if not selected_devices:
                         logging.info("devices donot exist..!!")
                         return
 
-                    obj.android_list = selected_devices
+                    self.vs_obj_dict[ce][obj_name]["obj"].android_list = selected_devices
                     # Verify if all resource IDs are valid for Android devices
-                    if obj.android_list:
-                        resource_ids = ",".join([item.split(".")[1] for item in obj.android_list])
+                    if self.vs_obj_dict[ce][obj_name]["obj"].android_list:
+                        resource_ids = ",".join([item.split(".")[1] for item in self.vs_obj_dict[ce][obj_name]["obj"].android_list])
 
                         num_list = list(map(int, resource_ids.split(',')))
 
@@ -2543,13 +2595,13 @@ class Candela(Realm):
                         # Join the sorted list back into a string
                         sorted_string = ','.join(map(str, num_list))
 
-                        obj.resource_ids = sorted_string
+                        self.vs_obj_dict[ce][obj_name]["obj"].resource_ids = sorted_string
                         resource_ids1 = list(map(int, sorted_string.split(',')))
-                        modified_list = list(map(lambda item: int(item.split('.')[1]), obj.android_devices))
+                        modified_list = list(map(lambda item: int(item.split('.')[1]), self.vs_obj_dict[ce][obj_name]["obj"].android_devices))
                         if not all(x in modified_list for x in resource_ids1):
                             logging.info("Verify Resource ids, as few are invalid...!!")
                             return False
-                        resource_ids_sm = obj.resource_ids
+                        resource_ids_sm = self.vs_obj_dict[ce][obj_name]["obj"].resource_ids
                         resource_list = resource_ids_sm.split(',')
                         resource_set = set(resource_list)
                         resource_list_sorted = sorted(resource_set)
@@ -2562,65 +2614,65 @@ class Candela(Realm):
             resource_list = sorted(resource_set)
             resource_ids_generated = ','.join(resource_list)
             resource_list_sorted = resource_list
-            selected_devices, report_labels, selected_macs = obj.devices.query_user(dowebgui=args.dowebgui, device_list=resource_ids_generated)
-            obj.resource_ids = ",".join(id.split(".")[1] for id in args.device_list.split(","))
-            available_resources = [int(num) for num in obj.resource_ids.split(',')]
+            selected_devices, report_labels, selected_macs = self.vs_obj_dict[ce][obj_name]["obj"].devices.query_user(dowebgui=args.dowebgui, device_list=resource_ids_generated)
+            self.vs_obj_dict[ce][obj_name]["obj"].resource_ids = ",".join(id.split(".")[1] for id in args.device_list.split(","))
+            available_resources = [int(num) for num in self.vs_obj_dict[ce][obj_name]["obj"].resource_ids.split(',')]
         else:
-            obj.android_devices = obj.devices.get_devices(only_androids=True)
+            self.vs_obj_dict[ce][obj_name]["obj"].android_devices = self.vs_obj_dict[ce][obj_name]["obj"].devices.get_devices(only_androids=True)
             if args.device_list:
                 device_list = args.device_list.split(',')
                 # Extract resource IDs (after the dot), remove duplicates, and sort them
                 resource_ids = sorted(set(int(item.split('.')[1]) for item in device_list if '.' in item))
                 resource_list_sorted = resource_ids
-                obj.resource_ids = ','.join(map(str, resource_ids))
+                self.vs_obj_dict[ce][obj_name]["obj"].resource_ids = ','.join(map(str, resource_ids))
                 # Create a set of Android device IDs (e.g., "resource.123")
-                android_device_ids = set(obj.android_devices)
+                android_device_ids = set(self.vs_obj_dict[ce][obj_name]["obj"].android_devices)
                 android_device_short_ids = {device.split('.')[0] + '.' + device.split('.')[1] for device in android_device_ids}
-                obj.android_list = [dev for dev in android_device_short_ids if dev in device_list]
+                self.vs_obj_dict[ce][obj_name]["obj"].android_list = [dev for dev in android_device_short_ids if dev in device_list]
                 # Log any devices in the list that are not available
                 for dev in device_list:
                     if dev not in android_device_short_ids:
                         logger.info(f"{dev} device is not available")
                 # Final list of available Android resource IDs
-                available_resources = sorted(set(int(dev.split('.')[1]) for dev in obj.android_list))
+                available_resources = sorted(set(int(dev.split('.')[1]) for dev in self.vs_obj_dict[ce][obj_name]["obj"].android_list))
                 logger.info(f"Available devices: {available_resources}")
         if len(available_resources) != 0:
-            available_resources = obj.filter_ios_devices(available_resources)
+            available_resources = self.vs_obj_dict[ce][obj_name]["obj"].filter_ios_devices(available_resources)
         if len(available_resources) == 0:
             logger.info("No devices which are selected are available in the lanforge")
             return False
         gave_incremental = False
         if args.incremental and not args.webgui_incremental:
-            if obj.resource_ids:
+            if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
                 logging.info("The total available devices are {}".format(len(available_resources)))
-                obj.incremental = input('Specify incremental values as 1,2,3 : ')
-                obj.incremental = [int(x) for x in obj.incremental.split(',')]
+                self.vs_obj_dict[ce][obj_name]["obj"].incremental = input('Specify incremental values as 1,2,3 : ')
+                self.vs_obj_dict[ce][obj_name]["obj"].incremental = [int(x) for x in self.vs_obj_dict[ce][obj_name]["obj"].incremental.split(',')]
             else:
                 logging.info("incremental Values are not needed as Android devices are not selected..")
         elif not args.incremental:
             gave_incremental = True
-            obj.incremental = [len(available_resources)]
+            self.vs_obj_dict[ce][obj_name]["obj"].incremental = [len(available_resources)]
 
         if args.webgui_incremental:
             incremental = [int(x) for x in args.webgui_incremental.split(',')]
             if (len(args.webgui_incremental) == 1 and incremental[0] != len(resource_list_sorted)) or (len(args.webgui_incremental) > 1):
-                obj.incremental = incremental
+                self.vs_obj_dict[ce][obj_name]["obj"].incremental = incremental
 
-        if obj.incremental and obj.resource_ids:
-            if obj.incremental[-1] > len(available_resources):
+        if self.vs_obj_dict[ce][obj_name]["obj"].incremental and self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
+            if self.vs_obj_dict[ce][obj_name]["obj"].incremental[-1] > len(available_resources):
                 logging.info("Exiting the program as incremental values are greater than the resource ids provided")
                 return False
-            elif obj.incremental[-1] < len(available_resources) and len(obj.incremental) > 1:
+            elif self.vs_obj_dict[ce][obj_name]["obj"].incremental[-1] < len(available_resources) and len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) > 1:
                 logging.info("Exiting the program as the last incremental value must be equal to selected devices")
                 return False
 
         # To create cx for selected devices
-        obj.build()
+        self.vs_obj_dict[ce][obj_name]["obj"].build()
 
         # To set media source and media quality
         time.sleep(10)
 
-        # obj.run
+        # self.vs_obj_dict[ce][obj_name]["obj"].run
         test_time = datetime.now()
         test_time = test_time.strftime("%b %d %H:%M:%S")
 
@@ -2628,7 +2680,7 @@ class Candela(Realm):
 
         individual_dataframe_columns = []
 
-        keys = list(obj.http_profile.created_cx.keys())
+        keys = list(self.vs_obj_dict[ce][obj_name]["obj"].http_profile.created_cx.keys())
 
         # Extend individual_dataframe_column with dynamically generated column names
         for i in range(len(keys)):
@@ -2669,24 +2721,24 @@ class Candela(Realm):
         elif args.duration.endswith(''):
             args.duration = int(args.duration)
 
-        incremental_capacity_list_values = obj.get_incremental_capacity_list()
+        incremental_capacity_list_values = self.vs_obj_dict[ce][obj_name]["obj"].get_incremental_capacity_list()
         if incremental_capacity_list_values[-1] != len(available_resources):
             logger.error("Incremental capacity doesnt match available devices")
             if args.postcleanup:
-                obj.postcleanup()
+                self.vs_obj_dict[ce][obj_name]["obj"].postcleanup()
             return False
         # Process resource IDs and incremental values if specified
-        if obj.resource_ids:
-            if obj.incremental:
+        if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
+            if self.vs_obj_dict[ce][obj_name]["obj"].incremental:
                 test_setup_info_incremental_values = ','.join([str(n) for n in incremental_capacity_list_values])
-                if len(obj.incremental) == len(available_resources):
+                if len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) == len(available_resources):
                     test_setup_info_total_duration = args.duration
-                elif len(obj.incremental) == 1 and len(available_resources) > 1:
-                    if obj.incremental[0] == len(available_resources):
+                elif len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) == 1 and len(available_resources) > 1:
+                    if self.vs_obj_dict[ce][obj_name]["obj"].incremental[0] == len(available_resources):
                         test_setup_info_total_duration = args.duration
                     else:
-                        div = len(available_resources) // obj.incremental[0]
-                        mod = len(available_resources) % obj.incremental[0]
+                        div = len(available_resources) // self.vs_obj_dict[ce][obj_name]["obj"].incremental[0]
+                        mod = len(available_resources) % self.vs_obj_dict[ce][obj_name]["obj"].incremental[0]
                         if mod == 0:
                             test_setup_info_total_duration = args.duration * (div)
                         else:
@@ -2700,24 +2752,24 @@ class Candela(Realm):
                 test_setup_info_incremental_values = ','.join([str(n) for n in incremental_capacity_list_values])
             elif gave_incremental:
                 test_setup_info_incremental_values = "No Incremental Value provided"
-            obj.total_duration = test_setup_info_total_duration
+            self.vs_obj_dict[ce][obj_name]["obj"].total_duration = test_setup_info_total_duration
 
         actual_start_time = datetime.now()
 
         iterations_before_test_stopped_by_user = []
 
         # Calculate and manage cx_order_list ( list of cross connections to run ) based on incremental values
-        if obj.resource_ids:
+        if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
             # Check if incremental  is specified
-            if obj.incremental:
+            if self.vs_obj_dict[ce][obj_name]["obj"].incremental:
 
                 # Case 1: Incremental list has only one value and it equals the length of keys
-                if len(obj.incremental) == 1 and obj.incremental[0] == len(keys):
+                if len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) == 1 and self.vs_obj_dict[ce][obj_name]["obj"].incremental[0] == len(keys):
                     cx_order_list.append(keys[index:])
 
                 # Case 2: Incremental list has only one value but length of keys is greater than 1
-                elif len(obj.incremental) == 1 and len(keys) > 1:
-                    incremental_value = obj.incremental[0]
+                elif len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) == 1 and len(keys) > 1:
+                    incremental_value = self.vs_obj_dict[ce][obj_name]["obj"].incremental[0]
                     max_index = len(keys)
                     index = 0
 
@@ -2727,10 +2779,10 @@ class Candela(Realm):
                         index = next_index
 
                 # Case 3: Incremental list has multiple values and length of keys is greater than 1
-                elif len(obj.incremental) != 1 and len(keys) > 1:
+                elif len(self.vs_obj_dict[ce][obj_name]["obj"].incremental) != 1 and len(keys) > 1:
 
                     index = 0
-                    for num in obj.incremental:
+                    for num in self.vs_obj_dict[ce][obj_name]["obj"].incremental:
 
                         cx_order_list.append(keys[index: num])
                         index = num
@@ -2741,35 +2793,35 @@ class Candela(Realm):
                 # Iterate over cx_order_list to start tests incrementally
                 for i in range(len(cx_order_list)):
                     if i == 0:
-                        obj.data["start_time_webGUI"] = [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
-                        end_time_webGUI = (datetime.now() + timedelta(minutes=obj.total_duration)).strftime('%Y-%m-%d %H:%M:%S')
-                        obj.data['end_time_webGUI'] = [end_time_webGUI]
+                        self.vs_obj_dict[ce][obj_name]["obj"].data["start_time_webGUI"] = [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+                        end_time_webGUI = (datetime.now() + timedelta(minutes=self.vs_obj_dict[ce][obj_name]["obj"].total_duration)).strftime('%Y-%m-%d %H:%M:%S')
+                        self.vs_obj_dict[ce][obj_name]["obj"].data['end_time_webGUI'] = [end_time_webGUI]
 
                     # time.sleep(10)
 
                     # Start specific devices based on incremental capacity
-                    obj.start_specific(cx_order_list[i])
+                    self.vs_obj_dict[ce][obj_name]["obj"].start_specific(cx_order_list[i])
                     if cx_order_list[i]:
                         logging.info("Test started on Devices with resource Ids : {selected}".format(selected=cx_order_list[i]))
                     else:
                         logging.info("Test started on Devices with resource Ids : {selected}".format(selected=cx_order_list[i]))
                     file_path = "video_streaming_realtime_data.csv"
                     if end_time_webGUI < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
-                        obj.data['remaining_time_webGUI'] = ['0:00']
+                        self.vs_obj_dict[ce][obj_name]["obj"].data['remaining_time_webGUI'] = ['0:00']
                     else:
                         date_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        obj.data['remaining_time_webGUI'] = [datetime.strptime(end_time_webGUI, "%Y-%m-%d %H:%M:%S") - datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")]
+                        self.vs_obj_dict[ce][obj_name]["obj"].data['remaining_time_webGUI'] = [datetime.strptime(end_time_webGUI, "%Y-%m-%d %H:%M:%S") - datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")]
 
                     if args.dowebgui:
-                        file_path = os.path.join(obj.result_dir, "../../Running_instances/{}_{}_running.json".format(obj.host, obj.test_name))
+                        file_path = os.path.join(self.vs_obj_dict[ce][obj_name]["obj"].result_dir, "../../Running_instances/{}_{}_running.json".format(self.vs_obj_dict[ce][obj_name]["obj"].host, self.vs_obj_dict[ce][obj_name]["obj"].test_name))
                         if os.path.exists(file_path):
                             with open(file_path, 'r') as file:
                                 data = json.load(file)
                                 if data["status"] != "Running":
                                     break
-                        test_stopped_by_user = obj.monitor_for_runtime_csv(args.duration, file_path, individual_df, i, actual_start_time, resource_list_sorted, cx_order_list[i])
+                        test_stopped_by_user = self.vs_obj_dict[ce][obj_name]["obj"].monitor_for_runtime_csv(args.duration, file_path, individual_df, i, actual_start_time, resource_list_sorted, cx_order_list[i])
                     else:
-                        test_stopped_by_user = obj.monitor_for_runtime_csv(args.duration, file_path, individual_df, i, actual_start_time, resource_list_sorted, cx_order_list[i])
+                        test_stopped_by_user = self.vs_obj_dict[ce][obj_name]["obj"].monitor_for_runtime_csv(args.duration, file_path, individual_df, i, actual_start_time, resource_list_sorted, cx_order_list[i])
                     if not test_stopped_by_user:
                         # Append current iteration index to iterations_before_test_stopped_by_user
                         iterations_before_test_stopped_by_user.append(i)
@@ -2777,24 +2829,24 @@ class Candela(Realm):
                         # Append current iteration index to iterations_before_test_stopped_by_user
                         iterations_before_test_stopped_by_user.append(i)
                         break
-        obj.stop()
+        self.vs_obj_dict[ce][obj_name]["obj"].stop()
 
-        if obj.resource_ids:
+        if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
 
             date = str(datetime.now()).split(",")[0].replace(" ", "-").split(".")[0]
             username = []
 
             try:
-                eid_data = obj.json_get("ports?fields=alias,mac,mode,Parent Dev,rx-rate,tx-rate,ssid,signal")
+                eid_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("ports?fields=alias,mac,mode,Parent Dev,rx-rate,tx-rate,ssid,signal")
             except KeyError:
                 logger.error("Error: 'interfaces' key not found in port data")
                 return False
 
-            resource_ids = list(map(int, obj.resource_ids.split(',')))
+            resource_ids = list(map(int, self.vs_obj_dict[ce][obj_name]["obj"].resource_ids.split(',')))
             for alias in eid_data["interfaces"]:
                 for i in alias:
                     if int(i.split(".")[1]) > 1 and alias[i]["alias"] == 'wlan0':
-                        resource_hw_data = obj.json_get("/resource/" + i.split(".")[0] + "/" + i.split(".")[1])
+                        resource_hw_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("/resource/" + i.split(".")[0] + "/" + i.split(".")[1])
                         hw_version = resource_hw_data['resource']['hw version']
                         if not hw_version.startswith(('Win', 'Linux', 'Apple')) and int(resource_hw_data['resource']['eid'].split('.')[1]) in resource_ids:
                             username.append(resource_hw_data['resource']['user'])
@@ -2816,17 +2868,43 @@ class Candela(Realm):
         logging.info("Test Completed")
 
         # prev_inc_value = 0
-        if obj.resource_ids and obj.incremental:
-            obj.generate_report(date, list(set(iterations_before_test_stopped_by_user)), test_setup_info=test_setup_info, realtime_dataset=individual_df, cx_order_list=cx_order_list,report_path=self.result_path)
-        elif obj.resource_ids:
-            obj.generate_report(date, list(set(iterations_before_test_stopped_by_user)), test_setup_info=test_setup_info, realtime_dataset=individual_df,report_path=self.result_path)
+        if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids and self.vs_obj_dict[ce][obj_name]["obj"].incremental:
+            self.vs_obj_dict[ce][obj_name]["obj"].generate_report(date, list(set(iterations_before_test_stopped_by_user)), test_setup_info=test_setup_info, realtime_dataset=individual_df, cx_order_list=cx_order_list,report_path=self.result_path)
+        elif self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
+            self.vs_obj_dict[ce][obj_name]["obj"].generate_report(date, list(set(iterations_before_test_stopped_by_user)), test_setup_info=test_setup_info, realtime_dataset=individual_df,report_path=self.result_path)
 
+        params = {
+            "date": None,
+            "iterations_before_test_stopped_by_user": None,
+            "test_setup_info": None,
+            "realtime_dataset": None,
+            "report_path": "",
+            "cx_order_list": []
+        }
+        if self.vs_obj_dict[ce][obj_name]["obj"].resource_ids and self.vs_obj_dict[ce][obj_name]["obj"].incremental:
+            params.update({
+                "date": date,
+                "iterations_before_test_stopped_by_user": list(set(iterations_before_test_stopped_by_user)),
+                "test_setup_info": test_setup_info,
+                "realtime_dataset": individual_df,
+                "report_path": self.result_path,
+                "cx_order_list": cx_order_list
+            })
+        elif self.vs_obj_dict[ce][obj_name]["obj"].resource_ids:
+            params.update({
+                "date": date,
+                "iterations_before_test_stopped_by_user": list(set(iterations_before_test_stopped_by_user)),
+                "test_setup_info": test_setup_info,
+                "realtime_dataset": individual_df,
+                "report_path": self.result_path
+            })
+        self.vs_obj_dict[ce][obj_name]["data"] = params.copy()
         # Perform post-cleanup operations
         if args.postcleanup:
-            obj.postcleanup()
+            self.vs_obj_dict[ce][obj_name]["obj"].postcleanup()
 
         if args.dowebgui:
-            obj.copy_reports_to_home_dir()
+            self.vs_obj_dict[ce][obj_name]["obj"].copy_reports_to_home_dir()
         return True
 
 
@@ -3727,9 +3805,17 @@ class Candela(Realm):
         # Configure reporting
         logger.info("Configuring report")
         report, kpi_csv, csv_outfile = configure_reporting(**vars(args))
-
+        ce = self.current_exec #seires
+        if ce == "parallel":
+            obj_name = "mcast_test"
+        else:
+            obj_no = 1
+            while f"mcast_test_{obj_no}" in self.mcast_obj_dict[ce]:
+                obj_no+=1 
+            obj_name = f"mcast_test_{obj_no}" 
+        self.mcast_obj_dict[ce][obj_name] = {"obj":None,"data":None}
         logger.debug("Configure test object")
-        ip_var_test = L3VariableTime(
+        self.mcast_obj_dict[ce][obj_name]["obj"] = L3VariableTime(
             endp_types=endp_types,
             args=args,
             tos=args.tos,
@@ -3841,19 +3927,19 @@ class Candela(Realm):
             logger.info("Skipping pre-test cleanup, '--use_existing_station_list' specified")
         else:
             logger.info("Performing pre-test cleanup")
-            ip_var_test.pre_cleanup()
+            self.mcast_obj_dict[ce][obj_name]["obj"].pre_cleanup()
 
         # Build test configuration
         logger.info("Building test configuration")
-        ip_var_test.build()
-        if not ip_var_test.passes():
+        self.mcast_obj_dict[ce][obj_name]["obj"].build()
+        if not self.mcast_obj_dict[ce][obj_name]["obj"].passes():
             logger.critical("Test configuration build failed")
-            logger.critical(ip_var_test.get_fail_message())
+            logger.critical(self.mcast_obj_dict[ce][obj_name]["obj"].get_fail_message())
             return False
 
         # Run test
         logger.info("Starting test")
-        ip_var_test.start(False)
+        self.mcast_obj_dict[ce][obj_name]["obj"].start(False)
 
         if args.wait > 0:
             logger.info(f"Pausing {args.wait} seconds for manual inspection before test conclusion and "
@@ -3866,33 +3952,40 @@ class Candela(Realm):
         else:
             if args.quiesce_cx:
                 logger.info("Test complete, quiescing traffic")
-                ip_var_test.quiesce_cx()
+                self.mcast_obj_dict[ce][obj_name]["obj"].quiesce_cx()
                 time.sleep(3)
             else:
                 logger.info("Test complete, stopping traffic")
-                ip_var_test.stop()
+                self.mcast_obj_dict[ce][obj_name]["obj"].stop()
 
         # Set DUT information for reporting
-        ip_var_test.set_dut_info(
+        self.mcast_obj_dict[ce][obj_name]["obj"].set_dut_info(
             dut_model_num=args.dut_model_num,
             dut_hw_version=args.dut_hw_version,
             dut_sw_version=args.dut_sw_version,
             dut_serial_num=args.dut_serial_num)
-        ip_var_test.set_report_obj(report=report)
+        self.mcast_obj_dict[ce][obj_name]["obj"].set_report_obj(report=report)
         if args.dowebgui:
-            ip_var_test.webgui_finalize()
+            self.mcast_obj_dict[ce][obj_name]["obj"].webgui_finalize()
         # Generate and write out test report
         logger.info("Generating test report")
         if args.real:
-            ip_var_test.generate_report(config_devices, group_device_map)
+            self.mcast_obj_dict[ce][obj_name]["obj"].generate_report(config_devices, group_device_map)
         else:
-            ip_var_test.generate_report()
-        ip_var_test.write_report()
+            self.mcast_obj_dict[ce][obj_name]["obj"].generate_report()
+        params = {
+            "config_devices" : None,
+            "group_device_map": None
+        }
+        params["group_device_map"] = group_device_map
+        params["config_devices"] = config_devices
+        self.mcast_obj_dict[ce][obj_name]["data"] = params.copy()
+        self.mcast_obj_dict[ce][obj_name]["obj"].write_report()
 
         # TODO move to after reporting
-        if not ip_var_test.passes():
+        if not self.mcast_obj_dict[ce][obj_name]["obj"].passes():
             logger.warning("Test Ended: There were Failures")
-            logger.warning(ip_var_test.get_fail_message())
+            logger.warning(self.mcast_obj_dict[ce][obj_name]["obj"].get_fail_message())
 
         if args.no_cleanup:
             logger.info("Skipping post-test cleanup, '--no_cleanup' specified")
@@ -3900,25 +3993,26 @@ class Candela(Realm):
             logger.info("Skipping post-test cleanup, '--no_stop_traffic' specified")
         else:
             logger.info("Performing post-test cleanup")
-            ip_var_test.cleanup()
+            self.mcast_obj_dict[ce][obj_name]["obj"].cleanup()
 
         # TODO: This is redundant if '--no_cleanup' is not specified (already taken care of there)
         if args.cleanup_cx:
             logger.info("Performing post-test CX traffic pair cleanup")
-            ip_var_test.cleanup_cx()
+            self.mcast_obj_dict[ce][obj_name]["obj"].cleanup_cx()
 
-        if ip_var_test.passes():
+        if self.mcast_obj_dict[ce][obj_name]["obj"].passes():
             test_passed = True
             logger.info("Full test passed, all connections increased rx bytes")
 
         # Run WebGUI-specific post test logic
         if args.dowebgui:
-            ip_var_test.copy_reports_to_home_dir()
+            self.mcast_obj_dict[ce][obj_name]["obj"].copy_reports_to_home_dir()
 
         if test_passed:
-            ip_var_test.exit_success()
+            self.mcast_obj_dict[ce][obj_name]["obj"].exit_success()
         else:
-            ip_var_test.exit_fail()
+            self.mcast_obj_dict[ce][obj_name]["obj"].exit_fail()
+
         return True
 
 
@@ -6525,7 +6619,992 @@ class Candela(Realm):
                         obj_name = f"ping_test_{obj_no}"
                     else:
                         break
+            elif test_name == "qos_test":
+                obj_no = 1
+                obj_name = 'qos_test'
+                if ce == "series":
+                    obj_name += "_1" 
+                while obj_name in self.qos_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    params = self.qos_obj_dict[ce][obj_name]["data"]
+                    data = params["data"].copy() if isinstance(params["data"], (list, dict, set)) else params["data"]
+                    input_setup_info = params["input_setup_info"].copy() if isinstance(params["input_setup_info"], (list, dict, set)) else params["input_setup_info"]
+                    connections_download_avg = params["connections_download_avg"].copy() if isinstance(params["connections_download_avg"], (list, dict, set)) else params["connections_download_avg"]
+                    connections_upload_avg = params["connections_upload_avg"].copy() if isinstance(params["connections_upload_avg"], (list, dict, set)) else params["connections_upload_avg"]
+                    avg_drop_a = params["avg_drop_a"].copy() if isinstance(params["avg_drop_a"], (list, dict, set)) else params["avg_drop_a"]
+                    avg_drop_b = params["avg_drop_b"].copy() if isinstance(params["avg_drop_b"], (list, dict, set)) else params["avg_drop_b"]
+                    report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
+                    result_dir_name = params["result_dir_name"].copy() if isinstance(params["result_dir_name"], (list, dict, set)) else params["result_dir_name"]
+                    selected_real_clients_names = params["selected_real_clients_names"].copy() if isinstance(params["selected_real_clients_names"], (list, dict, set)) else params["selected_real_clients_names"]
+                    config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
+                    self.qos_obj_dict[ce][obj_name]["obj"].ssid_list = self.qos_obj_dict[ce][obj_name]["obj"].get_ssid_list(self.qos_obj_dict[ce][obj_name]["obj"].input_devices_list)
+                    if selected_real_clients_names is not None:
+                        self.qos_obj_dict[ce][obj_name]["obj"].num_stations = selected_real_clients_names
+                    data_set, load, res = self.qos_obj_dict[ce][obj_name]["obj"].generate_graph_data_set(data)
+                    # Initialize counts and lists for device types
+                    android_devices, windows_devices, linux_devices, ios_devices, ios_mob_devices = 0, 0, 0, 0, 0
+                    all_devices_names = []
+                    device_type = []
+                    total_devices = ""
+                    for i in self.qos_obj_dict[ce][obj_name]["obj"].real_client_list:
+                        split_device_name = i.split(" ")
+                        if 'android' in split_device_name:
+                            all_devices_names.append(split_device_name[2] + ("(Android)"))
+                            device_type.append("Android")
+                            android_devices += 1
+                        elif 'Win' in split_device_name:
+                            all_devices_names.append(split_device_name[2] + ("(Windows)"))
+                            device_type.append("Windows")
+                            windows_devices += 1
+                        elif 'Lin' in split_device_name:
+                            all_devices_names.append(split_device_name[2] + ("(Linux)"))
+                            device_type.append("Linux")
+                            linux_devices += 1
+                        elif 'Mac' in split_device_name:
+                            all_devices_names.append(split_device_name[2] + ("(Mac)"))
+                            device_type.append("Mac")
+                            ios_devices += 1
+                        elif 'iOS' in split_device_name:
+                            all_devices_names.append(split_device_name[2] + ("(iOS)"))
+                            device_type.append("iOS")
+                            ios_mob_devices += 1
 
+                    # Build total_devices string based on counts
+                    if android_devices > 0:
+                        total_devices += f" Android({android_devices})"
+                    if windows_devices > 0:
+                        total_devices += f" Windows({windows_devices})"
+                    if linux_devices > 0:
+                        total_devices += f" Linux({linux_devices})"
+                    if ios_devices > 0:
+                        total_devices += f" Mac({ios_devices})"
+                    if ios_mob_devices > 0:
+                        total_devices += f" iOS({ios_mob_devices})"
+
+                    # Test setup information table for devices in device list
+                    if config_devices == "":
+                        test_setup_info = {
+                            "Device List": ", ".join(all_devices_names),
+                            "Number of Stations": "Total" + f"({self.qos_obj_dict[ce][obj_name]["obj"].num_stations})" + total_devices,
+                            "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
+                            "SSID": self.qos_obj_dict[ce][obj_name]["obj"].ssid,
+                            "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
+                            "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
+                            "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                            "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
+                            "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
+                            "Per TOS Load in Mbps": load
+                        }
+                    # Test setup information table for devices in groups
+                    else:
+                        group_names = ', '.join(config_devices.keys())
+                        profile_names = ', '.join(config_devices.values())
+                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                        test_setup_info = {
+                            "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
+                            'Configuration': configmap,
+                            "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
+                            "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
+                            "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                            "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
+                            "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
+                            "Per TOS Load in Mbps": load
+                        }
+                    print(res["throughput_table_df"])
+                    self.overall_report.set_obj_html(_obj_title=f'QOS Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
+                    self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
+                    self.overall_report.set_table_title(
+                        f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)")
+                    self.overall_report.build_table_title()
+                    df_throughput = pd.DataFrame(res["throughput_table_df"])
+                    self.overall_report.set_table_dataframe(df_throughput)
+                    self.overall_report.build_table()
+                    for key in res["graph_df"]:
+                        self.overall_report.set_obj_html(
+                            _obj_title=f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput for {len(self.qos_obj_dict[ce][obj_name]["obj"].input_devices_list)} clients with different TOS.",
+                            _obj=f"The below graph represents overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput for all "
+                                "connected stations running BK, BE, VO, VI traffic with different "
+                                f"intended loads{load} per tos")
+                    self.overall_report.build_objective()
+                    graph = lf_bar_graph(_data_set=data_set,
+                                        _xaxis_name="Load per Type of Service",
+                                        _yaxis_name="Throughput (Mbps)",
+                                        _xaxis_categories=["BK,BE,VI,VO"],
+                                        _xaxis_label=['1 Mbps', '2 Mbps', '3 Mbps', '4 Mbps', '5 Mbps'],
+                                        _graph_image_name=f"tos_download_{key}Hz {obj_no}",
+                                        _label=["BK", "BE", "VI", "VO"],
+                                        _xaxis_step=1,
+                                        _graph_title=f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput – BK,BE,VO,VI traffic streams",
+                                        _title_size=16,
+                                        _color=['orange', 'lightcoral', 'steelblue', 'lightgrey'],
+                                        _color_edge='black',
+                                        _bar_width=0.15,
+                                        _figsize=(18, 6),
+                                        _legend_loc="best",
+                                        _legend_box=(1.0, 1.0),
+                                        _dpi=96,
+                                        _show_bar_value=True,
+                                        _enable_csv=True,
+                                        _color_name=['orange', 'lightcoral', 'steelblue', 'lightgrey'])
+                    graph_png = graph.build_bar_graph()
+                    print("graph name {}".format(graph_png))
+                    self.overall_report.set_graph_image(graph_png)
+                    # need to move the graph image to the results directory
+                    self.overall_report.move_graph_image()
+                    self.overall_report.set_csv_filename(graph_png)
+                    self.overall_report.move_csv_file()
+                    self.overall_report.build_graph()
+                    self.qos_obj_dict[ce][obj_name]["obj"].generate_individual_graph(res, self.overall_report, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b,obj_no)
+                    self.overall_report.test_setup_table(test_setup_data=input_setup_info, value="Information")
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"qos_test_{obj_no}"
+                    else:
+                        break
+            
+            elif test_name == "mcast_test":
+                obj_no=1
+                obj_name = "mcast_test"
+                if ce == "series":
+                    obj_name += "_1"
+                while obj_name in self.mcast_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    print('is error',self.mcast_obj_dict)
+                    params = self.mcast_obj_dict[ce][obj_name]["data"].copy()
+                    config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
+                    group_device_map = params["group_device_map"].copy() if isinstance(params["group_device_map"], (list, dict, set)) else params["group_device_map"]
+
+                    # self.mcast_obj_dict[ce][obj_name]["obj"].update_a()
+                    # self.mcast_obj_dict[ce][obj_name]["obj"].update_b()
+                    test_setup_info = {
+                        "DUT Name": self.mcast_obj_dict[ce][obj_name]["obj"].dut_model_num,
+                        "DUT Hardware Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_hw_version,
+                        "DUT Software Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_sw_version,
+                        "DUT Serial Number": self.mcast_obj_dict[ce][obj_name]["obj"].dut_serial_num,
+                    }
+                    self.overall_report.set_obj_html(_obj_title=f'MULTICAST Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
+                    self.overall_report.set_table_title("Device Under Test Information")
+                    self.overall_report.build_table_title()
+                    self.overall_report.test_setup_table(value="Device Under Test",
+                                                test_setup_data=test_setup_info)
+                    # For real devices when groups specified for configuration
+                    if self.mcast_obj_dict[ce][obj_name]["obj"].real and self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
+                        group_names = ', '.join(config_devices.keys())
+                        profile_names = ', '.join(config_devices.values())
+                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                        test_input_info = {
+                            "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
+                            "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
+                            "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
+                            "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
+                            "Test Configuration": configmap,
+                            "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
+                            "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
+                        }
+                    else:
+                        test_input_info = {
+                            "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
+                            "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
+                            "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
+                            "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
+                            "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
+                            "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
+                        }
+
+                    self.overall_report.set_table_title("Test Configuration")
+                    self.overall_report.build_table_title()
+                    self.overall_report.test_setup_table(value="Test Configuration",
+                                                test_setup_data=test_input_info)
+
+                    self.overall_report.set_table_title("Radio Configuration")
+                    self.overall_report.build_table_title()
+
+                    wifi_mode_dict = {
+                        0: 'AUTO',  # 802.11g
+                        1: '802.11a',  # 802.11a
+                        2: '802.11b',  # 802.11b
+                        3: '802.11g',  # 802.11g
+                        4: '802.11abg',  # 802.11abg
+                        5: '802.11abgn',  # 802.11abgn
+                        6: '802.11bgn',  # 802.11bgn
+                        7: '802.11bg',  # 802.11bg
+                        8: '802.11abgnAC',  # 802.11abgn-AC
+                        9: '802.11anAC',  # 802.11an-AC
+                        10: '802.11an',  # 802.11an
+                        11: '802.11bgnAC',  # 802.11bgn-AC
+                        12: '802.11abgnAX',  # 802.11abgn-A+
+                        #     a/b/g/n/AC/AX (dual-band AX) support
+                        13: '802.11bgnAX',  # 802.11bgn-AX
+                        14: '802.11anAX',  # 802.11an-AX
+                        15: '802.11aAX',  # 802.11a-AX (6E disables /n and /ac)
+                        16: '802.11abgnEHT',  # 802.11abgn-EHT  a/b/g/n/AC/AX/EHT (dual-band AX) support
+                        17: '802.11bgnEHT',  # 802.11bgn-EHT
+                        18: '802.11anEHT',  # 802.11an-ETH
+                        19: '802.11aBE',  # 802.11a-EHT (6E disables /n and /ac)
+                    }
+
+                    for (
+                            radio_,
+                            ssid_,
+                            _ssid_password_,  # do not print password
+                            ssid_security_,
+                            mode_,
+                            wifi_enable_flags_list_,
+                            _reset_port_enable_,
+                            _reset_port_time_min_,
+                            _reset_port_time_max_) in zip(
+                            self.mcast_obj_dict[ce][obj_name]["obj"].radio_name_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_password_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_security_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].wifi_mode_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].enable_flags_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_enable_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_min_list,
+                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_max_list):
+
+                        mode_value = wifi_mode_dict[int(mode_)]
+
+                        radio_info = {
+                            "SSID": ssid_,
+                            "Security": ssid_security_,
+                            "Wifi mode set": mode_value,
+                            'Wifi Enable Flags': wifi_enable_flags_list_
+                        }
+                        self.overall_report.test_setup_table(value=radio_, test_setup_data=radio_info)
+
+                    # TODO move the graphing to the class so it may be called as a service
+
+                    # Graph TOS data
+                    # Once the data is stopped can collect the data for the cx's both multi cast and uni cast
+                    # if the traffic is still running will gather the running traffic
+                    # self.mcast_obj_dict[ce][obj_name]["obj"].evaluate_qos()
+
+                    # graph BK A
+                    # try to do as a loop
+                    logger.info(f"BEFORE REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
+                    tos_list = ['BK', 'BE', 'VI', 'VO']
+                    if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                        tos_types = ['BE', 'BK', 'VI', 'VO']
+                        print("BOOLLLLL",self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B is self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A)
+                        for tos_key in tos_types:
+                            if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A:
+                                tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos_key]
+
+                                # Filter A side
+                                traffic_proto_A = tos_data.get("traffic_protocol_A", [])
+                                indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
+
+                                # Filter B side
+                                traffic_proto_B = tos_data.get("traffic_protocol_B", [])
+                                indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
+
+                                for key in list(tos_data.keys()):
+                                    if key in ["colors", "labels"]:
+                                        continue  # Keep as-is
+
+                                    if key.endswith('_A'):
+                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
+                                        tos_data[key] = filtered_list
+
+                                    elif key.endswith('_B'):
+                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
+                                        tos_data[key] = filtered_list
+                        for tos_key in tos_types:
+                            if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B:
+                                tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos_key]
+
+                                # Filter A side
+                                traffic_proto_A = tos_data.get("traffic_protocol_A", [])
+                                indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
+
+                                # Filter B side
+                                traffic_proto_B = tos_data.get("traffic_protocol_B", [])
+                                indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
+
+                                for key in list(tos_data.keys()):
+                                    if key in ["colors", "labels"]:
+                                        continue  # Keep as-is
+
+                                    if key.endswith('_A'):
+                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
+                                        tos_data[key] = filtered_list
+
+                                    elif key.endswith('_B'):
+                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
+                                        tos_data[key] = filtered_list
+                    logger.info(f"AFTER REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
+                    for tos in tos_list:
+                        print(self.mcast_obj_dict[ce][obj_name]["obj"].tos)
+                        if tos not in self.mcast_obj_dict[ce][obj_name]["obj"].tos:
+                            continue
+                        if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]):
+                            min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_a"]
+                            min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_b"]
+
+                            dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]]
+                            # TODO possibly explain the wording for upload and download
+                            dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"])
+                            x_fig_size = 20
+                            y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]) * .4 + 5
+                            logger.debug("length of clients_A {clients} resource_alias_A {alias_A}".format(
+                                clients=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]), alias_A=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"])))
+                            logger.debug("clients_A {clients}".format(clients=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]))
+                            logger.debug("resource_alias_A {alias_A}".format(alias_A=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"]))
+
+                            if int(min_bps_a) != 0:
+                                self.overall_report.set_obj_html(
+                                    _obj_title=f"Individual throughput measured  upload tcp or udp bps: {min_bps_a},  download tcp, udp, or mcast  bps: {min_bps_b} station for traffic {tos} (WiFi).",
+                                    _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                    f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                    f"Throughput in Mbps”.")
+                            else:
+                                self.overall_report.set_obj_html(
+                                    _obj_title=f"Individual throughput mcast download bps: {min_bps_b} traffic {tos} (WiFi).",
+                                    _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                    f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                    f"Throughput in Mbps”.")
+
+                            self.overall_report.build_objective()
+
+                            graph = lf_bar_graph_horizontal(_data_set=dataset_list,
+                                                                    _xaxis_name="Throughput in bps",
+                                                                    _yaxis_name="Client names",
+                                                                    # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                                    _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"],
+                                                                    _graph_image_name=f"{tos}_A{obj_no}",
+                                                                    _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['labels'],
+                                                                    _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['colors'],
+                                                                    _color_edge=['black'],
+                                                                    # traditional station side -A
+                                                                    _graph_title=f"Individual {tos} client side traffic measurement - side a (downstream)",
+                                                                    _title_size=10,
+                                                                    _figsize=(x_fig_size, y_fig_size),
+                                                                    _show_bar_value=True,
+                                                                    _enable_csv=True,
+                                                                    _text_font=8,
+                                                                    _legend_loc="best",
+                                                                    _legend_box=(1.0, 1.0)
+                                                                    )
+                            graph_png = graph.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_png)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+                            self.overall_report.set_csv_filename(graph_png)
+                            self.overall_report.move_csv_file()
+                            if(self.mcast_obj_dict[ce][obj_name]["obj"].dowebgui and self.mcast_obj_dict[ce][obj_name]["obj"].get_live_view):
+                                for floor in range(0,int(self.mcast_obj_dict[ce][obj_name]["obj"].total_floors)):
+                                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                                    throughput_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]["obj"].test_name}_throughput_{floor+1}.png")
+                                    rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]["obj"].test_name}_rssi_{floor+1}.png")
+                                    timeout = 60  # seconds
+                                    start_time = time.time()
+
+                                    while not (os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path)):
+                                        if time.time() - start_time > timeout:
+                                            print("Timeout: Images not found within 60 seconds.")
+                                            break
+                                        time.sleep(1)
+                                    while not os.path.exists(throughput_image_path) and not os.path.exists(rssi_image_path):
+                                        if os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path):
+                                            break
+                                        # time.sleep(10)
+                                    if os.path.exists(throughput_image_path):
+                                        self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
+                                        self.overall_report.build_custom()
+                                        # self.overall_report.set_custom_html("<h2>Average Throughput Heatmap: </h2>")
+                                        # self.overall_report.build_custom()
+                                        self.overall_report.set_custom_html(f'<img src="file://{throughput_image_path}"></img>')
+                                        self.overall_report.build_custom()
+                                        # os.remove(throughput_image_path)
+
+                                    if os.path.exists(rssi_image_path):
+                                        self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
+                                        self.overall_report.build_custom()
+                                        # self.overall_report.set_custom_html("<h2>Average RSSI Heatmap: </h2>")
+                                        # self.overall_report.build_custom()
+                                        self.overall_report.set_custom_html(f'<img src="file://{rssi_image_path}"></img>')
+                                        self.overall_report.build_custom()
+                                        # os.remove(rssi_image_path)
+
+                            # For real devices appending the required data for pass fail criteria
+                            if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                                up, down, off_up, off_down = [], [], [], []
+                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A']:
+                                    up.append(int(i) / 1000000)
+                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A']:
+                                    down.append(int(i) / 1000000)
+                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A']:
+                                    off_up.append(int(i) / 1_000_000)
+                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A']:
+                                    off_down.append(int(i) / 1000000)
+                                # if either 'expected_passfail_value' or 'device_csv_name' is provided for pass/fail evaluation
+                                if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                    test_input_list, pass_fail_list = self.mcast_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(tos, up, down)
+
+                            if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                                # When groups and profiles specifed for configuration
+                                if self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
+                                    for key, val in group_device_map.items():
+                                        # Generating Dataframe when Groups with their profiles and pass_fail case is specified
+                                        if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                            dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                                val,
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                                off_up,
+                                                off_down,
+                                                up,
+                                                down,
+                                                test_input_list,
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                                pass_fail_list)
+                                        # Generating Dataframe for groups when pass_fail case is not specified
+                                        else:
+                                            dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                                val,
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                                off_up,
+                                                off_down,
+                                                up,
+                                                down,
+                                                [],
+                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                                [],)
+                                        # When the client exists in either group.
+                                        if dataframe:
+                                            self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                            self.overall_report.build_objective()
+                                            dataframe1 = pd.DataFrame(dataframe)
+                                            self.overall_report.set_table_dataframe(dataframe1)
+                                            self.overall_report.build_table()
+                                else:
+                                    tos_dataframe_A = {
+                                        " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                        " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                        " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                        " Device Type / Hw Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                        " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                        # TODO : port A being set to many times
+                                        " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                        " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                        " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                        " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                        " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                        " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                        " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                        " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A'],
+                                        " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A'],
+                                        " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A'],
+                                        " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A'],
+                                        " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                    }
+                                    # When pass_Fail criteria specified
+                                    if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                        tos_dataframe_A[" Expected " + 'Download' + " Rate"] = [float(x) * 10**6 for x in test_input_list]
+                                        tos_dataframe_A[" Status "] = pass_fail_list
+
+                                    dataframe3 = pd.DataFrame(tos_dataframe_A)
+                                    self.overall_report.set_table_dataframe(dataframe3)
+                                    self.overall_report.build_table()
+
+                            # For virtual clients
+                            else:
+                                tos_dataframe_A = {
+                                    " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                    " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                    " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                    " Device Type / Hw Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                    " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                    " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                    " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                    " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                    " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                    " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                    " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                    " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                    " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A'],
+                                    " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A'],
+                                    " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A'],
+                                    " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A'],
+                                    " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                }
+                                dataframe3 = pd.DataFrame(tos_dataframe_A)
+                                self.overall_report.set_table_dataframe(dataframe3)
+                                self.overall_report.build_table()
+
+                    # TODO both client_dict_A and client_dict_B contains the same information
+                    for tos in tos_list:
+                        if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]):
+                            min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_a"]
+                            min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_b"]
+
+                            dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]]
+                            dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"])
+
+                            x_fig_size = 20
+                            y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"]) * .4 + 5
+
+                            self.overall_report.set_obj_html(
+                                _obj_title=f"Individual throughput upstream endp,  offered upload bps: {min_bps_a} offered download bps: {min_bps_b} /station for traffic {tos} (WiFi).",
+                                _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                f"Throughput in Mbps”.")
+                            self.overall_report.build_objective()
+
+                            graph = lf_bar_graph_horizontal(_data_set=dataset_list,
+                                                                    _xaxis_name="Throughput in bps",
+                                                                    _yaxis_name="Client names",
+                                                                    # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
+                                                                    _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["resource_alias_B"],
+                                                                    _graph_image_name=f"{tos}_B{obj_no}",
+                                                                    _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['labels'],
+                                                                    _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['colors'],
+                                                                    _color_edge=['black'],
+                                                                    _graph_title=f"Individual {tos} upstream side traffic measurement - side b (WIFI) traffic",
+                                                                    _title_size=10,
+                                                                    _figsize=(x_fig_size, y_fig_size),
+                                                                    _show_bar_value=True,
+                                                                    _enable_csv=True,
+                                                                    _text_font=8,
+                                                                    _legend_loc="best",
+                                                                    _legend_box=(1.0, 1.0)
+                                                                    )
+                            graph_png = graph.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_png)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+                            self.overall_report.set_csv_filename(graph_png)
+                            self.overall_report.move_csv_file()
+
+                            tos_dataframe_B = {
+                                " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_alias_B'],
+                                " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_eid_B'],
+                                " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_host_B'],
+                                " Device Type / HW Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_hw_ver_B'],
+                                " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
+                                # TODO get correct size
+                                " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['port_B'],
+                                " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mode_B'],
+                                " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mac_B'],
+                                " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ssid_B'],
+                                " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['channel_B'],
+                                " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_type_B'],
+                                " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_protocol_B'],
+                                " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_upload_rate_B'],
+                                " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_download_rate_B'],
+                                " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ul_B'],
+                                " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['dl_B'],
+                                " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['download_rx_drop_percent_B']
+                            }
+
+                            dataframe3 = pd.DataFrame(tos_dataframe_B)
+                            self.overall_report.set_table_dataframe(dataframe3)
+                            self.overall_report.build_table()
+
+                    # L3 total traffic # TODO csv_results_file present yet not readable
+                    # self.overall_report.set_table_title("Total Layer 3 Cross-Connect Traffic across all Stations")
+                    # self.overall_report.build_table_title()
+                    # self.overall_report.set_table_dataframe_from_csv(self.mcast_obj_dict[ce][obj_name]["obj"].csv_results_file)
+                    # self.overall_report.build_table()
+
+                    # empty dictionarys evaluate to false , placing tables in output
+                    if bool(self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files):
+                        for key, value in self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files.items():
+                            if self.mcast_obj_dict[ce][obj_name]["obj"].csv_data_to_report:
+                                # read the csv file
+                                self.overall_report.set_table_title("Layer 3 Cx Traffic  {key}".format(key=key))
+                                self.overall_report.build_table_title()
+                                self.overall_report.set_table_dataframe_from_csv(value.name)
+                                self.overall_report.build_table()
+
+                            # read in column heading and last line
+                            df = pd.read_csv(value.name)
+                            last_row = df.tail(1)
+                            self.overall_report.set_table_title(
+                                "Layer 3 Cx Traffic Last Reporting Interval {key}".format(key=key))
+                            self.overall_report.build_table_title()
+                            self.overall_report.set_table_dataframe(last_row)
+                            self.overall_report.build_table()
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"mcast_test_{obj_no}"
+                    else:
+                        break        
+            
+            elif test_name == "vs_test":
+                obj_no=1
+                obj_name = "vs_test"
+                if ce == "series":
+                    obj_name += "_1"
+                while obj_name in self.vs_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    params = self.vs_obj_dict[ce][obj_name]["data"].copy()
+                    date = params["date"]
+
+                    iterations_before_test_stopped_by_user = (
+                        params["iterations_before_test_stopped_by_user"].copy()
+                        if isinstance(params["iterations_before_test_stopped_by_user"], (list, dict, set))
+                        else params["iterations_before_test_stopped_by_user"]
+                    )
+
+                    test_setup_info = (
+                        params["test_setup_info"].copy()
+                        if isinstance(params["test_setup_info"], (list, dict, set))
+                        else params["test_setup_info"]
+                    )
+
+                    realtime_dataset = (
+                        params["realtime_dataset"].copy()
+                        if isinstance(params["realtime_dataset"], (list, dict, set))
+                        else params["realtime_dataset"]
+                    )
+
+                    report_path = (
+                        params["report_path"].copy()
+                        if isinstance(params["report_path"], (list, dict, set))
+                        else params["report_path"]
+                    )
+
+                    cx_order_list = (
+                        params["cx_order_list"].copy()
+                        if isinstance(params["cx_order_list"], (list, dict, set))
+                        else params["cx_order_list"]
+                    )
+                    self.overall_report.set_obj_html(_obj_title=f'Video Streaming Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
+                    created_incremental_values = self.vs_obj_dict[ce][obj_name]["obj"].get_incremental_capacity_list()
+                    keys = list(self.vs_obj_dict[ce][obj_name]["obj"].http_profile.created_cx.keys())
+
+                    self.overall_report.set_table_title("Input Parameters")
+                    self.overall_report.build_table_title()
+                    if self.vs_obj_dict[ce][obj_name]["obj"].config:
+                        test_setup_info["SSID"] = self.vs_obj_dict[ce][obj_name]["obj"].ssid
+                        test_setup_info["Password"] = self.vs_obj_dict[ce][obj_name]["obj"].passwd
+                        test_setup_info["ENCRYPTION"] = self.vs_obj_dict[ce][obj_name]["obj"].encryp
+                    elif len(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                        # Map each group with a profile
+                        gp_pairs = zip(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups, self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles)
+                        # Create a string by joining the mapped pairs
+                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+                        test_setup_info["Configuration"] = gp_map
+
+                    self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
+
+                    device_type = []
+                    username = []
+                    ssid = []
+                    mac = []
+                    channel = []
+                    mode = []
+                    rssi = []
+                    channel = []
+                    tx_rate = []
+                    resource_ids = list(map(int, self.vs_obj_dict[ce][obj_name]["obj"].resource_ids.split(',')))
+                    try:
+                        eid_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("ports?fields=alias,mac,mode,Parent Dev,rx-rate,tx-rate,ssid,signal,channel")
+                    except KeyError:
+                        logger.error("Error: 'interfaces' key not found in port data")
+                        exit(1)
+
+                    # Loop through interfaces
+                    for alias in eid_data["interfaces"]:
+                        for i in alias:
+                            # Check interface index and alias
+                            if int(i.split(".")[1]) > 1 and alias[i]["alias"] == 'wlan0':
+
+                                # Get resource data for specific interface
+                                resource_hw_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("/resource/" + i.split(".")[0] + "/" + i.split(".")[1])
+                                hw_version = resource_hw_data['resource']['hw version']
+
+                                # Filter based on OS and resource ID
+                                if not hw_version.startswith(('Win', 'Linux', 'Apple')) and int(resource_hw_data['resource']['eid'].split('.')[1]) in resource_ids:
+                                    device_type.append('Android')
+                                    username.append(resource_hw_data['resource']['user'])
+                                    ssid.append(alias[i]['ssid'])
+                                    mac.append(alias[i]['mac'])
+                                    mode.append(alias[i]['mode'])
+                                    rssi.append(alias[i]['signal'])
+                                    channel.append(alias[i]['channel'])
+                                    tx_rate.append(alias[i]['tx-rate'])
+                    total_urls = self.vs_obj_dict[ce][obj_name]["obj"].data["total_urls"]
+                    total_err = self.vs_obj_dict[ce][obj_name]["obj"].data["total_err"]
+                    total_buffer = self.vs_obj_dict[ce][obj_name]["obj"].data["total_buffer"]
+                    max_bytes_rd_list = []
+                    avg_rx_rate_list = []
+                    # Iterate through the length of cx_order_list
+                    for iter in range(len(iterations_before_test_stopped_by_user)):
+                        data_set_in_graph, wait_time_data, devices_on_running_state, device_names_on_running = [], [], [], []
+                        devices_data_to_create_wait_time_bar_graph = []
+                        max_video_rate, min_video_rate, avg_video_rate = [], [], []
+                        total_url_data, rssi_data = [], []
+                        trimmed_data_set_in_graph = []
+                        max_bytes_rd_list = []
+                        avg_rx_rate_list = []
+                        # Retrieve data for the previous iteration, if it's not the first iteration
+                        if iter != 0:
+                            before_data_iter = realtime_dataset[realtime_dataset['iteration'] == iter]
+                        # Retrieve data for the current iteration
+                        data_iter = realtime_dataset[realtime_dataset['iteration'] == iter + 1]
+
+                        # Populate the list of devices on running state and their corresponding usernames
+                        for j in range(created_incremental_values[iter]):
+                            devices_on_running_state.append(keys[j])
+                            device_names_on_running.append(username[j])
+
+                        # Iterate through each device currently running
+                        for k in devices_on_running_state:
+                            # Filter columns related to the current device
+                            columns_with_substring = [col for col in data_iter.columns if k in col]
+                            filtered_df = data_iter[columns_with_substring]
+                            min_val = self.vs_obj_dict[ce][obj_name]["obj"].process_list(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist())
+                            if iter != 0:
+                                # Filter columns related to the current device from the previous iteration
+                                before_iter_columns_with_substring = [col for col in before_data_iter.columns if k in col]
+                                before_filtered_df = before_data_iter[before_iter_columns_with_substring]
+
+                            # Extract and compute max, min, and average video rates
+                            max_video_rate.append(max(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()))
+                            min_video_rate.append(min_val)
+                            avg_video_rate.append(round(sum(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()) /
+                                                len(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()), 2))
+                            wait_time_data.append(filtered_df[[col for col in filtered_df.columns if "total_wait_time" in col][0]].values.tolist()[-1])
+                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                            # Extract maximum bytes read for the device
+                            max_bytes_rd = max(filtered_df[[col for col in filtered_df.columns if "bytes_rd" in col][0]].values.tolist())
+                            max_bytes_rd_list.append(max_bytes_rd)
+
+                            # Calculate and append the average RX rate in Mbps
+                            rx_rate_values = filtered_df[[col for col in filtered_df.columns if "rx rate" in col][0]].values.tolist()
+                            avg_rx_rate_list.append(round((sum(rx_rate_values) / len(rx_rate_values)) / 1_000_000, 2))  # Convert bps to Mbps
+
+                            if iter != 0:
+                                # Calculate the difference in total URLs between the current and previous iterations
+                                total_url_data.append(abs(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1] -
+                                                    before_filtered_df[[col for col in before_filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1]))
+                            else:
+                                # Append the total URLs for the first iteration
+                                total_url_data.append(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1])
+
+                        # Append the wait time data to the list for creating the wait time bar graph
+                        devices_data_to_create_wait_time_bar_graph.append(wait_time_data)
+
+                        # Extract overall video format bitrate values for the current iteration and append to data_set_in_graph
+                        video_streaming_values_list = realtime_dataset['overall_video_format_bitrate'][realtime_dataset['iteration'] == iter + 1].values.tolist()
+                        data_set_in_graph.append(video_streaming_values_list)
+
+                        # Trim the data in data_set_in_graph and append to trimmed_data_set_in_graph
+                        for _ in range(len(data_set_in_graph)):
+                            trimmed_data_set_in_graph.append(self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(data_set_in_graph[_]), data_set_in_graph[_]))
+
+                        # If there are multiple incremental values, add custom HTML content to the report for the current iteration
+                        if len(created_incremental_values) > 1:
+                            self.overall_report.set_custom_html(f"<h2><u>Iteration-{iter + 1}</u></h2>")
+                            self.overall_report.build_custom()
+
+                        self.overall_report.set_obj_html(
+                            _obj_title=f"Realtime Video Rate: Number of devices running: {len(device_names_on_running)}",
+                            _obj="")
+                        self.overall_report.build_objective()
+
+                        # Create a line graph for video rate over time
+                        graph = lf_line_graph(_data_set=trimmed_data_set_in_graph,
+                                            _xaxis_name="Time",
+                                            _yaxis_name="Video Rate (Mbps)",
+                                            _xaxis_categories=self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
+                                                                            realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
+                                            _label=['Rate'],
+                                            _graph_image_name=f"vs_line_graph{iter}{obj_no}"
+                                            )
+                        graph_png = graph.build_line_graph()
+                        logger.info("graph name {}".format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        self.overall_report.move_graph_image()
+
+                        self.overall_report.build_graph()
+
+                        # Define figure size for horizontal bar graphs
+                        x_fig_size = 15
+                        y_fig_size = len(devices_on_running_state) * .5 + 4
+
+                        self.overall_report.set_obj_html(
+                            _obj_title="Total Urls Per Device",
+                            _obj="")
+                        self.overall_report.build_objective()
+                        # Create a horizontal bar graph for total URLs per device
+                        graph = lf_bar_graph_horizontal(_data_set=[total_urls[:created_incremental_values[iter]]],
+                                                        _xaxis_name="Total Urls",
+                                                        _yaxis_name="Devices",
+                                                        _graph_image_name=f"total_urls_image_name{iter}{obj_no}",
+                                                        _label=["Total Urls"],
+                                                        _yaxis_categories=device_names_on_running,
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _show_bar_value=True,
+                                                        _figsize=(x_fig_size, y_fig_size)
+                                                        #    _color=['lightcoral']
+                                                        )
+                        graph_png = graph.build_bar_graph_horizontal()
+                        logger.info("wait time graph name {}".format(graph_png))
+                        graph.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_png)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_obj_html(
+                            _obj_title="Max/Min Video Rate Per Device",
+                            _obj="")
+                        self.overall_report.build_objective()
+
+                        # Create a horizontal bar graph for max and min video rates per device
+                        graph = lf_bar_graph_horizontal(_data_set=[max_video_rate, min_video_rate],
+                                                        _xaxis_name="Max/Min Video Rate(Mbps)",
+                                                        _yaxis_name="Devices",
+                                                        _graph_image_name=f"max-min-video-rate_image_name{iter}{obj_no}",
+                                                        _label=['Max Video Rate', 'Min Video Rate'],
+                                                        _yaxis_categories=device_names_on_running,
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _show_bar_value=True,
+                                                        _figsize=(x_fig_size, y_fig_size)
+                                                        #    _color=['lightcoral']
+                                                        )
+                        graph_png = graph.build_bar_graph_horizontal()
+                        logger.info("max/min graph name {}".format(graph_png))
+                        graph.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_png)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_obj_html(
+                            _obj_title="Wait Time Per Device",
+                            _obj="")
+                        self.overall_report.build_objective()
+
+                        # Create a horizontal bar graph for wait time per device
+                        graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_wait_time_bar_graph,
+                                                        _xaxis_name="Wait Time(seconds)",
+                                                        _yaxis_name="Devices",
+                                                        _graph_image_name=f"wait_time_image_name{iter}{obj_no}",
+                                                        _label=['Wait Time'],
+                                                        _yaxis_categories=device_names_on_running,
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _show_bar_value=True,
+                                                        _figsize=(x_fig_size, y_fig_size)
+                                                        #    _color=['lightcoral']
+                                                        )
+                        graph_png = graph.build_bar_graph_horizontal()
+                        logger.info("wait time graph name {}".format(graph_png))
+                        graph.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_png)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        if self.vs_obj_dict[ce][obj_name]["obj"].dowebgui and self.vs_obj_dict[ce][obj_name]["obj"].get_live_view:
+                            script_dir = os.path.dirname(os.path.abspath(__file__))
+
+                            self.overall_report.set_custom_html("<h2>No of Buffers and Wait Time %</h2>")
+                            self.overall_report.build_custom()
+
+                            for floor in range(int(self.vs_obj_dict[ce][obj_name]["obj"].floors)):
+                                # Construct expected image paths
+                                vs_buffer_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]["obj"].test_name}_vs_buffer_{floor+1}.png")
+                                vs_wait_time_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]["obj"].test_name}_vs_wait_time_{floor+1}.png")
+
+
+                                # Wait for all required images to be generated (up to timeout)
+                                timeout = 60  # seconds
+                                start_time = time.time()
+
+                                while not (os.path.exists(vs_buffer_image) and os.path.exists(vs_wait_time_image)):
+                                    if time.time() - start_time > timeout:
+                                        print(f"Timeout: Heatmap images for floor {floor + 1} not found within {timeout} seconds.")
+                                        break
+                                    time.sleep(1)
+
+                                # Generate report sections for each image if it exists
+                                for image_path in [vs_buffer_image, vs_wait_time_image,]:
+                                    if os.path.exists(image_path):
+                                        self.overall_report.set_custom_html(f'<img src="file://{image_path}"  style="width:1200px; height:800px;"></img>')
+                                        self.overall_report.build_custom()
+
+                        # Table 1
+                        self.overall_report.set_obj_html("Overall - Detailed Result Table", "The below tables provides detailed information for the Video Streaming test.")
+                        self.overall_report.build_objective()
+                        test_data = {
+                            "iter": iter,
+                            "created_incremental_values": created_incremental_values,
+                            "device_type": device_type,
+                            "username": username,
+                            "ssid": ssid,
+                            "mac": mac,
+                            "channel": channel,
+                            "mode": mode,
+                            "total_buffer": total_buffer,
+                            "wait_time_data": wait_time_data,
+                            "min_video_rate": min_video_rate,
+                            "avg_video_rate": avg_video_rate,
+                            "max_video_rate": max_video_rate,
+                            "total_urls": total_urls,
+                            "total_err": total_err,
+                            "rssi_data": rssi_data,
+                            "tx_rate": tx_rate,
+                            "max_bytes_rd_list": max_bytes_rd_list,
+                            "avg_rx_rate_list": avg_rx_rate_list
+                        }
+
+                        dataframe = self.vs_obj_dict[ce][obj_name]["obj"].handle_passfail_criteria(test_data)
+
+                        dataframe1 = pd.DataFrame(dataframe)
+                        self.overall_report.set_table_dataframe(dataframe1)
+                        self.overall_report.build_table()
+
+                        # Set and build title for the overall results table
+                        self.overall_report.set_obj_html("Detailed Total Errors Table", "The below tables provides detailed information of total errors for the web browsing test.")
+                        self.overall_report.build_objective()
+                        dataframe2 = {
+                            " DEVICE": username[:created_incremental_values[iter]],
+                            " TOTAL ERRORS ": total_err[:created_incremental_values[iter]],
+                        }
+                        dataframe3 = pd.DataFrame(dataframe2)
+                        self.overall_report.set_table_dataframe(dataframe3)
+                        self.overall_report.build_table()
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"vs_test_{obj_no}"
+                    else:
+                        break
+
+
+                
     def generate_overall_report(self,test_results_df=''):
         self.overall_report = lf_report.lf_report(_results_dir_name="Base_Class_Test_Overall_report", _output_html="base_class_overall.html",
                                          _output_pdf="base_class_overall.pdf", _path=self.result_path)
