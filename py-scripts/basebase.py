@@ -131,10 +131,9 @@ class Candela(Realm):
         self.ping_obj_dict = {"parallel":{},"series":{}}
         self.mcast_obj_dict = {"parallel":{},"series":{}}
         self.vs_obj_dict = {"parallel":{},"series":{}}
-
-
-        self.series_tests = []
-        self.parallel_tests = []
+        self.rb_test_obj = manager.dict({"parallel": {}, "series": {}})
+        self.yt_test_obj = manager.dict({"parallel": {}, "series": {}})
+        self.zoom_test_obj = manager.dict({"parallel": {}, "series": {}})
 
         
     def api_get(self, endp: str):
@@ -4758,9 +4757,17 @@ class Candela(Realm):
                 args.url = "https://" + args.url
             if args.url.lower().startswith("http://"):
                 args.url = "https://" + args.url.removeprefix("http://")
-
+            ce = self.current_exec #seires
+            if ce == "parallel":
+                obj_name = "rb_test"
+            else:
+                obj_no = 1
+                while f"rb_test_{obj_no}" in self.rb_obj_dict[ce]:
+                    obj_no+=1 
+                obj_name = f"rb_test_{obj_no}" 
+            self.rb_obj_dict[ce][obj_name] = {"obj":None,"data":None}
             # Initialize an instance of RealBrowserTest with various parameters
-            self.rb_test_obj = RealBrowserTest(host=args.host,
+            self.rb_obj_dict[ce][obj_name]["obj"] = RealBrowserTest(host=args.host,
                                 ssid=args.ssid,
                                 passwd=args.passwd,
                                 encryp=args.encryp,
@@ -4807,14 +4814,14 @@ class Candela(Realm):
                                 )
             print('CHECKING PORT AVAILBILITY for RB TEST')
             self.port_clean_up(5003)
-            self.rb_test_obj.change_port_to_ip()
-            self.rb_test_obj.validate_and_process_args()
-            self.rb_test_obj.config_obj = DeviceConfig.DeviceConfig(lanforge_ip=self.rb_test_obj.host, file_name=self.rb_test_obj.file_name, wait_time=self.rb_test_obj.wait_time)
-            # if not self.rb_test_obj.expected_passfail_value and self.rb_test_obj.device_csv_name is None:
-            #     self.rb_test_obj.config_self.rb_test_obj.device_csv_file(csv_name="device.csv")
-            self.rb_test_obj.run_flask_server()
-            if self.rb_test_obj.group_name and self.rb_test_obj.profile_name and self.rb_test_obj.file_name:
-                available_resources = self.rb_test_obj.process_group_profiles()
+            self.rb_obj_dict[ce][obj_name]["obj"].change_port_to_ip()
+            self.rb_obj_dict[ce][obj_name]["obj"].validate_and_process_args()
+            self.rb_obj_dict[ce][obj_name]["obj"].config_obj = DeviceConfig.DeviceConfig(lanforge_ip=self.rb_obj_dict[ce][obj_name]["obj"].host, file_name=self.rb_obj_dict[ce][obj_name]["obj"].file_name, wait_time=self.rb_obj_dict[ce][obj_name]["obj"].wait_time)
+            # if not self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value and self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name is None:
+            #     self.rb_obj_dict[ce][obj_name]["obj"].config_self.rb_obj_dict[ce][obj_name]["obj"].device_csv_file(csv_name="device.csv")
+            self.rb_obj_dict[ce][obj_name]["obj"].run_flask_server()
+            if self.rb_obj_dict[ce][obj_name]["obj"].group_name and self.rb_obj_dict[ce][obj_name]["obj"].profile_name and self.rb_obj_dict[ce][obj_name]["obj"].file_name:
+                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].process_group_profiles()
             else:
                 # --- Build configuration dictionary for WiFi parameters ---
                 config_dict = {
@@ -4838,33 +4845,33 @@ class Candela(Realm):
                     'client_cert': args.client_cert,
                     'pk_passwd': args.pk_passwd,
                     'pac_file': args.pac_file,
-                    'server_ip': self.rb_test_obj.upstream_port,
+                    'server_ip': self.rb_obj_dict[ce][obj_name]["obj"].upstream_port,
                 }
-                available_resources = self.rb_test_obj.process_resources(config_dict)
+                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].process_resources(config_dict)
             if len(available_resources) != 0:
-                available_resources = self.rb_test_obj.filter_ios_devices(available_resources)
+                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].filter_ios_devices(available_resources)
             if len(available_resources) == 0:
                 logging.error("No devices available to run the test. Exiting...")
                 return False
 
             # --- Print available resources ---
             logging.info("Devices available: {}".format(available_resources))
-            if self.rb_test_obj.expected_passfail_value or self.rb_test_obj.device_csv_name:
-                self.rb_test_obj.update_passfail_value(available_resources)
+            if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                self.rb_obj_dict[ce][obj_name]["obj"].update_passfail_value(available_resources)
             # --- Handle incremental values ---
-            self.rb_test_obj.handle_incremental(args, self.rb_test_obj, available_resources, available_resources)
-            self.rb_test_obj.handle_duration()
-            self.rb_test_obj.run_test(available_resources)
+            self.rb_obj_dict[ce][obj_name]["obj"].handle_incremental(args, self.rb_obj_dict[ce][obj_name]["obj"], available_resources, available_resources)
+            self.rb_obj_dict[ce][obj_name]["obj"].handle_duration()
+            self.rb_obj_dict[ce][obj_name]["obj"].run_test(available_resources)
 
         except Exception as e:
             logging.error("Error occured", e)
             # traceback.print_exc()
         finally:
             if '--help' not in sys.argv and '-h' not in sys.argv:
-                self.rb_test_obj.create_report()
-                if self.rb_test_obj.dowebgui:
-                    self.rb_test_obj.webui_stop()
-                self.rb_test_obj.stop()
+                self.rb_obj_dict[ce][obj_name]["obj"].create_report()
+                if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
+                    self.rb_obj_dict[ce][obj_name]["obj"].webui_stop()
+                self.rb_obj_dict[ce][obj_name]["obj"].stop()
 
                 # if not args.no_postcleanup:
                 #     self.rb_test_obj.postcleanup()
@@ -7602,6 +7609,188 @@ class Candela(Realm):
                         obj_name = f"vs_test_{obj_no}"
                     else:
                         break
+            
+            elif test_name =="rb_test":
+                obj_no=1
+                obj_name = "rb_test"
+                if ce == "series":
+                    obj_name += "_1"
+                while obj_name in self.rb_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    self.overall_report.set_table_title("Test Parameters:")
+                    self.overall_report.build_table_title()
+
+                    final_eid_data = []
+                    mac_data = []
+                    channel_data = []
+                    signal_data = []
+                    ssid_data = []
+                    tx_rate_data = []
+                    device_type_data = []
+                    device_names = []
+                    total_urls = []
+                    time_to_target_urls = []
+                    uc_min_data = []
+                    uc_max_data = []
+                    uc_avg_data = []
+                    total_err_data = []
+
+                    final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = \
+                        self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
+
+                    test_setup_info = self.rb_obj_dict[ce][obj_name]["obj"].generate_test_setup_info()
+                    self.overall_report.test_setup_table(
+                        test_setup_data=test_setup_info, value='Test Parameters'
+                    )
+
+                    for i in range(0, len(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names)):
+
+                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = \
+                            self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data(
+                                '{}/{}'.format(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i],self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+                            )
+
+                        self.overall_report.set_graph_title("Successful URL's per Device")
+                        self.overall_report.build_graph_title()
+
+                        data = pd.read_csv(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i])
+
+                        # Extract device names from CSV
+                        if 'total_urls' in data.columns:
+                            total_urls = data['total_urls'].tolist()
+                        else:
+                            raise ValueError("The 'total_urls' column was not found in the CSV file.")
+
+                        x_fig_size = 18
+                        y_fig_size = len(device_type_data) * 1 + 4
+                        print('DEVICE NAMES', device_names)
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=[total_urls],
+                            _xaxis_name="URL",
+                            _yaxis_name="Devices",
+                            _yaxis_label=device_names,
+                            _yaxis_categories=device_names,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="URLs",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_urls_per_device{obj_no}",
+                            _label=["URLs"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_graph_title(
+                            f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]['obj'].count} RealTime URLs"
+                        )
+                        self.overall_report.build_graph_title()
+
+                        if 'time_to_target_urls' in data.columns:
+                            time_to_target_urls = data['time_to_target_urls'].tolist()
+                        else:
+                            raise ValueError("The 'time_to_target_urls' column was not found in the CSV file.")
+
+                        x_fig_size = 18
+                        y_fig_size = len(device_type_data) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=[time_to_target_urls],
+                            _xaxis_name="Time (in Seconds)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=device_names,
+                            _yaxis_categories=device_names,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Time Taken",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_time_taken_for_urls{obj_no}",
+                            _label=["Time (in sec)"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        if 'uc_min' in data.columns:
+                            uc_min_data = data['uc_min'].tolist()
+                        else:
+                            raise ValueError("The 'uc_min' column was not found in the CSV file.")
+
+                        if 'uc_max' in data.columns:
+                            uc_max_data = data['uc_max'].tolist()
+                        else:
+                            raise ValueError("The 'uc_max' column was not found in the CSV file.")
+
+                        if 'uc_avg' in data.columns:
+                            uc_avg_data = data['uc_avg'].tolist()
+                        else:
+                            raise ValueError("The 'uc_avg' column was not found in the CSV file.")
+
+                        if 'total_err' in data.columns:
+                            total_err_data = data['total_err'].tolist()
+                        else:
+                            raise ValueError("The 'total_err' column was not found in the CSV file.")
+
+                    self.overall_report.set_table_title("Final Test Results")
+                    self.overall_report.build_table_title()
+
+                    if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                        pass_fail_list, test_input_list = self.rb_obj_dict[ce][obj_name]["obj"].generate_pass_fail_list(
+                            device_type_data, device_names, total_urls
+                        )
+
+                        final_test_results = {
+                            "Device Type": device_type_data,
+                            "Hostname": device_names,
+                            "SSID": ssid_data,
+                            "MAC": mac_data,
+                            "Channel": channel_data,
+                            "UC-MIN (ms)": uc_min_data,
+                            "UC-MAX (ms)": uc_max_data,
+                            "UC-AVG (ms)": uc_avg_data,
+                            "Total Successful URLs": total_urls,
+                            "Expected URLS": test_input_list,
+                            "Total Erros": total_err_data,
+                            "RSSI": signal_data,
+                            "Link Speed": tx_rate_data,
+                            "Status ": pass_fail_list
+                        }
+                    else:
+                        final_test_results = {
+                            "Device Type": device_type_data,
+                            "Hostname": device_names,
+                            "SSID": ssid_data,
+                            "MAC": mac_data,
+                            "Channel": channel_data,
+                            "UC-MIN (ms)": uc_min_data,
+                            "UC-MAX (ms)": uc_max_data,
+                            "UC-AVG (ms)": uc_avg_data,
+                            "Total Successful URLs": total_urls,
+                            "Total Erros": total_err_data,
+                            "RSSI": signal_data,
+                            "Link Speed": tx_rate_data,
+                        }
+
+                    logger.info(f"dataframe realbrowser {final_test_results}")
+                    test_results_df = pd.DataFrame(final_test_results)
+                    self.overall_report.set_table_dataframe(test_results_df)
+                    self.overall_report.build_table()
+
+                    if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
+                        os.chdir(self.rb_obj_dict[ce][obj_name]["obj"].original_dir)
+
+                    self.overall_report.build_custom()
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"rb_test_{obj_no}"
+                    else:
+                        break                    
 
 
                 
