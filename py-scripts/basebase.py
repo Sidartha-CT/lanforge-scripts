@@ -130,12 +130,19 @@ class Candela(Realm):
         self.qos_obj_dict = {"parallel":{},"series":{}}
         self.ping_obj_dict = {"parallel":{},"series":{}}
         self.mcast_obj_dict = {"parallel":{},"series":{}}
-        self.vs_obj_dict = {"parallel":{},"series":{}}
-        self.rb_test_obj = manager.dict({"parallel": {}, "series": {}})
-        self.yt_test_obj = manager.dict({"parallel": {}, "series": {}})
-        self.zoom_test_obj = manager.dict({"parallel": {}, "series": {}})
+        self.rb_obj_dict = {"parallel":{},"series":{}}
+        # self.rb_obj_dict = manager.dict({
+        #     "parallel": manager.dict(),
+        #     "series": manager.dict()
+        # })
+        self.rb_pipe_dict = {"parallel":{},"series":{}}
+        self.yt_obj_dict = manager.dict({"parallel": {}, "series": {}})
+        self.zoom_obj_dict = manager.dict({"parallel": {}, "series": {}})
+        self.parallel_connect = {}
+        self.series_connect = {}
+        self.parallel_index = 0
+        self.series_index = 0
 
-        
     def api_get(self, endp: str):
         """
         Sends a GET request to fetch data
@@ -4757,17 +4764,17 @@ class Candela(Realm):
                 args.url = "https://" + args.url
             if args.url.lower().startswith("http://"):
                 args.url = "https://" + args.url.removeprefix("http://")
-            ce = self.current_exec #seires
-            if ce == "parallel":
-                obj_name = "rb_test"
-            else:
-                obj_no = 1
-                while f"rb_test_{obj_no}" in self.rb_obj_dict[ce]:
-                    obj_no+=1 
-                obj_name = f"rb_test_{obj_no}" 
-            self.rb_obj_dict[ce][obj_name] = {"obj":None,"data":None}
+            # ce = self.current_exec #seires
+            # if ce == "parallel":
+            #     obj_name = "rb_test"
+            # else:
+            #     obj_no = 1
+            #     while f"rb_test_{obj_no}" in self.rb_obj_dict[ce]:
+            #         obj_no+=1 
+            #     obj_name = f"rb_test_{obj_no}" 
+            # self.rb_obj_dict[ce][obj_name] = {"obj":None,"data":None}
             # Initialize an instance of RealBrowserTest with various parameters
-            self.rb_obj_dict[ce][obj_name]["obj"] = RealBrowserTest(host=args.host,
+            self.rb_test = RealBrowserTest(host=args.host,
                                 ssid=args.ssid,
                                 passwd=args.passwd,
                                 encryp=args.encryp,
@@ -4814,14 +4821,14 @@ class Candela(Realm):
                                 )
             print('CHECKING PORT AVAILBILITY for RB TEST')
             self.port_clean_up(5003)
-            self.rb_obj_dict[ce][obj_name]["obj"].change_port_to_ip()
-            self.rb_obj_dict[ce][obj_name]["obj"].validate_and_process_args()
-            self.rb_obj_dict[ce][obj_name]["obj"].config_obj = DeviceConfig.DeviceConfig(lanforge_ip=self.rb_obj_dict[ce][obj_name]["obj"].host, file_name=self.rb_obj_dict[ce][obj_name]["obj"].file_name, wait_time=self.rb_obj_dict[ce][obj_name]["obj"].wait_time)
-            # if not self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value and self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name is None:
-            #     self.rb_obj_dict[ce][obj_name]["obj"].config_self.rb_obj_dict[ce][obj_name]["obj"].device_csv_file(csv_name="device.csv")
-            self.rb_obj_dict[ce][obj_name]["obj"].run_flask_server()
-            if self.rb_obj_dict[ce][obj_name]["obj"].group_name and self.rb_obj_dict[ce][obj_name]["obj"].profile_name and self.rb_obj_dict[ce][obj_name]["obj"].file_name:
-                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].process_group_profiles()
+            self.rb_test.change_port_to_ip()
+            self.rb_test.validate_and_process_args()
+            self.rb_test.config_obj = DeviceConfig.DeviceConfig(lanforge_ip=self.rb_test.host, file_name=self.rb_test.file_name, wait_time=self.rb_test.wait_time)
+            # if not self.rb_test.expected_passfail_value and self.rb_test.device_csv_name is None:
+            #     self.rb_test.config_self.rb_test.device_csv_file(csv_name="device.csv")
+            self.rb_test.run_flask_server()
+            if self.rb_test.group_name and self.rb_test.profile_name and self.rb_test.file_name:
+                available_resources = self.rb_test.process_group_profiles()
             else:
                 # --- Build configuration dictionary for WiFi parameters ---
                 config_dict = {
@@ -4845,36 +4852,45 @@ class Candela(Realm):
                     'client_cert': args.client_cert,
                     'pk_passwd': args.pk_passwd,
                     'pac_file': args.pac_file,
-                    'server_ip': self.rb_obj_dict[ce][obj_name]["obj"].upstream_port,
+                    'server_ip': self.rb_test.upstream_port,
                 }
-                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].process_resources(config_dict)
+                available_resources = self.rb_test.process_resources(config_dict)
             if len(available_resources) != 0:
-                available_resources = self.rb_obj_dict[ce][obj_name]["obj"].filter_ios_devices(available_resources)
+                available_resources = self.rb_test.filter_ios_devices(available_resources)
             if len(available_resources) == 0:
                 logging.error("No devices available to run the test. Exiting...")
                 return False
 
             # --- Print available resources ---
             logging.info("Devices available: {}".format(available_resources))
-            if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                self.rb_obj_dict[ce][obj_name]["obj"].update_passfail_value(available_resources)
+            if self.rb_test.expected_passfail_value or self.rb_test.device_csv_name:
+                self.rb_test.update_passfail_value(available_resources)
             # --- Handle incremental values ---
-            self.rb_obj_dict[ce][obj_name]["obj"].handle_incremental(args, self.rb_obj_dict[ce][obj_name]["obj"], available_resources, available_resources)
-            self.rb_obj_dict[ce][obj_name]["obj"].handle_duration()
-            self.rb_obj_dict[ce][obj_name]["obj"].run_test(available_resources)
+            self.rb_test.handle_incremental(args, self.rb_test, available_resources, available_resources)
+            self.rb_test.handle_duration()
+            self.rb_test.run_test(available_resources)
 
         except Exception as e:
             logging.error("Error occured", e)
             # traceback.print_exc()
         finally:
             if '--help' not in sys.argv and '-h' not in sys.argv:
-                self.rb_obj_dict[ce][obj_name]["obj"].create_report()
-                if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
-                    self.rb_obj_dict[ce][obj_name]["obj"].webui_stop()
-                self.rb_obj_dict[ce][obj_name]["obj"].stop()
+                self.rb_test.create_report()
+                if self.rb_test.dowebgui:
+                    self.rb_test.webui_stop()
+                self.rb_test.stop()
 
                 # if not args.no_postcleanup:
                 #     self.rb_test_obj.postcleanup()
+            self.rb_test.app = None
+            if self.current_exec == "parallel":
+                if  self.parallel_connect[self.parallel_index][2]:
+                    self.parallel_connect[self.parallel_index][2].send([self.rb_test,{}])
+            else:
+                if  self.series_connect[self.series_index][2]:
+                    self.series_connect[self.series_index][2].send([self.rb_test,{}])
+
+
         return True
 
 
@@ -7618,6 +7634,8 @@ class Candela(Realm):
                 while obj_name in self.rb_obj_dict[ce]:
                     if ce == "parallel":
                         obj_no = ''
+                    self.overall_report.set_obj_html(_obj_title=f'Real Browser Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
                     self.overall_report.set_table_title("Test Parameters:")
                     self.overall_report.build_table_title()
 
@@ -7636,25 +7654,21 @@ class Candela(Realm):
                     uc_avg_data = []
                     total_err_data = []
 
-                    final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = \
-                        self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
+                    final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
 
                     test_setup_info = self.rb_obj_dict[ce][obj_name]["obj"].generate_test_setup_info()
                     self.overall_report.test_setup_table(
-                        test_setup_data=test_setup_info, value='Test Parameters'
-                    )
-
+                        test_setup_data=test_setup_info, value='Test Parameters')
+                    self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names
                     for i in range(0, len(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names)):
+                        if self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i].startswith("real_time_data.csv"):
+                            continue
 
-                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = \
-                            self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data(
-                                '{}/{}'.format(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i],self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time)
-                            )
-
+                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
                         self.overall_report.set_graph_title("Successful URL's per Device")
                         self.overall_report.build_graph_title()
 
-                        data = pd.read_csv(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i])
+                        data = pd.read_csv("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
 
                         # Extract device names from CSV
                         if 'total_urls' in data.columns:
@@ -7664,7 +7678,7 @@ class Candela(Realm):
 
                         x_fig_size = 18
                         y_fig_size = len(device_type_data) * 1 + 4
-                        print('DEVICE NAMES', device_names)
+                        print('DEVICE NAMES',device_names)
                         bar_graph_horizontal = lf_bar_graph_horizontal(
                             _data_set=[total_urls],
                             _xaxis_name="URL",
@@ -7677,19 +7691,19 @@ class Candela(Realm):
                             _show_bar_value=True,
                             _figsize=(x_fig_size, y_fig_size),
                             _graph_title="URLs",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_urls_per_device{obj_no}",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]}_urls_per_device{obj_no}",
                             _label=["URLs"]
                         )
+                        # print('yaxssss)
                         graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
                         self.overall_report.set_graph_image(graph_image)
                         self.overall_report.move_graph_image()
                         self.overall_report.build_graph()
 
-                        self.overall_report.set_graph_title(
-                            f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]['obj'].count} RealTime URLs"
-                        )
+                        self.overall_report.set_graph_title(f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]["obj"].count} RealTime URLs")
                         self.overall_report.build_graph_title()
 
+                        # Extract device names from CSV
                         if 'time_to_target_urls' in data.columns:
                             time_to_target_urls = data['time_to_target_urls'].tolist()
                         else:
@@ -7709,7 +7723,7 @@ class Candela(Realm):
                             _show_bar_value=True,
                             _figsize=(x_fig_size, y_fig_size),
                             _graph_title="Time Taken",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_time_taken_for_urls{obj_no}",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]}_time_taken_for_urls{obj_no}",
                             _label=["Time (in sec)"]
                         )
                         graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
@@ -7739,13 +7753,11 @@ class Candela(Realm):
 
                     self.overall_report.set_table_title("Final Test Results")
                     self.overall_report.build_table_title()
-
                     if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                        pass_fail_list, test_input_list = self.rb_obj_dict[ce][obj_name]["obj"].generate_pass_fail_list(
-                            device_type_data, device_names, total_urls
-                        )
+                        pass_fail_list, test_input_list = self.rb_obj_dict[ce][obj_name]["obj"].generate_pass_fail_list(device_type_data, device_names, total_urls)
 
                         final_test_results = {
+
                             "Device Type": device_type_data,
                             "Hostname": device_names,
                             "SSID": ssid_data,
@@ -7760,9 +7772,11 @@ class Candela(Realm):
                             "RSSI": signal_data,
                             "Link Speed": tx_rate_data,
                             "Status ": pass_fail_list
+
                         }
                     else:
                         final_test_results = {
+
                             "Device Type": device_type_data,
                             "Hostname": device_names,
                             "SSID": ssid_data,
@@ -7775,14 +7789,15 @@ class Candela(Realm):
                             "Total Erros": total_err_data,
                             "RSSI": signal_data,
                             "Link Speed": tx_rate_data,
-                        }
 
+                        }
                     logger.info(f"dataframe realbrowser {final_test_results}")
                     test_results_df = pd.DataFrame(final_test_results)
                     self.overall_report.set_table_dataframe(test_results_df)
                     self.overall_report.build_table()
 
                     if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
+
                         os.chdir(self.rb_obj_dict[ce][obj_name]["obj"].original_dir)
 
                     self.overall_report.build_custom()
@@ -8486,8 +8501,8 @@ def main():
     if args.series_tests or args.parallel_tests:
         series_threads = []
         parallel_threads = []
-        parallel_processes = []
-        series_processes = []
+        parallel_connect = []
+        series_connect = []
         rb_test = 'rb_test' in tests_to_run_parallel
         yt_test = 'yt_test' in tests_to_run_parallel
         zoom_test = 'zoom_test' in tests_to_run_parallel
@@ -8500,6 +8515,8 @@ def main():
                     func, label = test_map[test_name]
                     args.current = "series"
                     if test_name in ['rb_test','zoom_test','yt_test']:
+                        parent_conn, child_conn = multiprocessing.Pipe()
+                        candela_apis.series_connect[idx] = [test_name,parent_conn,child_conn]
                         series_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis)))
                     else:                 
                         series_threads.append(threading.Thread(
@@ -8517,6 +8534,11 @@ def main():
                     func, label = test_map[test_name]
                     args.current = "parallel"
                     if test_name in ['rb_test','zoom_test','yt_test']:
+                        # if test_name == "rb_test":
+                            # candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])] = {}
+                            # candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])]["parent"],candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])]["child"] = multiprocessing.Pipe()
+                        parent_conn, child_conn = multiprocessing.Pipe()
+                        candela_apis.parallel_connect[idx] = [test_name,parent_conn,child_conn]
                         parallel_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis)))
                     else:                 
                         parallel_threads.append(threading.Thread(
@@ -8526,21 +8548,21 @@ def main():
                     print(f"Warning: Unknown test '{test_name}' in --parallel_tests")
         logging.info(f"Series Threads: {series_threads}")
         logging.info(f"Parallel Threads: {parallel_threads}")
-        logging.info(f"Parallel Processes: {parallel_processes}")
-        logging.info(f"Series Processes: {series_processes}")
-        # Execute based on order priority
-        # candela_apis.set_for_report()
         if args.order_priority == 'series':
-            # candela_apis.misc_clean_up(layer3=True,layer4=True,generic=True)
-            # Run series tests first (one at a time)
             candela_apis.current_exec="series"
             for t in series_threads:
                 t.start()
+                if candela_apis.series_index in candela_apis.series_connect:
+                    test_name = candela_apis.series_connect[candela_apis.series_index][0]
+                    obj_no = 1
+                    while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
+                        obj_no+=1
+                    obj_name = f"rb_test_{obj_no}"
+                    candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                    candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                    print('hiii data',candela_apis.rb_obj_dict)
                 t.join()
-            # for p in series_processes:
-            #     p.start()
-            #     p.join()
-            
+                candela_apis.series_index += 1
             # Then run parallel tests
             if len(parallel_threads) != 0:
                 # candela_apis.misc_clean_up(layer3=False,layer4=False,generic=True)
@@ -8550,16 +8572,17 @@ def main():
             candela_apis.current_exec = "parallel"
             for t in parallel_threads:
                 t.start()
-            # for p in parallel_processes:
-            #     p.start()
-    
+
+            candela_apis.parallel_index = 0
             for t in parallel_threads:
+                if candela_apis.parallel_index in candela_apis.parallel_connect:
+                    test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
+                    candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
+                    candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                    print('hiii data',candela_apis.rb_obj_dict)
                 t.join()
-            # for p in parallel_processes:
-            #     p.join()
+                candela_apis.parallel_index += 1
         else:
-            # candela_apis.misc_clean_up(layer3=True,layer4=True,generic=True)
-            # Run parallel tests first
             candela_apis.current_exec="parallel"
             for t in parallel_threads:
                 t.start()
@@ -8567,25 +8590,31 @@ def main():
             #     p.start()
 
             for t in parallel_threads:
+                if candela_apis.parallel_index in candela_apis.parallel_connect:
+                    test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
+                    candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
+                    candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                    print('hiii data',candela_apis.rb_obj_dict)
                 t.join()
-            # for p in parallel_processes:
-            #     p.join()
-            # candela_apis.misc_clean_up(layer3=True,layer4=True,generic=True)
-            # Then run series tests (one at a time)
+
             if len(series_threads) != 0:
                 rb_test = 'rb_test' in tests_to_run_parallel
                 yt_test = 'yt_test' in tests_to_run_parallel
-                # candela_apis.browser_cleanup(rb_test=rb_test,yt_test=yt_test)
-                # candela_apis.misc_clean_up(layer3=False,layer4=False,generic=True)
                 candela_apis.misc_clean_up(layer3=True,layer4=True,generic=True,port_5000=iszoom,port_5002=isyt,port_5003=isrb)
                 print('starting Series tests.......')
                 time.sleep(10)
-            # for t in series_threads:
-            #     t.start()
-            #     t.join()
             candela_apis.current_exec="series"
             for t in series_threads:
                 t.start()
+                if candela_apis.series_index in candela_apis.series_connect:
+                    test_name = candela_apis.series_connect[candela_apis.series_index][0]
+                    obj_no = 1
+                    while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
+                        obj_no+=1
+                    obj_name = f"rb_test_{obj_no}"
+                    candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                    candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                    print('hiii data',candela_apis.rb_obj_dict)
                 t.join()
             # for p in series_processes:
             #     p.start()
