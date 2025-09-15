@@ -31,6 +31,8 @@ import json
 import traceback
 from types import SimpleNamespace
 import matplotlib
+import csv
+import matplotlib.pyplot as plt
 from pathlib import Path
 realm = importlib.import_module("py-json.realm")
 Realm = realm.Realm
@@ -131,13 +133,15 @@ class Candela(Realm):
         self.ping_obj_dict = {"parallel":{},"series":{}}
         self.mcast_obj_dict = {"parallel":{},"series":{}}
         self.rb_obj_dict = {"parallel":{},"series":{}}
+        self.yt_obj_dict = {"parallel":{},"series":{}}
+        self.zoom_obj_dict = {"parallel":{},"series":{}}
         # self.rb_obj_dict = manager.dict({
         #     "parallel": manager.dict(),
         #     "series": manager.dict()
         # })
-        self.rb_pipe_dict = {"parallel":{},"series":{}}
-        self.yt_obj_dict = manager.dict({"parallel": {}, "series": {}})
-        self.zoom_obj_dict = manager.dict({"parallel": {}, "series": {}})
+        # self.rb_pipe_dict = {"parallel":{},"series":{}}
+        # self.yt_obj_dict = manager.dict({"parallel": {}, "series": {}})
+        # self.zoom_obj_dict = manager.dict({"parallel": {}, "series": {}})
         self.parallel_connect = {}
         self.series_connect = {}
         self.parallel_index = 0
@@ -4463,6 +4467,12 @@ class Candela(Realm):
             if not ('--help' in sys.argv or '-h' in sys.argv):
                 traceback.print_exc()
                 self.yt_test_obj.stop()
+                if self.current_exec == "parallel":
+                    if  self.parallel_connect[self.parallel_index][2]:
+                        self.parallel_connect[self.parallel_index][2].send([self.yt_test_obj,{}])
+                else:
+                    if  self.series_connect[self.series_index][2]:
+                        self.series_connect[self.series_index][2].send([self.yt_test_obj,{}])
                 # Stopping the Youtube test
                 if do_webUI:
                     self.yt_test_obj.stop_test_yt()
@@ -4706,7 +4716,6 @@ class Candela(Realm):
                 if not self.zoom_test_obj.check_tab_exists():
                     logging.error('Generic Tab is not available.\nAborting the test.')
                     return False
-
                 self.zoom_test_obj.run(duration, upstream_port, signin_email, signin_passwd, participants)
                 self.zoom_test_obj.data_store.clear()
                 self.zoom_test_obj.generate_report()
@@ -4742,6 +4751,14 @@ class Candela(Realm):
 
                 self.zoom_test_obj.redis_client.set('login_completed', 0)
                 self.zoom_test_obj.stop_signal = True
+                self.zoom_test_obj.app = None
+                self.zoom_test_obj.redis_client = None
+                if self.current_exec == "parallel":
+                    if  self.parallel_connect[self.parallel_index][2]:
+                        self.parallel_connect[self.parallel_index][2].send([self.zoom_test_obj,{}])
+                else:
+                    if  self.series_connect[self.series_index][2]:
+                        self.series_connect[self.series_index][2].send([self.zoom_test_obj,{}])
                 logging.info("Waiting for Browser Cleanup in Laptops")
                 self.zoom_test_obj.generic_endps_profile.cleanup()
                 # self.zoom_test_obj.generic_endps_profile.cleanup()
@@ -5036,7 +5053,7 @@ class Candela(Realm):
         #             self.zoom_test_obj.generic_endps_profile.set_cmd(self.zoom_test_obj.generic_endps_profile.created_endp[i], cmd)
 
         #     self.zoom_test_obj.generic_endps_profile.start_cx()
-    def render_series_tests(self,ce):
+    def render_each_test(self,ce):
         # ce = "series"
         unq_tests = []
         test_map = {}
@@ -6410,6 +6427,8 @@ class Candela(Realm):
                     group_device_map = params["group_device_map"]
                     if result_json is not None:
                         self.ping_obj_dict[ce][obj_name]["obj"].result_json = result_json
+                    self.overall_report.set_obj_html(_obj_title=f'PING Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
                     # Test setup information table for devices in device list
                     if config_devices == '':
                         test_setup_info = {
@@ -7807,6 +7826,767 @@ class Candela(Realm):
                     else:
                         break                    
 
+            elif test_name == "yt_test":
+                obj_no=1
+                obj_name = "yt_test"
+                if ce == "series":
+                    obj_name += "_1"
+                while obj_name in self.yt_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    result_data = self.yt_obj_dict[ce][obj_name]["obj"].stats_api_response
+                    for device, stats in result_data.items():
+                        self.yt_obj_dict[ce][obj_name]["obj"].mydatajson.setdefault(device, {}).update({
+                            "Viewport": stats.get("Viewport", ""),
+                            "DroppedFrames": stats.get("DroppedFrames", "0"),
+                            "TotalFrames": stats.get("TotalFrames", "0"),
+                            "CurrentRes": stats.get("CurrentRes", ""),
+                            "OptimalRes": stats.get("OptimalRes", ""),
+                            "BufferHealth": stats.get("BufferHealth", "0.0"),
+                            "Timestamp": stats.get("Timestamp", ""),
+                        })
+
+                    if self.yt_obj_dict[ce][obj_name]["obj"].config:
+
+                        # Test setup info
+                        test_setup_info = {
+                            'Test Name': 'YouTube Streaming Test',
+                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+                            "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid,
+                            "Security": self.yt_obj_dict[ce][obj_name]["obj"].security,
+
+                        }
+
+                    elif len(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                        gp_pairs = zip(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups, self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles)
+                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+
+                        # Test setup info
+                        test_setup_info = {
+                            'Test Name': 'YouTube Streaming Test',
+                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                            "Configuration": gp_map,
+                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+
+                        }
+                    else:
+                        # Test setup info
+                        test_setup_info = {
+                            'Test Name': 'YouTube Streaming Test',
+                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+
+                        }
+                    self.overall_report.set_obj_html(_obj_title=f'Youtube Streaming Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
+                    self.overall_report.test_setup_table(
+                        test_setup_data=test_setup_info, value='Test Parameters')
+
+                    viewport_list = []
+                    current_res_list = []
+                    optimal_res_list = []
+
+                    dropped_frames_list = []
+                    total_frames_list = []
+                    max_buffer_health_list = []
+                    min_buffer_health_list = []
+
+                    for hostname in self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname:
+                        if hostname in self.yt_obj_dict[ce][obj_name]["obj"].mydatajson:
+                            stats = self.yt_obj_dict[ce][obj_name]["obj"].mydatajson[hostname]
+                            viewport_list.append(stats.get("Viewport", ""))
+                            current_res_list.append(stats.get("CurrentRes", ""))
+                            optimal_res_list.append(stats.get("OptimalRes", ""))
+
+                            dropped_frames = stats.get("DroppedFrames", "0")
+                            total_frames = stats.get("TotalFrames", "0")
+                            max_buffer_health = stats.get("maxbufferhealth", "0,0")
+                            min_buffer_health = stats.get("minbufferhealth", "0.0")
+                            try:
+                                dropped_frames_list.append(int(dropped_frames))
+                            except ValueError:
+                                dropped_frames_list.append(0)
+
+                            try:
+                                total_frames_list.append(int(total_frames))
+                            except ValueError:
+                                total_frames_list.append(0)
+                            try:
+                                max_buffer_health_list.append(float(max_buffer_health))
+                            except ValueError:
+                                max_buffer_health_list.append(0.0)
+
+                            try:
+                                min_buffer_health_list.append(float(min_buffer_health))
+                            except ValueError:
+                                min_buffer_health_list.append(0.0)
+
+                        else:
+                            viewport_list.append("NA")
+                            current_res_list.append("NA")
+                            optimal_res_list.append("NA")
+                            dropped_frames_list.append(0)
+                            total_frames_list.append(0)
+                            max_buffer_health_list.append(0.0)
+                            min_buffer_health_list.append(0.0)
+
+                    # graph of frames dropped
+                    self.overall_report.set_graph_title("Total Frames vs Frames dropped")
+                    self.overall_report.build_graph_title()
+                    x_fig_size = 25
+                    y_fig_size = len(self.yt_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
+
+                    graph = lf_bar_graph_horizontal(_data_set=[dropped_frames_list, total_frames_list],
+                                                    _xaxis_name="No of Frames",
+                                                    _yaxis_name="Devices",
+                                                    _yaxis_categories=self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                                                    _graph_image_name=f"Dropped Frames vs Total Frames{obj_no}",
+                                                    _label=["dropped Frames", "Total Frames"],
+                                                    _color=None,
+                                                    _color_edge='red',
+                                                    _figsize=(x_fig_size, y_fig_size),
+                                                    _show_bar_value=True,
+                                                    _text_font=6,
+                                                    _text_rotation=True,
+                                                    _enable_csv=True,
+                                                    _legend_loc="upper right",
+                                                    _legend_box=(1.1, 1),
+                                                    )
+                    graph_image = graph.build_bar_graph_horizontal()
+                    self.overall_report.set_graph_image(graph_image)
+                    self.overall_report.move_graph_image()
+                    self.overall_report.build_graph()
+
+                    self.overall_report.set_table_title('Test Results')
+                    self.overall_report.build_table_title()
+
+                    test_results = {
+                        "Hostname": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                        "OS Type": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types,
+                        "MAC": self.yt_obj_dict[ce][obj_name]["obj"].mac_list,
+                        "RSSI": self.yt_obj_dict[ce][obj_name]["obj"].rssi_list,
+                        "Link Rate": self.yt_obj_dict[ce][obj_name]["obj"].link_rate_list,
+                        "ViewPort": viewport_list,
+                        "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid_list,
+                        "Video Resoultion": current_res_list,
+                        "Max Buffer Health (Seconds)": max_buffer_health_list,
+                        "Min Buffer health (Seconds)": min_buffer_health_list,
+                        "Total Frames": total_frames_list,
+                        "Dropped Frames": dropped_frames_list,
+
+
+                    }
+
+                    test_results_df = pd.DataFrame(test_results)
+                    self.overall_report.set_table_dataframe(test_results_df)
+                    self.overall_report.build_table()
+
+                    # for file_path in self.yt_obj_dict[ce][obj_name]["obj"].devices_list:
+                    #         self.yt_obj_dict[ce][obj_name]["obj"].move_files(file_path, self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+
+                    original_dir = os.getcwd()
+
+                    if self.yt_obj_dict[ce][obj_name]["obj"].do_webUI:
+                        csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
+                        os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+                    else:
+                        csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
+                        os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+                    print("CSV FILES",csv_files)
+                    print("Script Directory:", os.path.dirname(os.path.abspath(__file__)))
+                    scp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),self.report_path_date_time)
+                    for file_name in csv_files:
+                        data = pd.read_csv(file_name)
+                        print('dataaaaaaaaaaaaa',data)
+                        self.overall_report.set_graph_title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]))
+                        self.overall_report.build_graph_title()
+
+                        try:
+                            data['TimeStamp'] = pd.to_datetime(data['TimeStamp'], format="%H:%M:%S").dt.time
+                        except Exception as e:
+                            logging.error(f"Error in timestamp conversion for {file_name}: {e}")
+                            continue
+
+                        data = data.drop_duplicates(subset='TimeStamp', keep='first')
+
+                        data = data.sort_values(by='TimeStamp')
+
+                        timestamps = data['TimeStamp'].apply(lambda t: t.strftime('%H:%M:%S'))
+                        buffer_health = data['BufferHealth']
+
+                        fig, ax = plt.subplots(figsize=(20, 10))
+                        plt.plot(timestamps, buffer_health, color='blue', linewidth=2)
+
+                        # Customize the plot
+                        plt.xlabel('Time', fontweight='bold', fontsize=15)
+                        plt.ylabel('Buffer Health', fontweight='bold', fontsize=15)
+                        plt.title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]), fontsize=18)
+
+                        if len(timestamps) > 30:
+                            tick_interval = len(timestamps) // 30
+                            selected_ticks = timestamps[::tick_interval]
+                            ax.set_xticks(selected_ticks)
+                        else:
+                            ax.set_xticks(timestamps)
+
+                        plt.xticks(rotation=45, ha='right')
+
+                        # output_file = '{}'.format(file_name.split('_')[0]) + 'buffer_health_vs_time.png'
+                        output_file = os.path.join(scp_path,f"{file_name.split('_')[0]}buffer_health_vs_time.png{obj_no}")
+                        plt.tight_layout()
+                        plt.savefig(output_file, dpi=96)
+                        plt.close()
+                        abs_path = os.path.abspath(output_file)
+                        logging.info(f"Graph saved PATH {file_name}: {abs_path}")
+
+                        logging.info(f"Graph saved for {file_name}: {output_file}")
+
+                        self.overall_report.set_graph_image(output_file)
+
+                        self.overall_report.build_graph()
+
+                    os.chdir(original_dir)
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"yt_test_{obj_no}"
+                    else:
+                        break
+
+            elif test_name == "zoom_test":
+                obj_no=1
+                obj_name = "zoom_test"
+                if ce == "series":
+                    obj_name += "_1"
+                while obj_name in self.zoom_obj_dict[ce]:
+                    if ce == "parallel":
+                        obj_no = ''
+                    self.overall_report.set_obj_html(_obj_title=f'ZOOM Test {obj_no}', _obj="")
+                    self.overall_report.build_objective()
+                    self.overall_report.set_table_title("Test Parameters:")
+                    self.overall_report.build_table_title()
+                    testtype = ""
+                    if self.zoom_obj_dict[ce][obj_name]["obj"].audio and self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                        testtype = "AUDIO & VIDEO"
+                    elif self.zoom_obj_dict[ce][obj_name]["obj"].audio:
+                        testtype = "AUDIO"
+                    elif self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                        testtype = "VIDEO"
+
+                    if self.zoom_obj_dict[ce][obj_name]["obj"].config:
+                        test_parameters = pd.DataFrame([{
+                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                            "TEST TYPE": testtype,
+                            "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid,
+                            "Security": self.zoom_obj_dict[ce][obj_name]["obj"].security
+
+                        }])
+                    elif len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                        # Map each group with a profile
+                        gp_pairs = zip(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups, self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles)
+
+                        # Create a string by joining the mapped pairs
+                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+
+                        test_parameters = pd.DataFrame([{
+                            "Configuration": gp_map,
+                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                            "TEST TYPE": testtype,
+
+                        }])
+                    else:
+
+                        test_parameters = pd.DataFrame([{
+                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                            "TEST TYPE": testtype,
+
+                        }])
+
+                    test_parameters = pd.DataFrame([{
+
+                        'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                        'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                        'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                        "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                        "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                        "TEST TYPE": testtype
+
+                    }])
+                    self.overall_report.set_table_dataframe(test_parameters)
+                    self.overall_report.build_table()
+
+                    client_array = []
+                    accepted_clients = []
+                    no_csv_client = []
+                    rejected_clients = []
+                    final_dataset = []
+                    accepted_ostypes = []
+                    max_audio_jitter_s, min_audio_jitter_s = [], []
+                    max_audio_jitter_r, min_audio_jitter_r = [], []
+                    max_audio_latency_s, min_audio_latency_s = [], []
+                    max_audio_latency_r, min_audio_latency_r = [], []
+                    max_audio_pktloss_s, min_audio_pktloss_s = [], []
+                    max_audio_pktloss_r, min_audio_pktloss_r = [], []
+
+                    max_video_jitter_s, min_video_jitter_s = [], []
+                    max_video_jitter_r, min_video_jitter_r = [], []
+                    max_video_latency_s, min_video_latency_s = [], []
+                    max_video_latency_r, min_video_latency_r = [], []
+                    max_video_pktloss_s, min_video_pktloss_s = [], []
+                    max_video_pktloss_r, min_video_pktloss_r = [], []
+                    for i in range(0, len(self.zoom_obj_dict[ce][obj_name]["obj"].device_names)):
+                        temp_max_audio_jitter_s, temp_min_audio_jitter_s = 0.0, 0.0
+                        temp_max_audio_jitter_r, temp_min_audio_jitter_r = 0.0, 0.0
+                        temp_max_audio_latency_s, temp_min_audio_latency_s = 0.0, 0.0
+                        temp_max_audio_latency_r, temp_min_audio_latency_r = 0.0, 0.0
+                        temp_max_audio_pktloss_s, temp_min_audio_pktloss_s = 0.0, 0.0
+                        temp_max_audio_pktloss_r, temp_min_audio_pktloss_r = 0.0, 0.0
+
+                        temp_max_video_jitter_s, temp_min_video_jitter_s = 0.0, 0.0
+                        temp_max_video_jitter_r, temp_min_video_jitter_r = 0.0, 0.0
+                        temp_max_video_latency_s, temp_min_video_latency_s = 0.0, 0.0
+                        temp_max_video_latency_r, temp_min_video_latency_r = 0.0, 0.0
+                        temp_max_video_pktloss_s, temp_min_video_pktloss_s = 0.0, 0.0
+                        temp_max_video_pktloss_r, temp_min_video_pktloss_r = 0.0, 0.0
+                        per_client_data = {
+                            "audio_jitter_s": [],
+                            "audio_jitter_r": [],
+                            "audio_latency_s": [],
+                            "audio_latency_r": [],
+                            "audio_pktloss_s": [],
+                            "audio_pktloss_r": [],
+                            "video_jitter_s": [],
+                            "video_jitter_r": [],
+                            "video_latency_s": [],
+                            "video_latency_r": [],
+                            "video_pktloss_s": [],
+                            "video_pktloss_r": [],
+                        }
+                        try:
+                            file_path = os.path.join(self.zoom_obj_dict[ce][obj_name]["obj"].report_path_date_time, f'{self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i]}.csv')
+                            with open(file_path, mode='r', encoding='utf-8', errors='ignore') as file:
+                                csv_reader = csv.DictReader(file)
+                                for row in csv_reader:
+
+                                    per_client_data["audio_jitter_s"].append(float(row["Sent Audio Jitter (ms)"]))
+                                    per_client_data["audio_jitter_r"].append(float(row["Receive Audio Jitter (ms)"]))
+                                    per_client_data["audio_latency_s"].append(float(row["Sent Audio Latency (ms)"]))
+                                    per_client_data["audio_latency_r"].append(float(row["Receive Audio Latency (ms)"]))
+                                    per_client_data["audio_pktloss_s"].append(float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                    per_client_data["audio_pktloss_r"].append(float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                    per_client_data["video_jitter_s"].append(float(row["Sent Video Jitter (ms)"]))
+                                    per_client_data["video_jitter_r"].append(float(row["Receive Video Jitter (ms)"]))
+                                    per_client_data["video_latency_s"].append(float(row["Sent Video Latency (ms)"]))
+                                    per_client_data["video_latency_r"].append(float(row["Receive Video Latency (ms)"]))
+                                    per_client_data["video_pktloss_s"].append(float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                    per_client_data["video_pktloss_r"].append(float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                    temp_max_audio_jitter_s = max(temp_max_audio_jitter_s, float(row["Sent Audio Jitter (ms)"]))
+                                    temp_max_audio_jitter_r = max(temp_max_audio_jitter_r, float(row["Receive Audio Jitter (ms)"]))
+                                    temp_max_audio_latency_s = max(temp_max_audio_latency_s, float(row["Sent Audio Latency (ms)"]))
+                                    temp_max_audio_latency_r = max(temp_max_audio_latency_r, float(row["Receive Audio Latency (ms)"]))
+                                    temp_max_audio_pktloss_s = max(temp_max_audio_pktloss_s, float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                    temp_max_audio_pktloss_r = max(temp_max_audio_pktloss_r, float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                    temp_max_video_jitter_s = max(temp_max_video_jitter_s, float(row["Sent Video Jitter (ms)"]))
+                                    temp_max_video_jitter_r = max(temp_max_video_jitter_r, float(row["Receive Video Jitter (ms)"]))
+                                    temp_max_video_latency_s = max(temp_max_video_latency_s, float(row["Sent Video Latency (ms)"]))
+                                    temp_max_video_latency_r = max(temp_max_video_latency_r, float(row["Receive Video Latency (ms)"]))
+                                    temp_max_video_pktloss_s = max(temp_max_video_pktloss_s, float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                    temp_max_video_pktloss_r = max(temp_max_video_pktloss_r, float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                    temp_min_audio_jitter_s = min(
+                                        temp_min_audio_jitter_s,
+                                        float(
+                                            row["Sent Audio Jitter (ms)"])) if temp_min_audio_jitter_s > 0 and float(
+                                        row["Sent Audio Jitter (ms)"]) > 0 else (
+                                        float(
+                                            row["Sent Audio Jitter (ms)"]) if float(
+                                            row["Sent Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_s)
+                                    temp_min_audio_jitter_r = min(
+                                        temp_min_audio_jitter_r, float(
+                                            row["Receive Audio Jitter (ms)"])) if temp_min_audio_jitter_r > 0 and float(
+                                        row["Receive Audio Jitter (ms)"]) > 0 else (
+                                        float(
+                                            row["Receive Audio Jitter (ms)"]) if float(
+                                            row["Receive Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_r)
+                                    temp_min_audio_latency_s = min(
+                                        temp_min_audio_latency_s, float(
+                                            row["Sent Audio Latency (ms)"])) if temp_min_audio_latency_s > 0 and float(
+                                        row["Sent Audio Latency (ms)"]) > 0 else (
+                                        float(
+                                            row["Sent Audio Latency (ms)"]) if float(
+                                            row["Sent Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_s)
+                                    temp_min_audio_latency_r = min(
+                                        temp_min_audio_latency_r, float(
+                                            row["Receive Audio Latency (ms)"])) if temp_min_audio_latency_r > 0 and float(
+                                        row["Receive Audio Latency (ms)"]) > 0 else (
+                                        float(
+                                            row["Receive Audio Latency (ms)"]) if float(
+                                            row["Receive Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_r)
+
+                                    temp_min_audio_pktloss_s = min(
+                                        temp_min_audio_pktloss_s, float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", ""))) if temp_min_audio_pktloss_s > 0 and float(
+                                        (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                            "%", "")) > 0 else (
+                                        float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) if float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else temp_min_audio_pktloss_s)
+                                    temp_min_audio_pktloss_r = min(
+                                        temp_min_audio_pktloss_r, float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", ""))) if temp_min_audio_pktloss_r > 0 and float(
+                                        (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                            "%", "")) > 0 else (
+                                        float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) if float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else temp_min_audio_pktloss_r)
+
+                                    temp_min_video_jitter_s = min(
+                                        temp_min_video_jitter_s,
+                                        float(
+                                            row["Sent Video Jitter (ms)"])) if temp_min_video_jitter_s > 0 and float(
+                                        row["Sent Video Jitter (ms)"]) > 0 else (
+                                        float(
+                                            row["Sent Video Jitter (ms)"]) if float(
+                                            row["Sent Video Jitter (ms)"]) > 0 else temp_min_video_jitter_s)
+                                    temp_min_video_jitter_r = min(
+                                        temp_min_video_jitter_r, float(
+                                            row["Receive Video Jitter (ms)"])) if temp_min_video_jitter_r > 0 and float(
+                                        row["Receive Video Jitter (ms)"]) > 0 else (
+                                        float(
+                                            row["Receive Video Jitter (ms)"]) if float(
+                                            row["Receive Video Jitter (ms)"]) > 0 else temp_min_video_jitter_r)
+                                    temp_min_video_latency_s = min(
+                                        temp_min_video_latency_s, float(
+                                            row["Sent Video Latency (ms)"])) if temp_min_video_latency_s > 0 and float(
+                                        row["Sent Video Latency (ms)"]) > 0 else (
+                                        float(
+                                            row["Sent Video Latency (ms)"]) if float(
+                                            row["Sent Video Latency (ms)"]) > 0 else temp_min_video_latency_s)
+                                    temp_min_video_latency_r = min(
+                                        temp_min_video_latency_r, float(
+                                            row["Receive Video Latency (ms)"])) if temp_min_video_latency_r > 0 and float(
+                                        row["Receive Video Latency (ms)"]) > 0 else (
+                                        float(
+                                            row["Receive Video Latency (ms)"]) if float(
+                                            row["Receive Video Latency (ms)"]) > 0 else temp_min_video_latency_r)
+
+                                    temp_min_video_pktloss_s = min(
+                                        temp_min_video_pktloss_s, float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", ""))) if temp_min_video_pktloss_s > 0 and float(
+                                        (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                            "%", "")) > 0 else (
+                                        float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) if float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else temp_min_video_pktloss_s)
+                                    temp_min_video_pktloss_r = min(
+                                        temp_min_video_pktloss_r, float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", ""))) if temp_min_video_pktloss_r > 0 and float(
+                                        (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                            "%", "")) > 0 else (
+                                        float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) if float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else temp_min_video_pktloss_r)
+
+                        except Exception as e:
+                            logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i]}", e)
+                            no_csv_client.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                            rejected_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                        if self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i] not in no_csv_client:
+                            client_array.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                            accepted_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                            accepted_ostypes.append(self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type[i])
+                            max_audio_jitter_s.append(temp_max_audio_jitter_s)
+                            min_audio_jitter_s.append(temp_min_audio_jitter_s)
+                            max_audio_jitter_r.append(temp_max_audio_jitter_r)
+                            min_audio_jitter_r.append(temp_min_audio_jitter_r)
+                            max_audio_latency_s.append(temp_max_audio_latency_s)
+                            min_audio_latency_s.append(temp_min_audio_latency_s)
+                            max_audio_latency_r.append(temp_max_audio_latency_r)
+                            min_audio_latency_r.append(temp_min_audio_latency_r)
+                            max_video_jitter_s.append(temp_max_video_jitter_s)
+                            min_video_jitter_s.append(temp_min_video_jitter_s)
+                            max_video_jitter_r.append(temp_max_video_jitter_r)
+                            min_video_jitter_r.append(temp_min_video_jitter_r)
+                            max_video_latency_s.append(temp_max_video_latency_s)
+                            min_video_latency_s.append(temp_min_video_latency_s)
+                            max_video_latency_r.append(temp_max_video_latency_r)
+                            min_video_latency_r.append(temp_min_video_latency_r)
+
+                            max_audio_pktloss_s.append(temp_max_audio_pktloss_s)
+                            min_audio_pktloss_s.append(temp_min_audio_pktloss_s)
+                            max_audio_pktloss_r.append(temp_max_audio_pktloss_r)
+                            min_audio_pktloss_r.append(temp_min_audio_pktloss_r)
+                            max_video_pktloss_s.append(temp_max_video_pktloss_s)
+                            min_video_pktloss_s.append(temp_min_video_pktloss_s)
+                            max_video_pktloss_r.append(temp_max_video_pktloss_r)
+                            min_video_pktloss_r.append(temp_min_video_pktloss_r)
+
+                            final_dataset.append(per_client_data.copy())
+
+                    self.overall_report.set_table_title("Test Devices:")
+                    self.overall_report.build_table_title()
+
+                    device_details = pd.DataFrame({
+                        'Hostname': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                        'OS Type': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type,
+                        "MAC": self.zoom_obj_dict[ce][obj_name]["obj"].mac_list,
+                        "RSSI": self.zoom_obj_dict[ce][obj_name]["obj"].rssi_list,
+                        "Link Rate": self.zoom_obj_dict[ce][obj_name]["obj"].link_rate_list,
+                        "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid_list,
+
+                    })
+                    self.overall_report.set_table_dataframe(device_details)
+                    self.overall_report.build_table()
+
+                    if self.zoom_obj_dict[ce][obj_name]["obj"].audio:
+                        self.overall_report.set_graph_title("Audio Latency (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_audio_latency_s.copy(), min_audio_latency_s.copy(), max_audio_latency_r.copy(), min_audio_latency_r.copy()]
+                        y_data_set = client_array
+
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Latency (ms)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Audio Latency(sent/received)",
+                            _graph_image_name=f"Audio Latency(sent and received){obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_graph_title("Audio Jitter (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_audio_jitter_s.copy(), min_audio_jitter_s.copy(), max_audio_jitter_r.copy(), min_audio_jitter_r.copy()]
+                        y_data_set = client_array
+
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Jitter (ms)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Audio Jitter(sent/received)",
+                            _graph_image_name=f"Audio Jitter(sent and received) {obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_graph_title("Audio Packet Loss (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_audio_pktloss_s.copy(), min_audio_pktloss_s.copy(), max_audio_pktloss_r.copy(), min_audio_pktloss_r.copy()]
+                        y_data_set = client_array
+
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Packet Loss (%)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Audio Packet Loss(sent/received)",
+                            _graph_image_name=f"Audio Packet Loss(sent and received){obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_table_title("Test Audio Results Table:")
+                        self.overall_report.build_table_title()
+                        audio_test_details = pd.DataFrame({
+                            'Device Name': [client for client in accepted_clients],
+                            'Avg Latency Sent (ms)': [round(sum(data["audio_latency_s"]) / len(data["audio_latency_s"]), 2) if len(data["audio_latency_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Latency Recv (ms)': [round(sum(data["audio_latency_r"]) / len(data["audio_latency_r"]), 2) if len(data["audio_latency_r"]) != 0 else 0 for data in final_dataset],
+                            'Avg Jitter Sent (ms)': [round(sum(data["audio_jitter_s"]) / len(data["audio_jitter_s"]), 2) if len(data["audio_jitter_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Jitter Recv (ms)': [round(sum(data["audio_jitter_r"]) / len(data["audio_jitter_r"]), 2) if len(data["audio_jitter_r"]) != 0 else 0 for data in final_dataset],
+                            'Avg Pkt Loss Sent': [round(sum(data["audio_pktloss_s"]) / len(data["audio_pktloss_s"]), 2) if len(data["audio_pktloss_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Pkt Loss Recv': [round(sum(data["audio_pktloss_r"]) / len(data["audio_pktloss_r"]), 2) if len(data["audio_pktloss_r"]) != 0 else 0 for data in final_dataset],
+                            'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
+
+                        })
+                        self.overall_report.set_table_dataframe(audio_test_details)
+                        self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
+                                                                        justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
+                        self.overall_report.html += self.overall_report.dataframe_html
+                    if self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                        self.overall_report.set_graph_title("Video Latency (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_video_latency_s.copy(), min_video_latency_s.copy(), max_video_latency_r.copy(), min_video_latency_r.copy()]
+                        y_data_set = client_array
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Latency (ms)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Video Latency(sent/received)",
+                            _graph_image_name=f"Video Latency(sent and received){obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_graph_title("Video Jitter (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_video_jitter_s.copy(), min_video_jitter_s.copy(), max_video_jitter_r.copy(), min_video_jitter_r.copy()]
+                        y_data_set = client_array
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Jitter (ms)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Video Jitter(sent/received)",
+                            _graph_image_name=f"Video Jitter(sent and received){obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_graph_title("Video Packet Loss (Sent/Received)")
+                        self.overall_report.build_graph_title()
+                        x_data_set = [max_video_pktloss_s.copy(), min_video_pktloss_s.copy(), max_video_pktloss_r.copy(), min_video_pktloss_r.copy()]
+                        y_data_set = client_array
+                        x_fig_size = 18
+                        y_fig_size = len(client_array) * 1 + 4
+                        bar_graph_horizontal = lf_bar_graph_horizontal(
+                            _data_set=x_data_set,
+                            _xaxis_name="Packet Loss (%)",
+                            _yaxis_name="Devices",
+                            _yaxis_label=y_data_set,
+                            _yaxis_categories=y_data_set,
+                            _yaxis_step=1,
+                            _yticks_font=8,
+                            _bar_height=.20,
+                            _color_name=["yellow", "blue", "orange", "grey"],
+                            _show_bar_value=True,
+                            _figsize=(x_fig_size, y_fig_size),
+                            _graph_title="Video Packet Loss(sent/received)",
+                            _graph_image_name=f"Video Packet Loss(sent and received){obj_no}",
+                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                        )
+                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
+
+                        self.overall_report.set_table_title("Test Video Results Table:")
+                        self.overall_report.build_table_title()
+                        video_test_details = pd.DataFrame({
+                            'Device Name': [client for client in accepted_clients],
+                            'Avg Latency Sent (ms)': [round(sum(data["video_latency_s"]) / len(data["video_latency_s"]), 2) if len(data["video_latency_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Latency Recv (ms)': [round(sum(data["video_latency_r"]) / len(data["video_latency_r"]), 2) if len(data["video_latency_r"]) != 0 else 0 for data in final_dataset],
+                            'Avg Jitter Sent (ms)': [round(sum(data["video_jitter_s"]) / len(data["video_jitter_s"]), 2) if len(data["video_jitter_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Jitter Recv (ms)': [round(sum(data["video_jitter_r"]) / len(data["video_jitter_r"]), 2) if len(data["video_jitter_r"]) != 0 else 0 for data in final_dataset],
+                            'Avg Pkt Loss Sent': [round(sum(data["video_pktloss_s"]) / len(data["video_pktloss_s"]), 2) if len(data["video_pktloss_s"]) != 0 else 0 for data in final_dataset],
+                            'Avg Pkt Loss Recv': [round(sum(data["video_pktloss_r"]) / len(data["video_pktloss_r"]), 2) if len(data["video_pktloss_r"]) != 0 else 0 for data in final_dataset],
+                            'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
+                        })
+                        self.overall_report.set_table_dataframe(video_test_details)
+
+                        self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
+                                                                        justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
+                        self.overall_report.html += self.overall_report.dataframe_html
+                    self.overall_report.set_custom_html("<br/><hr/>")
+                    self.overall_report.build_custom()
+
+                    if ce == "series":
+                        obj_no += 1
+                        obj_name = f"zoom_test_{obj_no}"
+                    else:
+                        break
+                    
+
 
                 
     def generate_overall_report(self,test_results_df=''):
@@ -7820,11 +8600,24 @@ class Candela(Realm):
         self.overall_report.build_custom()
 
         if self.order_priority == "series":
-            self.render_series_tests(ce="series")
-            self.render_series_tests(ce="parallel")
+            if len(self.series_tests) != 0:
+                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Series Tests</h1>')
+                self.overall_report.build_custom()
+                
+                self.render_each_test(ce="series")
+            if len(self.parallel_tests) != 0:
+                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Parallel Tests</h1>')
+                self.overall_report.build_custom()
+                self.render_each_test(ce="parallel")
         else:
-            self.render_series_tests(ce="parallel")
-            self.render_series_tests(ce="series")
+            if len(self.parallel_tests) != 0:
+                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Parallel Tests</h1>')
+                self.overall_report.build_custom()
+                self.render_each_test(ce="parallel")
+            if len(self.series_tests) != 0:
+                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Series Tests</h1>')
+                self.overall_report.build_custom()
+                self.render_each_test(ce="series")
         # self.overall_report.insert_table_at_marker(test_results_df,"for_table")
         self.overall_report.build_footer()
         html_file = self.overall_report.write_html()
@@ -8554,13 +9347,31 @@ def main():
                 t.start()
                 if candela_apis.series_index in candela_apis.series_connect:
                     test_name = candela_apis.series_connect[candela_apis.series_index][0]
-                    obj_no = 1
-                    while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
-                        obj_no+=1
-                    obj_name = f"rb_test_{obj_no}"
-                    candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                    candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                    print('hiii data',candela_apis.rb_obj_dict)
+                    if test_name == "rb_test":
+                        obj_no = 1
+                        while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
+                            obj_no+=1
+                        obj_name = f"rb_test_{obj_no}"
+                        candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                        candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                        print('hiii data',candela_apis.rb_obj_dict)
+                    elif test_name == "yt_test":
+                        obj_no = 1
+                        while f"yt_test_{obj_no}" in candela_apis.yt_obj_dict["series"]:
+                            obj_no+=1
+                        obj_name = f"yt_test_{obj_no}"
+                        candela_apis.yt_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                        candela_apis.yt_obj_dict["series"][obj_name]["obj"],candela_apis.yt_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                        print('hiii data',candela_apis.yt_obj_dict)
+                    elif test_name == "zoom_test":
+                        obj_no = 1
+                        while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
+                            obj_no+=1
+                        obj_name = f"zoom_test_{obj_no}"
+                        candela_apis.zoom_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                        candela_apis.zoom_obj_dict["series"][obj_name]["obj"],candela_apis.zoom_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                        print('hiii data',candela_apis.zoom_obj_dict)
+
                 t.join()
                 candela_apis.series_index += 1
             # Then run parallel tests
@@ -8577,9 +9388,18 @@ def main():
             for t in parallel_threads:
                 if candela_apis.parallel_index in candela_apis.parallel_connect:
                     test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
-                    candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
-                    candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                    print('hiii data',candela_apis.rb_obj_dict)
+                    if test_name == "rb_test":
+                        candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
+                        candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.rb_obj_dict)
+                    elif test_name == "yt_test":
+                        candela_apis.yt_obj_dict["parallel"]["yt_test"] = {"obj":None,"data":None}
+                        candela_apis.yt_obj_dict["parallel"]["yt_test"]["obj"],candela_apis.yt_obj_dict["parallel"]["yt_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.yt_obj_dict)
+                    elif test_name == "zoom_test":
+                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = {"obj":None,"data":None}
+                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["obj"],candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.zoom_obj_dict)
                 t.join()
                 candela_apis.parallel_index += 1
         else:
@@ -8592,9 +9412,19 @@ def main():
             for t in parallel_threads:
                 if candela_apis.parallel_index in candela_apis.parallel_connect:
                     test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
-                    candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
-                    candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                    print('hiii data',candela_apis.rb_obj_dict)
+                    if test_name == "rb_test":
+                        candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
+                        candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.rb_obj_dict)
+                    elif test_name == "yt_test":
+                        candela_apis.yt_obj_dict["parallel"]["yt_test"] = {"obj":None,"data":None}
+                        candela_apis.yt_obj_dict["parallel"]["yt_test"]["obj"],candela_apis.yt_obj_dict["parallel"]["yt_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.yt_obj_dict)
+                    elif test_name == "zoom_test":
+                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = {"obj":None,"data":None}
+                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["obj"],candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
+                        print('hiii data',candela_apis.zoom_obj_dict)
+
                 t.join()
 
             if len(series_threads) != 0:
@@ -8607,14 +9437,32 @@ def main():
             for t in series_threads:
                 t.start()
                 if candela_apis.series_index in candela_apis.series_connect:
-                    test_name = candela_apis.series_connect[candela_apis.series_index][0]
-                    obj_no = 1
-                    while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
-                        obj_no+=1
-                    obj_name = f"rb_test_{obj_no}"
-                    candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                    candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                    print('hiii data',candela_apis.rb_obj_dict)
+                    if candela_apis.series_index in candela_apis.series_connect:
+                        test_name = candela_apis.series_connect[candela_apis.series_index][0]
+                        if test_name == "rb_test":
+                            obj_no = 1
+                            while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"rb_test_{obj_no}"
+                            candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                            candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                            print('hiii data',candela_apis.rb_obj_dict)
+                        elif test_name == "yt_test":
+                            obj_no = 1
+                            while f"yt_test_{obj_no}" in candela_apis.yt_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"yt_test_{obj_no}"
+                            candela_apis.yt_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                            candela_apis.yt_obj_dict["series"][obj_name]["obj"],candela_apis.yt_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                            print('hiii data',candela_apis.yt_obj_dict)
+                        elif test_name == "zoom_test":
+                            obj_no = 1
+                            while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"zoom_test_{obj_no}"
+                            candela_apis.zoom_obj_dict["series"][obj_name] = {"obj":None,"data":None}
+                            candela_apis.zoom_obj_dict["series"][obj_name]["obj"],candela_apis.zoom_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
+                            print('hiii data',candela_apis.zoom_obj_dict)
                 t.join()
             # for p in series_processes:
             #     p.start()
