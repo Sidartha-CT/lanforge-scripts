@@ -36,7 +36,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 realm = importlib.import_module("py-json.realm")
 Realm = realm.Realm
-error_logs = "" 
+error_logs = ""
+# objj = "obj" 
 test_results_df = pd.DataFrame(columns=['test_name', 'status'])
 matplotlib.use('Agg')  # Before importing pyplot
 base_path = os.getcwd()
@@ -135,6 +136,7 @@ class Candela(Realm):
         self.rb_obj_dict = {"parallel":{},"series":{}}
         self.yt_obj_dict = {"parallel":{},"series":{}}
         self.zoom_obj_dict = {"parallel":{},"series":{}}
+        self.vs_obj_dict = {"parallel":{},"series":{}}
         # self.rb_obj_dict = manager.dict({
         #     "parallel": manager.dict(),
         #     "series": manager.dict()
@@ -5408,20 +5410,20 @@ class Candela(Realm):
                     self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
 
                     self.overall_report.set_obj_html(
-                        _obj_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]["obj"].direction}",
-                        _obj=f"The below graph represents number of times a file {self.ftp_obj_dict[ce][obj_name]["obj"].direction} for each client"
-                        f"(WiFi) traffic.  X- axis shows “No of times file {self.ftp_obj_dict[ce][obj_name]["obj"].direction}” and Y-axis shows "
+                        _obj_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
+                        _obj=f"The below graph represents number of times a file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client"
+                        f"(WiFi) traffic.  X- axis shows “No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}” and Y-axis shows "
                         f"Client names.")
 
                     self.overall_report.build_objective()
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].url_data], _xaxis_name=f"No of times file {self.ftp_obj_dict[ce][obj_name]["obj"].direction}",
+                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].url_data], _xaxis_name=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
                                                     _yaxis_name="Client names",
                                                     _yaxis_categories=[i for i in client_list],
                                                     _yaxis_label=[i for i in client_list],
                                                     _yaxis_step=1,
                                                     _yticks_font=8,
                                                     _yticks_rotation=None,
-                                                    _graph_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]["obj"].direction} (Count)",
+                                                    _graph_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} (Count)",
                                                     _title_size=16,
                                                     _figsize=(x_fig_size, y_fig_size),
                                                     _legend_loc="best",
@@ -5441,20 +5443,20 @@ class Candela(Realm):
                     self.overall_report.move_csv_file()
                     self.overall_report.build_graph()
                     self.overall_report.set_obj_html(
-                        _obj_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]["obj"].direction} file ",
-                        _obj=f"The below graph represents average time taken to {self.ftp_obj_dict[ce][obj_name]["obj"].direction} for each client  "
-                        f"(WiFi) traffic.  X- axis shows “Average time taken to {self.ftp_obj_dict[ce][obj_name]["obj"].direction} a file ” and Y-axis shows "
+                        _obj_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file ",
+                        _obj=f"The below graph represents average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client  "
+                        f"(WiFi) traffic.  X- axis shows “Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} a file ” and Y-axis shows "
                         f"Client names.")
 
                     self.overall_report.build_objective()
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg], _xaxis_name=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]["obj"].direction} file in ms",
+                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg], _xaxis_name=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file in ms",
                                                     _yaxis_name="Client names",
                                                     _yaxis_categories=[i for i in client_list],
                                                     _yaxis_label=[i for i in client_list],
                                                     _yaxis_step=1,
                                                     _yticks_font=8,
                                                     _yticks_rotation=None,
-                                                    _graph_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]["obj"].direction} file",
+                                                    _graph_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file",
                                                     _title_size=16,
                                                     _figsize=(x_fig_size, y_fig_size),
                                                     _legend_loc="best",
@@ -5476,7 +5478,7 @@ class Candela(Realm):
                     if(self.ftp_obj_dict[ce][obj_name]["obj"].dowebgui and self.ftp_obj_dict[ce][obj_name]["obj"].get_live_view):
                         for floor in range(0,int(self.ftp_obj_dict[ce][obj_name]["obj"].total_floors)):
                             script_dir = os.path.dirname(os.path.abspath(__file__))
-                            throughput_image_path = os.path.join(script_dir, "heatmap_images", f"ftp_{self.ftp_obj_dict[ce][obj_name]["obj"].test_name}_{floor+1}.png")
+                            throughput_image_path = os.path.join(script_dir, "heatmap_images", f"ftp_{self.ftp_obj_dict[ce][obj_name]['obj'].test_name}_{floor+1}.png")
                             # rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.test_name}_rssi_{floor+1}.png")
                             timeout = 60  # seconds
                             start_time = time.time()
@@ -5690,7 +5692,7 @@ class Candela(Realm):
                                 "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
                                 "Configuration": configmap,
                                 "Configured Devices": ", ".join(all_devices_names),
-                                "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]["obj"].num_stations)})" + total_devices,
+                                "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
                                 "Increment": incremental_capacity_data,
                                 "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
                                 "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
@@ -5704,7 +5706,7 @@ class Candela(Realm):
                             test_setup_info = {
                                 "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
                                 "Device List": ", ".join(all_devices_names),
-                                "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]["obj"].num_stations)})" + total_devices,
+                                "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
                                 "Increment": incremental_capacity_data,
                                 "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
                                 "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
@@ -6137,7 +6139,7 @@ class Candela(Realm):
                         test_setup_info = {
                             "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
                             "Device List": ", ".join(all_devices_names),
-                            "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]["obj"].num_stations)})" + total_devices,
+                            "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
                             "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
                             "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
                             "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
@@ -6728,7 +6730,7 @@ class Candela(Realm):
                     if config_devices == "":
                         test_setup_info = {
                             "Device List": ", ".join(all_devices_names),
-                            "Number of Stations": "Total" + f"({self.qos_obj_dict[ce][obj_name]["obj"].num_stations})" + total_devices,
+                            "Number of Stations": "Total" + f"({self.qos_obj_dict[ce][obj_name]['obj'].num_stations})" + total_devices,
                             "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
                             "SSID": self.qos_obj_dict[ce][obj_name]["obj"].ssid,
                             "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
@@ -6758,15 +6760,15 @@ class Candela(Realm):
                     self.overall_report.build_objective()
                     self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
                     self.overall_report.set_table_title(
-                        f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)")
+                        f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)")
                     self.overall_report.build_table_title()
                     df_throughput = pd.DataFrame(res["throughput_table_df"])
                     self.overall_report.set_table_dataframe(df_throughput)
                     self.overall_report.build_table()
                     for key in res["graph_df"]:
                         self.overall_report.set_obj_html(
-                            _obj_title=f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput for {len(self.qos_obj_dict[ce][obj_name]["obj"].input_devices_list)} clients with different TOS.",
-                            _obj=f"The below graph represents overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput for all "
+                            _obj_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for {len(self.qos_obj_dict[ce][obj_name]['obj'].input_devices_list)} clients with different TOS.",
+                            _obj=f"The below graph represents overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for all "
                                 "connected stations running BK, BE, VO, VI traffic with different "
                                 f"intended loads{load} per tos")
                     self.overall_report.build_objective()
@@ -6778,7 +6780,7 @@ class Candela(Realm):
                                         _graph_image_name=f"tos_download_{key}Hz {obj_no}",
                                         _label=["BK", "BE", "VI", "VO"],
                                         _xaxis_step=1,
-                                        _graph_title=f"Overall {self.qos_obj_dict[ce][obj_name]["obj"].direction} throughput – BK,BE,VO,VI traffic streams",
+                                        _graph_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput – BK,BE,VO,VI traffic streams",
                                         _title_size=16,
                                         _color=['orange', 'lightcoral', 'steelblue', 'lightgrey'],
                                         _color_edge='black',
@@ -6928,7 +6930,7 @@ class Candela(Realm):
 
                     # graph BK A
                     # try to do as a loop
-                    logger.info(f"BEFORE REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
+                    logger.info(f"BEFORE REAL A {self.mcast_obj_dict[ce][obj_name]['obj'].client_dict_A}")
                     tos_list = ['BK', 'BE', 'VI', 'VO']
                     if self.mcast_obj_dict[ce][obj_name]["obj"].real:
                         tos_types = ['BE', 'BK', 'VI', 'VO']
@@ -6979,7 +6981,7 @@ class Candela(Realm):
                                     elif key.endswith('_B'):
                                         filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
                                         tos_data[key] = filtered_list
-                    logger.info(f"AFTER REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
+                    # logger.info(f"AFTER REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
                     for tos in tos_list:
                         print(self.mcast_obj_dict[ce][obj_name]["obj"].tos)
                         if tos not in self.mcast_obj_dict[ce][obj_name]["obj"].tos:
@@ -7041,8 +7043,8 @@ class Candela(Realm):
                             if(self.mcast_obj_dict[ce][obj_name]["obj"].dowebgui and self.mcast_obj_dict[ce][obj_name]["obj"].get_live_view):
                                 for floor in range(0,int(self.mcast_obj_dict[ce][obj_name]["obj"].total_floors)):
                                     script_dir = os.path.dirname(os.path.abspath(__file__))
-                                    throughput_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]["obj"].test_name}_throughput_{floor+1}.png")
-                                    rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]["obj"].test_name}_rssi_{floor+1}.png")
+                                    throughput_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_throughput_{floor+1}.png")
+                                    rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_rssi_{floor+1}.png")
                                     timeout = 60  # seconds
                                     start_time = time.time()
 
@@ -7578,8 +7580,8 @@ class Candela(Realm):
 
                             for floor in range(int(self.vs_obj_dict[ce][obj_name]["obj"].floors)):
                                 # Construct expected image paths
-                                vs_buffer_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]["obj"].test_name}_vs_buffer_{floor+1}.png")
-                                vs_wait_time_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]["obj"].test_name}_vs_wait_time_{floor+1}.png")
+                                vs_buffer_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_buffer_{floor+1}.png")
+                                vs_wait_time_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_wait_time_{floor+1}.png")
 
 
                                 # Wait for all required images to be generated (up to timeout)
@@ -7710,7 +7712,7 @@ class Candela(Realm):
                             _show_bar_value=True,
                             _figsize=(x_fig_size, y_fig_size),
                             _graph_title="URLs",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]}_urls_per_device{obj_no}",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_urls_per_device{obj_no}",
                             _label=["URLs"]
                         )
                         # print('yaxssss)
@@ -7719,7 +7721,7 @@ class Candela(Realm):
                         self.overall_report.move_graph_image()
                         self.overall_report.build_graph()
 
-                        self.overall_report.set_graph_title(f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]["obj"].count} RealTime URLs")
+                        self.overall_report.set_graph_title(f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]['obj'].count} RealTime URLs")
                         self.overall_report.build_graph_title()
 
                         # Extract device names from CSV
@@ -7742,7 +7744,7 @@ class Candela(Realm):
                             _show_bar_value=True,
                             _figsize=(x_fig_size, y_fig_size),
                             _graph_title="Time Taken",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]}_time_taken_for_urls{obj_no}",
+                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_time_taken_for_urls{obj_no}",
                             _label=["Time (in sec)"]
                         )
                         graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
@@ -8326,7 +8328,7 @@ class Candela(Realm):
                                                 "%", "")) > 0 else temp_min_video_pktloss_r)
 
                         except Exception as e:
-                            logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i]}", e)
+                            logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]['obj'].device_names[i]}", e)
                             no_csv_client.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
                             rejected_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
                         if self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i] not in no_csv_client:
