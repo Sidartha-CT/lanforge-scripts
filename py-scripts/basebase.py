@@ -137,6 +137,10 @@ class Candela(Realm):
         self.yt_obj_dict = {"parallel":{},"series":{}}
         self.zoom_obj_dict = {"parallel":{},"series":{}}
         self.vs_obj_dict = {"parallel":{},"series":{}}
+        self.rb_obj_dict = manager.dict({
+            "parallel": manager.dict(),
+            "series": manager.dict()
+        })
         # self.rb_obj_dict = manager.dict({
         #     "parallel": manager.dict(),
         #     "series": manager.dict()
@@ -266,9 +270,6 @@ class Candela(Realm):
         layer3: (Boolean : optional) Default : False To Delete all layer3 connections
         layer4: (Boolean : optional) Default : False To Delete all layer4 connections
         """
-        layer3 = False
-        layer4 = False
-        generic = False
         if layer3:
             self.cleanup.cxs_clean()
             self.cleanup.layer3_endp_clean()
@@ -4470,11 +4471,12 @@ class Candela(Realm):
                 traceback.print_exc()
                 self.yt_test_obj.stop()
                 if self.current_exec == "parallel":
-                    if  self.parallel_connect[self.parallel_index][2]:
-                        self.parallel_connect[self.parallel_index][2].send([self.yt_test_obj,{}])
+                    self.yt_obj_dict["parallel"]["yt_test"]["obj"] =self.yt_test_obj
                 else:
-                    if  self.series_connect[self.series_index][2]:
-                        self.series_connect[self.series_index][2].send([self.yt_test_obj,{}])
+                    for i in range(len(self.yt_obj_dict["series"])):
+                        if self.yt_obj_dict["series"][f"yt_test_{i+1}"]["obj"] is None:
+                            self.yt_obj_dict["series"][f"yt_test_{i+1}"]["obj"] = self.yt_test_obj
+                            break
                 # Stopping the Youtube test
                 if do_webUI:
                     self.yt_test_obj.stop_test_yt()
@@ -4756,11 +4758,12 @@ class Candela(Realm):
                 self.zoom_test_obj.app = None
                 self.zoom_test_obj.redis_client = None
                 if self.current_exec == "parallel":
-                    if  self.parallel_connect[self.parallel_index][2]:
-                        self.parallel_connect[self.parallel_index][2].send([self.zoom_test_obj,{}])
+                    self.zoom_obj_dict["parallel"]["zoom_test"]["obj"] =self.zoom_test_obj
                 else:
-                    if  self.series_connect[self.series_index][2]:
-                        self.series_connect[self.series_index][2].send([self.zoom_test_obj,{}])
+                    for i in range(len(self.zoom_obj_dict["series"])):
+                        if self.zoom_obj_dict["series"][f"zoom_test_{i+1}"]["obj"] is None:
+                            self.zoom_obj_dict["series"][f"zoom_test_{i+1}"]["obj"] = self.zoom_test_obj
+                            break
                 logging.info("Waiting for Browser Cleanup in Laptops")
                 self.zoom_test_obj.generic_endps_profile.cleanup()
                 # self.zoom_test_obj.generic_endps_profile.cleanup()
@@ -4903,11 +4906,13 @@ class Candela(Realm):
                 #     self.rb_test_obj.postcleanup()
             self.rb_test.app = None
             if self.current_exec == "parallel":
-                if  self.parallel_connect[self.parallel_index][2]:
-                    self.parallel_connect[self.parallel_index][2].send([self.rb_test,{}])
+                self.rb_obj_dict["parallel"]["rb_test"]["obj"] =self.rb_test
             else:
-                if  self.series_connect[self.series_index][2]:
-                    self.series_connect[self.series_index][2].send([self.rb_test,{}])
+                for i in range(len(self.rb_obj_dict["series"])):
+                    if self.rb_obj_dict["series"][f"rb_test_{i+1}"]["obj"] is None:
+                        self.rb_obj_dict["series"][f"rb_test_{i+1}"]["obj"] = self.rb_test
+                        break
+
 
 
         return True
@@ -5073,167 +5078,187 @@ class Candela(Realm):
         print('test_map',test_map)
         print('unq_tests',unq_tests)
         for test_name in unq_tests:
-            if test_name == "http_test":
-                # obj = []
-                obj_no = 1
-                obj_name = 'http_test'
-                if ce == "series":
-                    obj_name += "_1" 
-                while obj_name in self.http_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    # report_path = self.result_path
-                    # print("Current working directory:", os.getcwd())
-                    http_data = self.http_obj_dict[ce][obj_name]["data"]
-                    if http_data["bands"] == "Both":
-                        num_stations = num_stations * 2
+            try:
+                if test_name == "http_test":
+                    # obj = []
+                    obj_no = 1
+                    obj_name = 'http_test'
+                    if ce == "series":
+                        obj_name += "_1" 
+                    while obj_name in self.http_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        # report_path = self.result_path
+                        # print("Current working directory:", os.getcwd())
+                        http_data = self.http_obj_dict[ce][obj_name]["data"]
+                        if http_data["bands"] == "Both":
+                            num_stations = num_stations * 2
 
-                    # report.set_title("HTTP DOWNLOAD TEST")
-                    # report.set_date(date)
-                    # if 'http_test' not in self.test_count_dict:
-                    #     self.test_count_dict['http_test']=0
-                    # self.test_count_dict['http_test']+=1
-                    self.overall_report.set_obj_html(_obj_title=f'HTTP Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.set_table_title("Test Setup Information")
-                    self.overall_report.build_table_title()
-                    self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=http_data["test_setup_info"])
+                        # report.set_title("HTTP DOWNLOAD TEST")
+                        # report.set_date(date)
+                        # if 'http_test' not in self.test_count_dict:
+                        #     self.test_count_dict['http_test']=0
+                        # self.test_count_dict['http_test']+=1
+                        self.overall_report.set_obj_html(_obj_title=f'HTTP Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.set_table_title("Test Setup Information")
+                        self.overall_report.build_table_title()
+                        self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=http_data["test_setup_info"])
 
-                    graph2 = self.http_obj_dict[ce][obj_name]["obj"].graph_2(http_data["dataset2"], lis=http_data["lis"], bands=http_data["bands"],graph_no=obj_no)
-                    print("graph name {}".format(graph2))
-                    self.overall_report.set_graph_image(graph2)
-                    self.overall_report.set_csv_filename(graph2)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.move_graph_image()
-                    self.overall_report.build_graph()
+                        graph2 = self.http_obj_dict[ce][obj_name]["obj"].graph_2(http_data["dataset2"], lis=http_data["lis"], bands=http_data["bands"],graph_no=obj_no)
+                        print("graph name {}".format(graph2))
+                        self.overall_report.set_graph_image(graph2)
+                        self.overall_report.set_csv_filename(graph2)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
 
-                    self.overall_report.set_obj_html(
-                        "Average time taken to download file ",
-                        "The below graph represents average time taken to download for each client  "
-                        ".  X- axis shows “Average time taken to download a file ” and Y-axis shows "
-                        "Client names."
-                    )
-                    self.overall_report.build_objective()
+                        self.overall_report.set_obj_html(
+                            "Average time taken to download file ",
+                            "The below graph represents average time taken to download for each client  "
+                            ".  X- axis shows “Average time taken to download a file ” and Y-axis shows "
+                            "Client names."
+                        )
+                        self.overall_report.build_objective()
 
-                    graph = self.http_obj_dict[ce][obj_name]["obj"].generate_graph(dataset=http_data["dataset"], lis=http_data["lis"], bands=http_data["bands"],graph_no=obj_no)
-                    self.overall_report.set_graph_image(graph)
-                    self.overall_report.set_csv_filename(graph)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.move_graph_image()
-                    self.overall_report.build_graph()
+                        graph = self.http_obj_dict[ce][obj_name]["obj"].generate_graph(dataset=http_data["dataset"], lis=http_data["lis"], bands=http_data["bands"],graph_no=obj_no)
+                        self.overall_report.set_graph_image(graph)
+                        self.overall_report.set_csv_filename(graph)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.move_graph_image()
+                        self.overall_report.build_graph()
 
-                    self.overall_report.set_obj_html(
-                        "Download Time Table Description",
-                        "This Table will provide you information of the "
-                        "minimum, maximum and the average time taken by clients to download a webpage in seconds"
-                    )
-                    self.overall_report.build_objective()
+                        self.overall_report.set_obj_html(
+                            "Download Time Table Description",
+                            "This Table will provide you information of the "
+                            "minimum, maximum and the average time taken by clients to download a webpage in seconds"
+                        )
+                        self.overall_report.build_objective()
 
-                    self.http_obj_dict[ce][obj_name]["obj"].response_port = self.http_obj_dict[ce][obj_name]["obj"].local_realm.json_get("/port/all")
-                    self.http_obj_dict[ce][obj_name]["obj"].channel_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, self.http_obj_dict[ce][obj_name]["obj"].ssid_list = [], [], []
+                        self.http_obj_dict[ce][obj_name]["obj"].response_port = self.http_obj_dict[ce][obj_name]["obj"].local_realm.json_get("/port/all")
+                        self.http_obj_dict[ce][obj_name]["obj"].channel_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, self.http_obj_dict[ce][obj_name]["obj"].ssid_list = [], [], []
 
-                    if self.http_obj_dict[ce][obj_name]["obj"].client_type == "Real":
-                        self.http_obj_dict[ce][obj_name]["obj"].devices = self.http_obj_dict[ce][obj_name]["obj"].devices_list
-                        for interface in self.http_obj_dict[ce][obj_name]["obj"].response_port['interfaces']:
-                            for port, port_data in interface.items():
-                                if port in self.http_obj_dict[ce][obj_name]["obj"].port_list:
-                                    self.http_obj_dict[ce][obj_name]["obj"].channel_list.append(str(port_data['channel']))
-                                    self.http_obj_dict[ce][obj_name]["obj"].mode_list.append(str(port_data['mode']))
-                                    self.http_obj_dict[ce][obj_name]["obj"].ssid_list.append(str(port_data['ssid']))
-                    elif self.http_obj_dict[ce][obj_name]["obj"].client_type == "Virtual":
-                        self.http_obj_dict[ce][obj_name]["obj"].devices = self.http_obj_dict[ce][obj_name]["obj"].station_list[0]
-                        for interface in self.http_obj_dict[ce][obj_name]["obj"].response_port['interfaces']:
-                            for port, port_data in interface.items():
-                                if port in self.http_obj_dict[ce][obj_name]["obj"].station_list[0]:
-                                    self.http_obj_dict[ce][obj_name]["obj"].channel_list.append(str(port_data['channel']))
-                                    self.http_obj_dict[ce][obj_name]["obj"].mode_list.append(str(port_data['mode']))
-                                    self.http_obj_dict[ce][obj_name]["obj"].macid_list.append(str(port_data['mac']))
-                                    self.http_obj_dict[ce][obj_name]["obj"].ssid_list.append(str(port_data['ssid']))
+                        if self.http_obj_dict[ce][obj_name]["obj"].client_type == "Real":
+                            self.http_obj_dict[ce][obj_name]["obj"].devices = self.http_obj_dict[ce][obj_name]["obj"].devices_list
+                            for interface in self.http_obj_dict[ce][obj_name]["obj"].response_port['interfaces']:
+                                for port, port_data in interface.items():
+                                    if port in self.http_obj_dict[ce][obj_name]["obj"].port_list:
+                                        self.http_obj_dict[ce][obj_name]["obj"].channel_list.append(str(port_data['channel']))
+                                        self.http_obj_dict[ce][obj_name]["obj"].mode_list.append(str(port_data['mode']))
+                                        self.http_obj_dict[ce][obj_name]["obj"].ssid_list.append(str(port_data['ssid']))
+                        elif self.http_obj_dict[ce][obj_name]["obj"].client_type == "Virtual":
+                            self.http_obj_dict[ce][obj_name]["obj"].devices = self.http_obj_dict[ce][obj_name]["obj"].station_list[0]
+                            for interface in self.http_obj_dict[ce][obj_name]["obj"].response_port['interfaces']:
+                                for port, port_data in interface.items():
+                                    if port in self.http_obj_dict[ce][obj_name]["obj"].station_list[0]:
+                                        self.http_obj_dict[ce][obj_name]["obj"].channel_list.append(str(port_data['channel']))
+                                        self.http_obj_dict[ce][obj_name]["obj"].mode_list.append(str(port_data['mode']))
+                                        self.http_obj_dict[ce][obj_name]["obj"].macid_list.append(str(port_data['mac']))
+                                        self.http_obj_dict[ce][obj_name]["obj"].ssid_list.append(str(port_data['ssid']))
 
-                    # Processing result_data
-                    z, z1, z2 = [], [], []
-                    for fcc in list(http_data["result_data"].keys()):
-                        z.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["min"]])
-                        z1.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["max"]])
-                        z2.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["avg"]])
+                        # Processing result_data
+                        z, z1, z2 = [], [], []
+                        for fcc in list(http_data["result_data"].keys()):
+                            z.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["min"]])
+                            z1.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["max"]])
+                            z2.extend([str(round(i / 1000, 1)) for i in http_data["result_data"][fcc]["avg"]])
 
-                    download_table_value_dup = {"Minimum": z, "Maximum": z1, "Average": z2}
-                    download_table_value = {"Band": http_data["bands"], "Minimum": z, "Maximum": z1, "Average": z2}
+                        download_table_value_dup = {"Minimum": z, "Maximum": z1, "Average": z2}
+                        download_table_value = {"Band": http_data["bands"], "Minimum": z, "Maximum": z1, "Average": z2}
 
-                    # KPI reporting
-                    kpi_path = self.overall_report.get_report_path()
-                    print("kpi_path :{kpi_path}".format(kpi_path=kpi_path))
+                        # KPI reporting
+                        kpi_path = self.overall_report.get_report_path()
+                        print("kpi_path :{kpi_path}".format(kpi_path=kpi_path))
 
-                    kpi_csv = lf_kpi_csv.lf_kpi_csv(
-                        _kpi_path=kpi_path,
-                        _kpi_test_rig=http_data["test_rig"],
-                        _kpi_test_tag=http_data["test_tag"],
-                        _kpi_dut_hw_version=http_data["dut_hw_version"],
-                        _kpi_dut_sw_version=http_data["dut_sw_version"],
-                        _kpi_dut_model_num=http_data["dut_model_num"],
-                        _kpi_dut_serial_num=http_data["dut_serial_num"],
-                        _kpi_test_id=http_data["test_id"]
-                    )
-                    kpi_csv.kpi_dict['Units'] = "Mbps"
-                    for band in range(len(download_table_value["Band"])):
-                        kpi_csv.kpi_csv_get_dict_update_time()
-                        kpi_csv.kpi_dict['Graph-Group'] = "Webpage Download {band}".format(
-                            band=download_table_value['Band'][band])
-                        kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Minimum".format(
-                            band=download_table_value['Band'][band])
-                        kpi_csv.kpi_dict['numeric-score'] = "{min}".format(min=download_table_value['Minimum'][band])
-                        kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
+                        kpi_csv = lf_kpi_csv.lf_kpi_csv(
+                            _kpi_path=kpi_path,
+                            _kpi_test_rig=http_data["test_rig"],
+                            _kpi_test_tag=http_data["test_tag"],
+                            _kpi_dut_hw_version=http_data["dut_hw_version"],
+                            _kpi_dut_sw_version=http_data["dut_sw_version"],
+                            _kpi_dut_model_num=http_data["dut_model_num"],
+                            _kpi_dut_serial_num=http_data["dut_serial_num"],
+                            _kpi_test_id=http_data["test_id"]
+                        )
+                        kpi_csv.kpi_dict['Units'] = "Mbps"
+                        for band in range(len(download_table_value["Band"])):
+                            kpi_csv.kpi_csv_get_dict_update_time()
+                            kpi_csv.kpi_dict['Graph-Group'] = "Webpage Download {band}".format(
+                                band=download_table_value['Band'][band])
+                            kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Minimum".format(
+                                band=download_table_value['Band'][band])
+                            kpi_csv.kpi_dict['numeric-score'] = "{min}".format(min=download_table_value['Minimum'][band])
+                            kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
 
-                        kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Maximum".format(
-                            band=download_table_value['Band'][band])
-                        kpi_csv.kpi_dict['numeric-score'] = "{max}".format(max=download_table_value['Maximum'][band])
-                        kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
+                            kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Maximum".format(
+                                band=download_table_value['Band'][band])
+                            kpi_csv.kpi_dict['numeric-score'] = "{max}".format(max=download_table_value['Maximum'][band])
+                            kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
 
-                        kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Average".format(
-                            band=download_table_value['Band'][band])
-                        kpi_csv.kpi_dict['numeric-score'] = "{avg}".format(avg=download_table_value['Average'][band])
-                        kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
+                            kpi_csv.kpi_dict['short-description'] = "Webpage download {band} Average".format(
+                                band=download_table_value['Band'][band])
+                            kpi_csv.kpi_dict['numeric-score'] = "{avg}".format(avg=download_table_value['Average'][band])
+                            kpi_csv.kpi_csv_write_dict(kpi_csv.kpi_dict)
 
-                    if http_data["csv_outfile"] is not None:
-                        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-                        http_data["csv_outfile"] = "{}_{}-test_l3_longevity.csv".format(http_data["csv_outfile"], current_time)
-                        http_data["csv_outfile"] = self.overall_report.file_add_path(http_data["csv_outfile"])
-                        print("csv output file : {}".format(http_data["csv_outfile"]))
+                        if http_data["csv_outfile"] is not None:
+                            current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+                            http_data["csv_outfile"] = "{}_{}-test_l3_longevity.csv".format(http_data["csv_outfile"], current_time)
+                            http_data["csv_outfile"] = self.overall_report.file_add_path(http_data["csv_outfile"])
+                            print("csv output file : {}".format(http_data["csv_outfile"]))
 
-                    test_setup = pd.DataFrame(download_table_value_dup)
-                    self.overall_report.set_table_dataframe(test_setup)
-                    self.overall_report.build_table()
-
-                    if self.http_obj_dict[ce][obj_name]["obj"].group_name:
-                        self.overall_report.set_table_title("Overall Results for Groups")
-                    else:
-                        self.overall_report.set_table_title("Overall Results")
-                    self.overall_report.build_table_title()
-
-                    if self.http_obj_dict[ce][obj_name]["obj"].client_type == "Real":
-                        if self.http_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.http_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                            test_input_list, pass_fail_list = self.http_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(http_data["dataset2"])
+                        test_setup = pd.DataFrame(download_table_value_dup)
+                        self.overall_report.set_table_dataframe(test_setup)
+                        self.overall_report.build_table()
 
                         if self.http_obj_dict[ce][obj_name]["obj"].group_name:
-                            for key, val in self.http_obj_dict[ce][obj_name]["obj"].group_device_map.items():
+                            self.overall_report.set_table_title("Overall Results for Groups")
+                        else:
+                            self.overall_report.set_table_title("Overall Results")
+                        self.overall_report.build_table_title()
+
+                        if self.http_obj_dict[ce][obj_name]["obj"].client_type == "Real":
+                            if self.http_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.http_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                test_input_list, pass_fail_list = self.http_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(http_data["dataset2"])
+
+                            if self.http_obj_dict[ce][obj_name]["obj"].group_name:
+                                for key, val in self.http_obj_dict[ce][obj_name]["obj"].group_device_map.items():
+                                    if self.http_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.http_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                        dataframe = self.http_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                            val, self.http_obj_dict[ce][obj_name]["obj"].devices, self.http_obj_dict[ce][obj_name]["obj"].macid_list, self.http_obj_dict[ce][obj_name]["obj"].channel_list,
+                                            self.http_obj_dict[ce][obj_name]["obj"].ssid_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, http_data["dataset2"], test_input_list,
+                                            http_data["dataset"], http_data["dataset1"], http_data["rx_rate"], pass_fail_list
+                                        )
+                                    else:
+                                        dataframe = self.http_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                            val, self.http_obj_dict[ce][obj_name]["obj"].devices, self.http_obj_dict[ce][obj_name]["obj"].macid_list, self.http_obj_dict[ce][obj_name]["obj"].channel_list,
+                                            self.http_obj_dict[ce][obj_name]["obj"].ssid_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, http_data["dataset2"], [], http_data["dataset"],
+                                            http_data["dataset1"], http_data["rx_rate"], []
+                                        )
+                                    if dataframe:
+                                        self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                        self.overall_report.build_objective()
+                                        dataframe1 = pd.DataFrame(dataframe)
+                                        self.overall_report.set_table_dataframe(dataframe1)
+                                        self.overall_report.build_table()
+                            else:
+                                dataframe = {
+                                    " Clients": self.http_obj_dict[ce][obj_name]["obj"].devices,
+                                    " MAC ": self.http_obj_dict[ce][obj_name]["obj"].macid_list,
+                                    " Channel": self.http_obj_dict[ce][obj_name]["obj"].channel_list,
+                                    " SSID ": self.http_obj_dict[ce][obj_name]["obj"].ssid_list,
+                                    " Mode": self.http_obj_dict[ce][obj_name]["obj"].mode_list,
+                                    " No of times File downloaded ": http_data["dataset2"],
+                                    " Average time taken to Download file (ms)": http_data["dataset"],
+                                    " Bytes-rd (Mega Bytes) ": http_data["dataset1"],
+                                    "Rx Rate (Mbps)": http_data["rx_rate"],
+                                    "Failed url's": self.http_obj_dict[ce][obj_name]["obj"].data["total_err"]
+                                }
                                 if self.http_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.http_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                    dataframe = self.http_obj_dict[ce][obj_name]["obj"].generate_dataframe(
-                                        val, self.http_obj_dict[ce][obj_name]["obj"].devices, self.http_obj_dict[ce][obj_name]["obj"].macid_list, self.http_obj_dict[ce][obj_name]["obj"].channel_list,
-                                        self.http_obj_dict[ce][obj_name]["obj"].ssid_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, http_data["dataset2"], test_input_list,
-                                        http_data["dataset"], http_data["dataset1"], http_data["rx_rate"], pass_fail_list
-                                    )
-                                else:
-                                    dataframe = self.http_obj_dict[ce][obj_name]["obj"].generate_dataframe(
-                                        val, self.http_obj_dict[ce][obj_name]["obj"].devices, self.http_obj_dict[ce][obj_name]["obj"].macid_list, self.http_obj_dict[ce][obj_name]["obj"].channel_list,
-                                        self.http_obj_dict[ce][obj_name]["obj"].ssid_list, self.http_obj_dict[ce][obj_name]["obj"].mode_list, http_data["dataset2"], [], http_data["dataset"],
-                                        http_data["dataset1"], http_data["rx_rate"], []
-                                    )
-                                if dataframe:
-                                    self.overall_report.set_obj_html("", "Group: {}".format(key))
-                                    self.overall_report.build_objective()
-                                    dataframe1 = pd.DataFrame(dataframe)
-                                    self.overall_report.set_table_dataframe(dataframe1)
-                                    self.overall_report.build_table()
+                                    dataframe[" Expected value of no of times file downloaded"] = test_input_list
+                                    dataframe["Status"] = pass_fail_list
+                                dataframe1 = pd.DataFrame(dataframe)
+                                self.overall_report.set_table_dataframe(dataframe1)
+                                self.overall_report.build_table()
                         else:
                             dataframe = {
                                 " Clients": self.http_obj_dict[ce][obj_name]["obj"].devices,
@@ -5243,296 +5268,298 @@ class Candela(Realm):
                                 " Mode": self.http_obj_dict[ce][obj_name]["obj"].mode_list,
                                 " No of times File downloaded ": http_data["dataset2"],
                                 " Average time taken to Download file (ms)": http_data["dataset"],
-                                " Bytes-rd (Mega Bytes) ": http_data["dataset1"],
-                                "Rx Rate (Mbps)": http_data["rx_rate"],
-                                "Failed url's": self.http_obj_dict[ce][obj_name]["obj"].data["total_err"]
+                                " Bytes-rd (Mega Bytes) ": http_data["dataset1"]
                             }
-                            if self.http_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.http_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                dataframe[" Expected value of no of times file downloaded"] = test_input_list
-                                dataframe["Status"] = pass_fail_list
                             dataframe1 = pd.DataFrame(dataframe)
                             self.overall_report.set_table_dataframe(dataframe1)
                             self.overall_report.build_table()
-                    else:
-                        dataframe = {
-                            " Clients": self.http_obj_dict[ce][obj_name]["obj"].devices,
-                            " MAC ": self.http_obj_dict[ce][obj_name]["obj"].macid_list,
-                            " Channel": self.http_obj_dict[ce][obj_name]["obj"].channel_list,
-                            " SSID ": self.http_obj_dict[ce][obj_name]["obj"].ssid_list,
-                            " Mode": self.http_obj_dict[ce][obj_name]["obj"].mode_list,
-                            " No of times File downloaded ": http_data["dataset2"],
-                            " Average time taken to Download file (ms)": http_data["dataset"],
-                            " Bytes-rd (Mega Bytes) ": http_data["dataset1"]
-                        }
-                        dataframe1 = pd.DataFrame(dataframe)
-                        self.overall_report.set_table_dataframe(dataframe1)
-                        self.overall_report.build_table()
 
-                    # self.http_obj_dict[ce]
+                        # self.http_obj_dict[ce]
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"http_test_{obj_no}"
+                        else:
+                            break
+
+                elif test_name == "ftp_test":
+                    obj_no=1
+                    obj_name = "ftp_test"
                     if ce == "series":
-                        obj_no += 1
-                        obj_name = f"http_test_{obj_no}"
-                    else:
-                        break
+                        obj_name += "_1"
+                    while obj_name in self.ftp_obj_dict[ce]:
+                        # obj_name = f"ftp_test_{obj_no}"
+                        if ce == "parallel":
+                            obj_no = ''
+                        params = self.ftp_obj_dict[ce][obj_name]["data"].copy()
+                        ftp_data = params["ftp_data"].copy() if isinstance(params["ftp_data"], (list, dict, set)) else params["ftp_data"]
+                        date = params["date"].copy() if isinstance(params["date"], (list, dict, set)) else params["date"]
+                        input_setup_info = params["input_setup_info"].copy() if isinstance(params["input_setup_info"], (list, dict, set)) else params["input_setup_info"]
+                        test_rig = params["test_rig"].copy() if isinstance(params["test_rig"], (list, dict, set)) else params["test_rig"]
+                        test_tag = params["test_tag"].copy() if isinstance(params["test_tag"], (list, dict, set)) else params["test_tag"]
+                        dut_hw_version = params["dut_hw_version"].copy() if isinstance(params["dut_hw_version"], (list, dict, set)) else params["dut_hw_version"]
+                        dut_sw_version = params["dut_sw_version"].copy() if isinstance(params["dut_sw_version"], (list, dict, set)) else params["dut_sw_version"]
+                        dut_model_num = params["dut_model_num"].copy() if isinstance(params["dut_model_num"], (list, dict, set)) else params["dut_model_num"]
+                        dut_serial_num = params["dut_serial_num"].copy() if isinstance(params["dut_serial_num"], (list, dict, set)) else params["dut_serial_num"]
+                        test_id = params["test_id"].copy() if isinstance(params["test_id"], (list, dict, set)) else params["test_id"]
+                        bands = params["bands"].copy() if isinstance(params["bands"], (list, dict, set)) else params["bands"]
+                        csv_outfile = params["csv_outfile"].copy() if isinstance(params["csv_outfile"], (list, dict, set)) else params["csv_outfile"]
+                        local_lf_report_dir = params["local_lf_report_dir"].copy() if isinstance(params["local_lf_report_dir"], (list, dict, set)) else params["local_lf_report_dir"]
+                        report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
 
-            elif test_name == "ftp_test":
-                obj_no=1
-                obj_name = "ftp_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.ftp_obj_dict[ce]:
-                    # obj_name = f"ftp_test_{obj_no}"
-                    if ce == "parallel":
-                        obj_no = ''
-                    params = self.ftp_obj_dict[ce][obj_name]["data"].copy()
-                    ftp_data = params["ftp_data"].copy() if isinstance(params["ftp_data"], (list, dict, set)) else params["ftp_data"]
-                    date = params["date"].copy() if isinstance(params["date"], (list, dict, set)) else params["date"]
-                    input_setup_info = params["input_setup_info"].copy() if isinstance(params["input_setup_info"], (list, dict, set)) else params["input_setup_info"]
-                    test_rig = params["test_rig"].copy() if isinstance(params["test_rig"], (list, dict, set)) else params["test_rig"]
-                    test_tag = params["test_tag"].copy() if isinstance(params["test_tag"], (list, dict, set)) else params["test_tag"]
-                    dut_hw_version = params["dut_hw_version"].copy() if isinstance(params["dut_hw_version"], (list, dict, set)) else params["dut_hw_version"]
-                    dut_sw_version = params["dut_sw_version"].copy() if isinstance(params["dut_sw_version"], (list, dict, set)) else params["dut_sw_version"]
-                    dut_model_num = params["dut_model_num"].copy() if isinstance(params["dut_model_num"], (list, dict, set)) else params["dut_model_num"]
-                    dut_serial_num = params["dut_serial_num"].copy() if isinstance(params["dut_serial_num"], (list, dict, set)) else params["dut_serial_num"]
-                    test_id = params["test_id"].copy() if isinstance(params["test_id"], (list, dict, set)) else params["test_id"]
-                    bands = params["bands"].copy() if isinstance(params["bands"], (list, dict, set)) else params["bands"]
-                    csv_outfile = params["csv_outfile"].copy() if isinstance(params["csv_outfile"], (list, dict, set)) else params["csv_outfile"]
-                    local_lf_report_dir = params["local_lf_report_dir"].copy() if isinstance(params["local_lf_report_dir"], (list, dict, set)) else params["local_lf_report_dir"]
-                    report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
+                        # Optional parameter
+                        config_devices = ""
+                        if "config_devices" in params:
+                            config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
 
-                    # Optional parameter
-                    config_devices = ""
-                    if "config_devices" in params:
-                        config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
+                        no_of_stations = ""
+                        duration = ""
+                        x_fig_size = 18
+                        y_fig_size = len(self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list1) * .5 + 4
 
-                    no_of_stations = ""
-                    duration = ""
-                    x_fig_size = 18
-                    y_fig_size = len(self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list1) * .5 + 4
+                        if int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) < 60:
+                            duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) + "s"
+                        elif int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration == 60) or (int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) > 60 and int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) < 3600):
+                            duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration / 60) + "m"
+                        else:
+                            if int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration == 3600) or (int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) > 3600):
+                                duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration / 3600) + "h"
 
-                    if int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) < 60:
-                        duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) + "s"
-                    elif int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration == 60) or (int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) > 60 and int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) < 3600):
-                        duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration / 60) + "m"
-                    else:
-                        if int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration == 3600) or (int(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration) > 3600):
-                            duration = str(self.ftp_obj_dict[ce][obj_name]["obj"].traffic_duration / 3600) + "h"
+                        client_list = []
+                        if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Real":
+                            client_list = self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list1
+                            android_devices, windows_devices, linux_devices, mac_devices = 0, 0, 0, 0
+                            all_devices_names = []
+                            device_type = []
+                            total_devices = ""
+                            for i in self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list:
+                                split_device_name = i.split(" ")
+                                if 'android' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Android)"))
+                                    device_type.append("Android")
+                                    android_devices += 1
+                                elif 'Win' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Windows)"))
+                                    device_type.append("Windows")
+                                    windows_devices += 1
+                                elif 'Lin' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Linux)"))
+                                    device_type.append("Linux")
+                                    linux_devices += 1
+                                elif 'Mac' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Mac)"))
+                                    device_type.append("Mac")
+                                    mac_devices += 1
 
-                    client_list = []
-                    if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Real":
-                        client_list = self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list1
-                        android_devices, windows_devices, linux_devices, mac_devices = 0, 0, 0, 0
-                        all_devices_names = []
-                        device_type = []
-                        total_devices = ""
-                        for i in self.ftp_obj_dict[ce][obj_name]["obj"].real_client_list:
-                            split_device_name = i.split(" ")
-                            if 'android' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Android)"))
-                                device_type.append("Android")
-                                android_devices += 1
-                            elif 'Win' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Windows)"))
-                                device_type.append("Windows")
-                                windows_devices += 1
-                            elif 'Lin' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Linux)"))
-                                device_type.append("Linux")
-                                linux_devices += 1
-                            elif 'Mac' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Mac)"))
-                                device_type.append("Mac")
-                                mac_devices += 1
+                            if android_devices > 0:
+                                total_devices += f" Android({android_devices})"
+                            if windows_devices > 0:
+                                total_devices += f" Windows({windows_devices})"
+                            if linux_devices > 0:
+                                total_devices += f" Linux({linux_devices})"
+                            if mac_devices > 0:
+                                total_devices += f" Mac({mac_devices})"
+                        else:
+                            if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Virtual":
+                                client_list = self.ftp_obj_dict[ce][obj_name]["obj"].station_list
+                        if 'ftp_test' not in self.test_count_dict:
+                            self.test_count_dict['ftp_test']=0
+                        self.test_count_dict['ftp_test']+=1
+                        self.overall_report.set_obj_html(_obj_title=f'FTP Test ', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.set_table_title("Test Setup Information")
+                        self.overall_report.build_table_title()
 
-                        if android_devices > 0:
-                            total_devices += f" Android({android_devices})"
-                        if windows_devices > 0:
-                            total_devices += f" Windows({windows_devices})"
-                        if linux_devices > 0:
-                            total_devices += f" Linux({linux_devices})"
-                        if mac_devices > 0:
-                            total_devices += f" Mac({mac_devices})"
-                    else:
                         if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Virtual":
-                            client_list = self.ftp_obj_dict[ce][obj_name]["obj"].station_list
-                    if 'ftp_test' not in self.test_count_dict:
-                        self.test_count_dict['ftp_test']=0
-                    self.test_count_dict['ftp_test']+=1
-                    self.overall_report.set_obj_html(_obj_title=f'FTP Test ', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.set_table_title("Test Setup Information")
-                    self.overall_report.build_table_title()
+                            no_of_stations = str(len(self.ftp_obj_dict[ce][obj_name]["obj"].station_list))
+                        else:
+                            no_of_stations = str(len(self.ftp_obj_dict[ce][obj_name]["obj"].input_devices_list))
 
-                    if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Virtual":
-                        no_of_stations = str(len(self.ftp_obj_dict[ce][obj_name]["obj"].station_list))
-                    else:
-                        no_of_stations = str(len(self.ftp_obj_dict[ce][obj_name]["obj"].input_devices_list))
-
-                    if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Real":
-                        if config_devices == "":
+                        if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == "Real":
+                            if config_devices == "":
+                                test_setup_info = {
+                                    "AP Name": self.ftp_obj_dict[ce][obj_name]["obj"].ap_name,
+                                    "SSID": self.ftp_obj_dict[ce][obj_name]["obj"].ssid,
+                                    "Security": self.ftp_obj_dict[ce][obj_name]["obj"].security,
+                                    "Device List": ", ".join(all_devices_names),
+                                    "No of Devices": "Total" + f"({no_of_stations})" + total_devices,
+                                    "Failed CXs": self.ftp_obj_dict[ce][obj_name]["obj"].failed_cx if self.ftp_obj_dict[ce][obj_name]["obj"].failed_cx else "NONE",
+                                    "File size": self.ftp_obj_dict[ce][obj_name]["obj"].file_size,
+                                    "File location": "/home/lanforge",
+                                    "Traffic Direction": self.ftp_obj_dict[ce][obj_name]["obj"].direction,
+                                    "Traffic Duration ": duration
+                                }
+                            else:
+                                group_names = ', '.join(config_devices.keys())
+                                profile_names = ', '.join(config_devices.values())
+                                configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                                test_setup_info = {
+                                    "AP Name": self.ftp_obj_dict[ce][obj_name]["obj"].ap_name,
+                                    'Configuration': configmap,
+                                    "No of Devices": "Total" + f"({no_of_stations})" + total_devices,
+                                    "File size": self.ftp_obj_dict[ce][obj_name]["obj"].file_size,
+                                    "File location": "/home/lanforge",
+                                    "Traffic Direction": self.ftp_obj_dict[ce][obj_name]["obj"].direction,
+                                    "Traffic Duration ": duration
+                                }
+                        else:
                             test_setup_info = {
                                 "AP Name": self.ftp_obj_dict[ce][obj_name]["obj"].ap_name,
                                 "SSID": self.ftp_obj_dict[ce][obj_name]["obj"].ssid,
                                 "Security": self.ftp_obj_dict[ce][obj_name]["obj"].security,
-                                "Device List": ", ".join(all_devices_names),
-                                "No of Devices": "Total" + f"({no_of_stations})" + total_devices,
-                                "Failed CXs": self.ftp_obj_dict[ce][obj_name]["obj"].failed_cx if self.ftp_obj_dict[ce][obj_name]["obj"].failed_cx else "NONE",
+                                "No of Devices": no_of_stations,
                                 "File size": self.ftp_obj_dict[ce][obj_name]["obj"].file_size,
                                 "File location": "/home/lanforge",
                                 "Traffic Direction": self.ftp_obj_dict[ce][obj_name]["obj"].direction,
                                 "Traffic Duration ": duration
                             }
-                        else:
-                            group_names = ', '.join(config_devices.keys())
-                            profile_names = ', '.join(config_devices.values())
-                            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
-                            test_setup_info = {
-                                "AP Name": self.ftp_obj_dict[ce][obj_name]["obj"].ap_name,
-                                'Configuration': configmap,
-                                "No of Devices": "Total" + f"({no_of_stations})" + total_devices,
-                                "File size": self.ftp_obj_dict[ce][obj_name]["obj"].file_size,
-                                "File location": "/home/lanforge",
-                                "Traffic Direction": self.ftp_obj_dict[ce][obj_name]["obj"].direction,
-                                "Traffic Duration ": duration
-                            }
-                    else:
-                        test_setup_info = {
-                            "AP Name": self.ftp_obj_dict[ce][obj_name]["obj"].ap_name,
-                            "SSID": self.ftp_obj_dict[ce][obj_name]["obj"].ssid,
-                            "Security": self.ftp_obj_dict[ce][obj_name]["obj"].security,
-                            "No of Devices": no_of_stations,
-                            "File size": self.ftp_obj_dict[ce][obj_name]["obj"].file_size,
-                            "File location": "/home/lanforge",
-                            "Traffic Direction": self.ftp_obj_dict[ce][obj_name]["obj"].direction,
-                            "Traffic Duration ": duration
-                        }
 
-                    self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
+                        self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
 
-                    self.overall_report.set_obj_html(
-                        _obj_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
-                        _obj=f"The below graph represents number of times a file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client"
-                        f"(WiFi) traffic.  X- axis shows “No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}” and Y-axis shows "
-                        f"Client names.")
+                        self.overall_report.set_obj_html(
+                            _obj_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
+                            _obj=f"The below graph represents number of times a file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client"
+                            f"(WiFi) traffic.  X- axis shows “No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}” and Y-axis shows "
+                            f"Client names.")
 
-                    self.overall_report.build_objective()
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].url_data], _xaxis_name=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
-                                                    _yaxis_name="Client names",
-                                                    _yaxis_categories=[i for i in client_list],
-                                                    _yaxis_label=[i for i in client_list],
-                                                    _yaxis_step=1,
-                                                    _yticks_font=8,
-                                                    _yticks_rotation=None,
-                                                    _graph_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} (Count)",
-                                                    _title_size=16,
-                                                    _figsize=(x_fig_size, y_fig_size),
-                                                    _legend_loc="best",
-                                                    _legend_box=(1.0, 1.0),
-                                                    _color_name=['orange'],
-                                                    _show_bar_value=True,
-                                                    _enable_csv=True,
-                                                    _graph_image_name=f"Total-url_ftp_{obj_no}", _color_edge=['black'],
-                                                    _color=['orange'],
-                                                    _label=[self.ftp_obj_dict[ce][obj_name]["obj"].direction])
-                    graph_png = graph.build_bar_graph_horizontal()
-                    print("graph name {}".format(graph_png))
-                    self.overall_report.set_graph_image(graph_png)
-                    # need to move the graph image to the results
-                    self.overall_report.move_graph_image()
-                    self.overall_report.set_csv_filename(graph_png)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.build_graph()
-                    self.overall_report.set_obj_html(
-                        _obj_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file ",
-                        _obj=f"The below graph represents average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client  "
-                        f"(WiFi) traffic.  X- axis shows “Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} a file ” and Y-axis shows "
-                        f"Client names.")
+                        self.overall_report.build_objective()
+                        graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].url_data], _xaxis_name=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction}",
+                                                        _yaxis_name="Client names",
+                                                        _yaxis_categories=[i for i in client_list],
+                                                        _yaxis_label=[i for i in client_list],
+                                                        _yaxis_step=1,
+                                                        _yticks_font=8,
+                                                        _yticks_rotation=None,
+                                                        _graph_title=f"No of times file {self.ftp_obj_dict[ce][obj_name]['obj'].direction} (Count)",
+                                                        _title_size=16,
+                                                        _figsize=(x_fig_size, y_fig_size),
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _color_name=['orange'],
+                                                        _show_bar_value=True,
+                                                        _enable_csv=True,
+                                                        _graph_image_name=f"Total-url_ftp_{obj_no}", _color_edge=['black'],
+                                                        _color=['orange'],
+                                                        _label=[self.ftp_obj_dict[ce][obj_name]["obj"].direction])
+                        graph_png = graph.build_bar_graph_horizontal()
+                        print("graph name {}".format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        # need to move the graph image to the results
+                        self.overall_report.move_graph_image()
+                        self.overall_report.set_csv_filename(graph_png)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.build_graph()
+                        self.overall_report.set_obj_html(
+                            _obj_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file ",
+                            _obj=f"The below graph represents average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} for each client  "
+                            f"(WiFi) traffic.  X- axis shows “Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} a file ” and Y-axis shows "
+                            f"Client names.")
 
-                    self.overall_report.build_objective()
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg], _xaxis_name=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file in ms",
-                                                    _yaxis_name="Client names",
-                                                    _yaxis_categories=[i for i in client_list],
-                                                    _yaxis_label=[i for i in client_list],
-                                                    _yaxis_step=1,
-                                                    _yticks_font=8,
-                                                    _yticks_rotation=None,
-                                                    _graph_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file",
-                                                    _title_size=16,
-                                                    _figsize=(x_fig_size, y_fig_size),
-                                                    _legend_loc="best",
-                                                    _legend_box=(1.0, 1.0),
-                                                    _color_name=['steelblue'],
-                                                    _show_bar_value=True,
-                                                    _enable_csv=True,
-                                                    _graph_image_name=f"ucg-avg_ftp_{obj_no}", _color_edge=['black'],
-                                                    _color=['steelblue'],
-                                                    _label=[self.ftp_obj_dict[ce][obj_name]["obj"].direction])
-                    graph_png = graph.build_bar_graph_horizontal()
-                    print("graph name {}".format(graph_png))
-                    self.overall_report.set_graph_image(graph_png)
-                    self.overall_report.move_graph_image()
-                    # need to move the graph image to the results
-                    self.overall_report.set_csv_filename(graph_png)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.build_graph()
-                    if(self.ftp_obj_dict[ce][obj_name]["obj"].dowebgui and self.ftp_obj_dict[ce][obj_name]["obj"].get_live_view):
-                        for floor in range(0,int(self.ftp_obj_dict[ce][obj_name]["obj"].total_floors)):
-                            script_dir = os.path.dirname(os.path.abspath(__file__))
-                            throughput_image_path = os.path.join(script_dir, "heatmap_images", f"ftp_{self.ftp_obj_dict[ce][obj_name]['obj'].test_name}_{floor+1}.png")
-                            # rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.test_name}_rssi_{floor+1}.png")
-                            timeout = 60  # seconds
-                            start_time = time.time()
+                        self.overall_report.build_objective()
+                        graph = lf_bar_graph_horizontal(_data_set=[self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg], _xaxis_name=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file in ms",
+                                                        _yaxis_name="Client names",
+                                                        _yaxis_categories=[i for i in client_list],
+                                                        _yaxis_label=[i for i in client_list],
+                                                        _yaxis_step=1,
+                                                        _yticks_font=8,
+                                                        _yticks_rotation=None,
+                                                        _graph_title=f"Average time taken to {self.ftp_obj_dict[ce][obj_name]['obj'].direction} file",
+                                                        _title_size=16,
+                                                        _figsize=(x_fig_size, y_fig_size),
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _color_name=['steelblue'],
+                                                        _show_bar_value=True,
+                                                        _enable_csv=True,
+                                                        _graph_image_name=f"ucg-avg_ftp_{obj_no}", _color_edge=['black'],
+                                                        _color=['steelblue'],
+                                                        _label=[self.ftp_obj_dict[ce][obj_name]["obj"].direction])
+                        graph_png = graph.build_bar_graph_horizontal()
+                        print("graph name {}".format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        self.overall_report.move_graph_image()
+                        # need to move the graph image to the results
+                        self.overall_report.set_csv_filename(graph_png)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.build_graph()
+                        if(self.ftp_obj_dict[ce][obj_name]["obj"].dowebgui and self.ftp_obj_dict[ce][obj_name]["obj"].get_live_view):
+                            for floor in range(0,int(self.ftp_obj_dict[ce][obj_name]["obj"].total_floors)):
+                                script_dir = os.path.dirname(os.path.abspath(__file__))
+                                throughput_image_path = os.path.join(script_dir, "heatmap_images", f"ftp_{self.ftp_obj_dict[ce][obj_name]['obj'].test_name}_{floor+1}.png")
+                                # rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.test_name}_rssi_{floor+1}.png")
+                                timeout = 60  # seconds
+                                start_time = time.time()
 
-                            while not (os.path.exists(throughput_image_path)):
-                                if time.time() - start_time > timeout:
-                                    print("Timeout: Images not found within 60 seconds.")
-                                    break
-                                time.sleep(1)
-                            while not os.path.exists(throughput_image_path):
+                                while not (os.path.exists(throughput_image_path)):
+                                    if time.time() - start_time > timeout:
+                                        print("Timeout: Images not found within 60 seconds.")
+                                        break
+                                    time.sleep(1)
+                                while not os.path.exists(throughput_image_path):
+                                    if os.path.exists(throughput_image_path):
+                                        break
+                                    # time.sleep(10)
                                 if os.path.exists(throughput_image_path):
-                                    break
-                                # time.sleep(10)
-                            if os.path.exists(throughput_image_path):
-                                self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
-                                self.overall_report.build_custom()
-                                # self.overall_report.set_custom_html("<h2>Average Throughput Heatmap: </h2>")
-                                # self.overall_report.build_custom()
-                                self.overall_report.set_custom_html(f'<img src="file://{throughput_image_path}"></img>')
-                                self.overall_report.build_custom()
-                                # os.remove(throughput_image_path)
-                    self.overall_report.set_obj_html("File Download Time (sec)", "The below table will provide information of "
-                                            "minimum, maximum and the average time taken by clients to download a file in seconds")
-                    self.overall_report.build_objective()
-                    dataframe2 = {
-                        "Minimum": [str(round(min(self.ftp_obj_dict[ce][obj_name]["obj"].uc_min) / 1000, 1))],
-                        "Maximum": [str(round(max(self.ftp_obj_dict[ce][obj_name]["obj"].uc_max) / 1000, 1))],
-                        "Average": [str(round((sum(self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg) / len(client_list)) / 1000, 1))]
-                    }
-                    dataframe3 = pd.DataFrame(dataframe2)
-                    self.overall_report.set_table_dataframe(dataframe3)
-                    self.overall_report.build_table()
-                    self.overall_report.set_table_title("Overall Results")
-                    self.overall_report.build_table_title()
-                    if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == 'Real':
-                        # Calculating the pass/fail criteria when either expected_passfail_val or csv_name is provided
-                        if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
-                            self.ftp_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(client_list)
-                        # When groups are provided a seperate table will be generated for each group using generate_dataframe
-                        if self.ftp_obj_dict[ce][obj_name]["obj"].group_name:
-                            for key, val in self.ftp_obj_dict[ce][obj_name]["obj"].group_device_map.items():
-                                if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
-                                    dataframe = self.ftp_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, client_list, self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list, self.ftp_obj_dict[ce][obj_name]["obj"].channel_list, self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list, self.ftp_obj_dict[ce][obj_name]["obj"].mode_list,
-                                                                        self.ftp_obj_dict[ce][obj_name]["obj"].url_data, self.ftp_obj_dict[ce][obj_name]["obj"].test_input_list, self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg, self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd, self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate, self.ftp_obj_dict[ce][obj_name]["obj"].pass_fail_list)
-                                else:
-                                    dataframe = self.ftp_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, client_list, self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list, self.ftp_obj_dict[ce][obj_name]["obj"].channel_list, self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list,
-                                                                        self.ftp_obj_dict[ce][obj_name]["obj"].mode_list, self.ftp_obj_dict[ce][obj_name]["obj"].url_data, [], self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg, self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd, self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate, [])
+                                    self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
+                                    self.overall_report.build_custom()
+                                    # self.overall_report.set_custom_html("<h2>Average Throughput Heatmap: </h2>")
+                                    # self.overall_report.build_custom()
+                                    self.overall_report.set_custom_html(f'<img src="file://{throughput_image_path}"></img>')
+                                    self.overall_report.build_custom()
+                                    # os.remove(throughput_image_path)
+                        self.overall_report.set_obj_html("File Download Time (sec)", "The below table will provide information of "
+                                                "minimum, maximum and the average time taken by clients to download a file in seconds")
+                        self.overall_report.build_objective()
+                        dataframe2 = {
+                            "Minimum": [str(round(min(self.ftp_obj_dict[ce][obj_name]["obj"].uc_min) / 1000, 1))],
+                            "Maximum": [str(round(max(self.ftp_obj_dict[ce][obj_name]["obj"].uc_max) / 1000, 1))],
+                            "Average": [str(round((sum(self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg) / len(client_list)) / 1000, 1))]
+                        }
+                        dataframe3 = pd.DataFrame(dataframe2)
+                        self.overall_report.set_table_dataframe(dataframe3)
+                        self.overall_report.build_table()
+                        self.overall_report.set_table_title("Overall Results")
+                        self.overall_report.build_table_title()
+                        if self.ftp_obj_dict[ce][obj_name]["obj"].clients_type == 'Real':
+                            # Calculating the pass/fail criteria when either expected_passfail_val or csv_name is provided
+                            if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
+                                self.ftp_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(client_list)
+                            # When groups are provided a seperate table will be generated for each group using generate_dataframe
+                            if self.ftp_obj_dict[ce][obj_name]["obj"].group_name:
+                                for key, val in self.ftp_obj_dict[ce][obj_name]["obj"].group_device_map.items():
+                                    if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
+                                        dataframe = self.ftp_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, client_list, self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list, self.ftp_obj_dict[ce][obj_name]["obj"].channel_list, self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list, self.ftp_obj_dict[ce][obj_name]["obj"].mode_list,
+                                                                            self.ftp_obj_dict[ce][obj_name]["obj"].url_data, self.ftp_obj_dict[ce][obj_name]["obj"].test_input_list, self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg, self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd, self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate, self.ftp_obj_dict[ce][obj_name]["obj"].pass_fail_list)
+                                    else:
+                                        dataframe = self.ftp_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, client_list, self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list, self.ftp_obj_dict[ce][obj_name]["obj"].channel_list, self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list,
+                                                                            self.ftp_obj_dict[ce][obj_name]["obj"].mode_list, self.ftp_obj_dict[ce][obj_name]["obj"].url_data, [], self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg, self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd, self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate, [])
 
-                                if dataframe:
-                                    self.overall_report.set_obj_html("", "Group: {}".format(key))
-                                    self.overall_report.build_objective()
-                                    dataframe1 = pd.DataFrame(dataframe)
-                                    self.overall_report.set_table_dataframe(dataframe1)
-                                    self.overall_report.build_table()
+                                    if dataframe:
+                                        self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                        self.overall_report.build_objective()
+                                        dataframe1 = pd.DataFrame(dataframe)
+                                        self.overall_report.set_table_dataframe(dataframe1)
+                                        self.overall_report.build_table()
+                            else:
+                                dataframe = {
+                                    " Clients": client_list,
+                                    " MAC ": self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list,
+                                    " Channel": self.ftp_obj_dict[ce][obj_name]["obj"].channel_list,
+                                    " SSID ": self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list,
+                                    " Mode": self.ftp_obj_dict[ce][obj_name]["obj"].mode_list,
+                                    " No of times File downloaded ": self.ftp_obj_dict[ce][obj_name]["obj"].url_data,
+                                    " Time Taken to Download file (ms)": self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg,
+                                    " Bytes-rd (Mega Bytes)": self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd,
+                                    " RX RATE (Mbps) ": self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate,
+                                    "Failed Urls": self.ftp_obj_dict[ce][obj_name]["obj"].total_err
+                                }
+                                if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
+                                    dataframe[" Expected output "] = self.ftp_obj_dict[ce][obj_name]["obj"].test_input_list
+                                    dataframe[" Status "] = self.ftp_obj_dict[ce][obj_name]["obj"].pass_fail_list
+
+                                dataframe1 = pd.DataFrame(dataframe)
+                                self.overall_report.set_table_dataframe(dataframe1)
+                                self.overall_report.build_table()
+
                         else:
                             dataframe = {
                                 " Clients": client_list,
@@ -5543,291 +5570,640 @@ class Candela(Realm):
                                 " No of times File downloaded ": self.ftp_obj_dict[ce][obj_name]["obj"].url_data,
                                 " Time Taken to Download file (ms)": self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg,
                                 " Bytes-rd (Mega Bytes)": self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd,
-                                " RX RATE (Mbps) ": self.ftp_obj_dict[ce][obj_name]["obj"].rx_rate,
-                                "Failed Urls": self.ftp_obj_dict[ce][obj_name]["obj"].total_err
                             }
-                            if self.ftp_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ftp_obj_dict[ce][obj_name]["obj"].csv_name:
-                                dataframe[" Expected output "] = self.ftp_obj_dict[ce][obj_name]["obj"].test_input_list
-                                dataframe[" Status "] = self.ftp_obj_dict[ce][obj_name]["obj"].pass_fail_list
-
                             dataframe1 = pd.DataFrame(dataframe)
                             self.overall_report.set_table_dataframe(dataframe1)
                             self.overall_report.build_table()
+                        # self.overall_report.build_footer()
+                        # html_file = self.overall_report.write_html()
+                        # logger.info("returned file {}".format(html_file))
+                        # logger.info(html_file)
+                        # self.overall_report.write_pdf()
 
-                    else:
-                        dataframe = {
-                            " Clients": client_list,
-                            " MAC ": self.ftp_obj_dict[ce][obj_name]["obj"].mac_id_list,
-                            " Channel": self.ftp_obj_dict[ce][obj_name]["obj"].channel_list,
-                            " SSID ": self.ftp_obj_dict[ce][obj_name]["obj"].ssid_list,
-                            " Mode": self.ftp_obj_dict[ce][obj_name]["obj"].mode_list,
-                            " No of times File downloaded ": self.ftp_obj_dict[ce][obj_name]["obj"].url_data,
-                            " Time Taken to Download file (ms)": self.ftp_obj_dict[ce][obj_name]["obj"].uc_avg,
-                            " Bytes-rd (Mega Bytes)": self.ftp_obj_dict[ce][obj_name]["obj"].bytes_rd,
-                        }
-                        dataframe1 = pd.DataFrame(dataframe)
-                        self.overall_report.set_table_dataframe(dataframe1)
-                        self.overall_report.build_table()
-                    # self.overall_report.build_footer()
-                    # html_file = self.overall_report.write_html()
-                    # logger.info("returned file {}".format(html_file))
-                    # logger.info(html_file)
-                    # self.overall_report.write_pdf()
+                        if csv_outfile is not None:
+                            current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+                            csv_outfile = "{}_{}-test_l4_ftp.csv".format(
+                                csv_outfile, current_time)
+                            csv_outfile = self.overall_report.file_add_path(csv_outfile)
+                            logger.info("csv output file : {}".format(csv_outfile))
+                        if ce == "series":
+                            obj_no+=1
+                            obj_name = f"ftp_test_{obj_no}"
+                        else:
+                            break
 
-                    if csv_outfile is not None:
-                        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-                        csv_outfile = "{}_{}-test_l4_ftp.csv".format(
-                            csv_outfile, current_time)
-                        csv_outfile = self.overall_report.file_add_path(csv_outfile)
-                        logger.info("csv output file : {}".format(csv_outfile))
+                elif test_name == "thput_test":
+                    obj_no=1
+                    obj_name = "thput_test"
                     if ce == "series":
-                        obj_no+=1
-                        obj_name = f"ftp_test_{obj_no}"
-                    else:
-                        break
-
-            elif test_name == "thput_test":
-                obj_no=1
-                obj_name = "thput_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.thput_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    self.overall_report.set_obj_html(_obj_title=f'THROUGHPUT Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    # obj_name = f"thput_test_{obj_no}"
-                    params = self.thput_obj_dict[ce][obj_name]["data"].copy()
-                    iterations_before_test_stopped_by_user = params["iterations_before_test_stopped_by_user"].copy() if isinstance(params["iterations_before_test_stopped_by_user"], (list, dict, set)) else params["iterations_before_test_stopped_by_user"]
-                    incremental_capacity_list = params["incremental_capacity_list"].copy() if isinstance(params["incremental_capacity_list"], (list, dict, set)) else params["incremental_capacity_list"]
-                    data = params["data"].copy() if isinstance(params["data"], (list, dict, set)) else params["data"]
-                    data1 = params["data1"].copy() if isinstance(params["data1"], (list, dict, set)) else params["data1"]
-                    report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
-
-                    self.thput_obj_dict[ce][obj_name]["obj"].ssid_list = self.thput_obj_dict[ce][obj_name]["obj"].get_ssid_list(self.thput_obj_dict[ce][obj_name]["obj"].input_devices_list)
-                    self.thput_obj_dict[ce][obj_name]["obj"].signal_list, self.thput_obj_dict[ce][obj_name]["obj"].channel_list, self.thput_obj_dict[ce][obj_name]["obj"].mode_list, self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list, rx_rate_list = self.thput_obj_dict[ce][obj_name]["obj"].get_signal_and_channel_data(self.thput_obj_dict[ce][obj_name]["obj"].input_devices_list)
-                    selected_real_clients_names = params["selected_real_clients_names"] if "selected_real_clients_names" in params else None 
-                    if selected_real_clients_names is not None:
-                        self.thput_obj_dict[ce][obj_name]["obj"].num_stations = selected_real_clients_names
-
-                    # Initialize the report object
-                    if self.thput_obj_dict[ce][obj_name]["obj"].do_interopability == False:
-                        # df.to_csv(os.path.join(report_path_date_time, 'throughput_data.csv'))
-                        # For groups and profiles configuration through webgui
-
-                        self.overall_report.set_obj_html(_obj_title="Input Parameters",
-                                            _obj="The below tables provides the input parameters for the test")
+                        obj_name += "_1"
+                    while obj_name in self.thput_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        self.overall_report.set_obj_html(_obj_title=f'THROUGHPUT Test {obj_no}', _obj="")
                         self.overall_report.build_objective()
+                        # obj_name = f"thput_test_{obj_no}"
+                        params = self.thput_obj_dict[ce][obj_name]["data"].copy()
+                        iterations_before_test_stopped_by_user = params["iterations_before_test_stopped_by_user"].copy() if isinstance(params["iterations_before_test_stopped_by_user"], (list, dict, set)) else params["iterations_before_test_stopped_by_user"]
+                        incremental_capacity_list = params["incremental_capacity_list"].copy() if isinstance(params["incremental_capacity_list"], (list, dict, set)) else params["incremental_capacity_list"]
+                        data = params["data"].copy() if isinstance(params["data"], (list, dict, set)) else params["data"]
+                        data1 = params["data1"].copy() if isinstance(params["data1"], (list, dict, set)) else params["data1"]
+                        report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
 
-                        # Initialize counts and lists for device types
-                        android_devices, windows_devices, linux_devices, mac_devices, ios_devices = 0, 0, 0, 0, 0
-                        all_devices_names = []
-                        device_type = []
-                        packet_size_text = ''
-                        total_devices = ""
-                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                            packet_size_text = 'AUTO'
-                        else:
-                            packet_size_text = str(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu) + ' Bytes'
-                        # Determine load type name based on self.thput_obj_dict[ce][obj_name]["obj"].load_type
-                        if self.thput_obj_dict[ce][obj_name]["obj"].load_type == "wc_intended_load":
-                            load_type_name = "Intended Load"
-                        else:
-                            load_type_name = "Per Client Load"
-                        for i in self.thput_obj_dict[ce][obj_name]["obj"].real_client_list:
-                            split_device_name = i.split(" ")
-                            if 'android' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Android)"))
-                                device_type.append("Android")
-                                android_devices += 1
-                            elif 'Win' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Windows)"))
-                                device_type.append("Windows")
-                                windows_devices += 1
-                            elif 'Lin' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Linux)"))
-                                device_type.append("Linux")
-                                linux_devices += 1
-                            elif 'Mac' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Mac)"))
-                                device_type.append("Mac")
-                                mac_devices += 1
-                            elif 'iOS' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(iOS)"))
-                                device_type.append("iOS")
-                                ios_devices += 1
+                        self.thput_obj_dict[ce][obj_name]["obj"].ssid_list = self.thput_obj_dict[ce][obj_name]["obj"].get_ssid_list(self.thput_obj_dict[ce][obj_name]["obj"].input_devices_list)
+                        self.thput_obj_dict[ce][obj_name]["obj"].signal_list, self.thput_obj_dict[ce][obj_name]["obj"].channel_list, self.thput_obj_dict[ce][obj_name]["obj"].mode_list, self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list, rx_rate_list = self.thput_obj_dict[ce][obj_name]["obj"].get_signal_and_channel_data(self.thput_obj_dict[ce][obj_name]["obj"].input_devices_list)
+                        selected_real_clients_names = params["selected_real_clients_names"] if "selected_real_clients_names" in params else None 
+                        if selected_real_clients_names is not None:
+                            self.thput_obj_dict[ce][obj_name]["obj"].num_stations = selected_real_clients_names
 
-                        # Build total_devices string based on counts
-                        if android_devices > 0:
-                            total_devices += f" Android({android_devices})"
-                        if windows_devices > 0:
-                            total_devices += f" Windows({windows_devices})"
-                        if linux_devices > 0:
-                            total_devices += f" Linux({linux_devices})"
-                        if mac_devices > 0:
-                            total_devices += f" Mac({mac_devices})"
-                        if ios_devices > 0:
-                            total_devices += f" iOS({ios_devices})"
+                        # Initialize the report object
+                        if self.thput_obj_dict[ce][obj_name]["obj"].do_interopability == False:
+                            # df.to_csv(os.path.join(report_path_date_time, 'throughput_data.csv'))
+                            # For groups and profiles configuration through webgui
 
-                        # Determine incremental_capacity_data based on self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity
-                        if self.thput_obj_dict[ce][obj_name]["obj"].gave_incremental:
-                            incremental_capacity_data = "No Incremental values provided"
-                        elif len(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity) == 1:
-                            if len(incremental_capacity_list) == 1:
-                                incremental_capacity_data = str(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity[0])
+                            self.overall_report.set_obj_html(_obj_title="Input Parameters",
+                                                _obj="The below tables provides the input parameters for the test")
+                            self.overall_report.build_objective()
+
+                            # Initialize counts and lists for device types
+                            android_devices, windows_devices, linux_devices, mac_devices, ios_devices = 0, 0, 0, 0, 0
+                            all_devices_names = []
+                            device_type = []
+                            packet_size_text = ''
+                            total_devices = ""
+                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                packet_size_text = 'AUTO'
                             else:
-                                incremental_capacity_data = ','.join(map(str, incremental_capacity_list))
-                        elif (len(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity) > 1):
-                            self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity = self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity.split(',')
-                            incremental_capacity_data = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity)
-                        else:
-                            incremental_capacity_data = "None"
+                                packet_size_text = str(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu) + ' Bytes'
+                            # Determine load type name based on self.thput_obj_dict[ce][obj_name]["obj"].load_type
+                            if self.thput_obj_dict[ce][obj_name]["obj"].load_type == "wc_intended_load":
+                                load_type_name = "Intended Load"
+                            else:
+                                load_type_name = "Per Client Load"
+                            for i in self.thput_obj_dict[ce][obj_name]["obj"].real_client_list:
+                                split_device_name = i.split(" ")
+                                if 'android' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Android)"))
+                                    device_type.append("Android")
+                                    android_devices += 1
+                                elif 'Win' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Windows)"))
+                                    device_type.append("Windows")
+                                    windows_devices += 1
+                                elif 'Lin' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Linux)"))
+                                    device_type.append("Linux")
+                                    linux_devices += 1
+                                elif 'Mac' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Mac)"))
+                                    device_type.append("Mac")
+                                    mac_devices += 1
+                                elif 'iOS' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(iOS)"))
+                                    device_type.append("iOS")
+                                    ios_devices += 1
 
-                        # Construct test_setup_info dictionary for test setup table
-                        if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
-                            group_names = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].configdevices.keys())
-                            profile_names = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].configdevices.values())
-                            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
-                            test_setup_info = {
-                                "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
-                                "Configuration": configmap,
-                                "Configured Devices": ", ".join(all_devices_names),
-                                "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
-                                "Increment": incremental_capacity_data,
-                                "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
-                                "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
-                                "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
-                                "Upload Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)) + "Mbps",
-                                "Download Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)) + "Mbps",
-                                "Load Type": load_type_name,
-                                "Packet Size": packet_size_text
-                            }
-                        else:
+                            # Build total_devices string based on counts
+                            if android_devices > 0:
+                                total_devices += f" Android({android_devices})"
+                            if windows_devices > 0:
+                                total_devices += f" Windows({windows_devices})"
+                            if linux_devices > 0:
+                                total_devices += f" Linux({linux_devices})"
+                            if mac_devices > 0:
+                                total_devices += f" Mac({mac_devices})"
+                            if ios_devices > 0:
+                                total_devices += f" iOS({ios_devices})"
+
+                            # Determine incremental_capacity_data based on self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity
+                            if self.thput_obj_dict[ce][obj_name]["obj"].gave_incremental:
+                                incremental_capacity_data = "No Incremental values provided"
+                            elif len(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity) == 1:
+                                if len(incremental_capacity_list) == 1:
+                                    incremental_capacity_data = str(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity[0])
+                                else:
+                                    incremental_capacity_data = ','.join(map(str, incremental_capacity_list))
+                            elif (len(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity) > 1):
+                                self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity = self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity.split(',')
+                                incremental_capacity_data = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].incremental_capacity)
+                            else:
+                                incremental_capacity_data = "None"
+
+                            # Construct test_setup_info dictionary for test setup table
+                            if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
+                                group_names = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].configdevices.keys())
+                                profile_names = ', '.join(self.thput_obj_dict[ce][obj_name]["obj"].configdevices.values())
+                                configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                                test_setup_info = {
+                                    "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
+                                    "Configuration": configmap,
+                                    "Configured Devices": ", ".join(all_devices_names),
+                                    "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
+                                    "Increment": incremental_capacity_data,
+                                    "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
+                                    "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                                    "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
+                                    "Upload Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)) + "Mbps",
+                                    "Download Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)) + "Mbps",
+                                    "Load Type": load_type_name,
+                                    "Packet Size": packet_size_text
+                                }
+                            else:
+                                test_setup_info = {
+                                    "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
+                                    "Device List": ", ".join(all_devices_names),
+                                    "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
+                                    "Increment": incremental_capacity_data,
+                                    "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
+                                    "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                                    "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
+                                    "Upload Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)) + "Mbps",
+                                    "Download Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)) + "Mbps",
+                                    "Load Type": load_type_name,
+                                    "Packet Size": packet_size_text
+                                }
+                            self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
+
+                            # Loop through iterations and build graphs, tables for each iteration
+                            for i in range(len(iterations_before_test_stopped_by_user)):
+                                # rssi_signal_data=[]
+                                devices_on_running = []
+                                download_data = []
+                                upload_data = []
+                                upload_drop = []
+                                download_drop = []
+                                devices_data_to_create_bar_graph = []
+                                # signal_data=[]
+                                direction_in_table = []
+                                packet_size_in_table = []
+                                upload_list, download_list = [], []
+                                rssi_data = []
+                                data_iter = data[data['Iteration'] == i + 1]
+                                avg_rtt_data = []
+
+                                # for sig in self.thput_obj_dict[ce][obj_name]["obj"].signal_list[0:int(incremental_capacity_list[i])]:
+                                #     signal_data.append(int(sig)*(-1))
+                                # rssi_signal_data.append(signal_data)
+
+                                # Fetch devices_on_running from real_client_list
+                                for j in range(data1[i][-1]):
+                                    devices_on_running.append(self.thput_obj_dict[ce][obj_name]["obj"].real_client_list[j].split(" ")[-1])
+
+                                # Fetch download_data and upload_data based on load_type and direction
+                                for k in devices_on_running:
+                                    # individual_device_data=[]
+
+                                    # Checking individual device download and upload rate by searching device name in dataframe
+                                    columns_with_substring = [col for col in data_iter.columns if k in col]
+                                    filtered_df = data_iter[columns_with_substring]
+                                    dl_len = len(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()) - 1
+                                    ul_len = len(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()) - 1
+                                    if self.thput_obj_dict[ce][obj_name]["obj"].load_type == "wc_intended_load":
+                                        if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+
+                                            # Append average download and upload data from filtered dataframe
+                                            download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            # Append average upload and download drop from filtered dataframe
+                                            upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+                                            download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+
+                                        elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+
+                                            # Append average download data from filtered dataframe
+                                            download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+
+                                            # Append 0 for upload data
+                                            upload_data.append(0)
+
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+                                            download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            # Append average download drop data from filtered dataframe
+                                            download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+
+                                        elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
+
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+                                            download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
+
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+
+                                            # Append Average upload data from filtered dataframe
+                                            upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            # Append 0 for download data
+                                            download_data.append(0)
+                                            # Append average upload drop data from filtered dataframe
+                                            upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+
+                                    else:
+
+                                        if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+                                            # Append average download and upload data from filtered dataframe
+                                            download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            # Append average download and upload drop data from filtered dataframe
+                                            upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            # upload_data.append(filtered_df[[col for col in  filtered_df.columns if "Upload" in col][0]].values.tolist()[-1])
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
+                                            download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
+
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+                                        elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+
+                                            # Append average download data from filtered dataframe
+                                            download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            # Append 0 for upload data
+                                            upload_data.append(0)
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
+                                            download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
+                                            # Append average download drop data from filtered dataframe
+                                            download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+                                        elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
+
+                                            # Calculate and append upload and download throughput to lists
+                                            upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
+                                            download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
+                                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                            avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                            # Append average upload data from filtered dataframe
+                                            upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                            # Append average upload drop data from filtered dataframe
+                                            upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+
+                                            # Append 0 for download data
+                                            download_data.append(0)
+
+                                            if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
+                                                packet_size_in_table.append('AUTO')
+                                            else:
+                                                packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+                                            direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
+
+                                data_set_in_graph = []
+
+                                # Depending on the test direction, retrieve corresponding throughput data,
+                                # organize it into datasets for graphing, and calculate real-time average throughput values accordingly.
+                                if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+                                    download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
+                                    upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(download_values_list)
+                                    data_set_in_graph.append(upload_values_list)
+                                    devices_data_to_create_bar_graph.append(download_data)
+                                    devices_data_to_create_bar_graph.append(upload_data)
+                                    label_data = ['Download', 'Upload']
+                                    real_time_data = (
+                                        f"Real Time Throughput: Achieved Throughput: Download: {round(sum(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps, "
+                                        f"Upload: {round(sum(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
+                                    )
+
+                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+                                    download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(download_values_list)
+                                    devices_data_to_create_bar_graph.append(download_data)
+                                    label_data = ['Download']
+                                    real_time_data = f"Real Time Throughput: Achieved Throughput: Download : {round(((sum(download_data[0:int(incremental_capacity_list[i])]))), 2)} Mbps"
+
+                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
+                                    upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(upload_values_list)
+                                    devices_data_to_create_bar_graph.append(upload_data)
+                                    label_data = ['Upload']
+                                    real_time_data = f"Real Time Throughput: Achieved Throughput: Upload : {round((sum(upload_data[0:int(incremental_capacity_list[i])])), 2)} Mbps"
+
+                                if len(incremental_capacity_list) > 1:
+                                    self.overall_report.set_custom_html(f"<h2><u>Iteration-{i + 1}: Number of Devices Running : {len(devices_on_running)}</u></h2>")
+                                    self.overall_report.build_custom()
+
+                                self.overall_report.set_obj_html(
+                                    _obj_title=f"{real_time_data}",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                graph_png = self.thput_obj_dict[ce][obj_name]["obj"].build_line_graph(
+                                    data_set=data_set_in_graph,
+                                    xaxis_name="Time",
+                                    yaxis_name="Throughput (Mbps)",
+                                    xaxis_categories=data['TIMESTAMP'][data['Iteration'] == i + 1].values.tolist(),
+                                    label=label_data,
+                                    graph_image_name=f"line_graph{i}"
+                                )
+                                logger.info("graph name {}".format(graph_png))
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+
+                                self.overall_report.build_graph()
+                                x_fig_size = 15
+                                y_fig_size = len(devices_on_running) * .5 + 4
+                                self.overall_report.set_obj_html(
+                                    _obj_title="Per Client Avg-Throughput",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                devices_on_running_trimmed = [n[:17] if len(n) > 17 else n for n in devices_on_running]
+                                graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_bar_graph,
+                                                                _xaxis_name="Avg Throughput(Mbps)",
+                                                                _yaxis_name="Devices",
+                                                                _graph_image_name=f"image_name{i}_{obj_no}",
+                                                                _label=label_data,
+                                                                _yaxis_categories=devices_on_running_trimmed,
+                                                                _legend_loc="best",
+                                                                _legend_box=(1.0, 1.0),
+                                                                _show_bar_value=True,
+                                                                _figsize=(x_fig_size, y_fig_size)
+                                                                )
+
+                                graph_png = graph.build_bar_graph_horizontal()
+                                logger.info("graph name {}".format(graph_png))
+                                graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
+                                self.overall_report.set_obj_html(
+                                    _obj_title="RSSI Of The Clients Connected",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                graph = lf_bar_graph_horizontal(_data_set=[rssi_data],
+                                                                _xaxis_name="Signal(-dBm)",
+                                                                _yaxis_name="Devices",
+                                                                _graph_image_name=f"signal_image_name{i}_{obj_no}",
+                                                                _label=['RSSI'],
+                                                                _yaxis_categories=devices_on_running_trimmed,
+                                                                _legend_loc="best",
+                                                                _legend_box=(1.0, 1.0),
+                                                                _show_bar_value=True,
+                                                                _figsize=(x_fig_size, y_fig_size)
+                                                                #    _color=['lightcoral']
+                                                                )
+                                graph_png = graph.build_bar_graph_horizontal()
+                                logger.info("graph name {}".format(graph_png))
+                                graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
+                                if(self.thput_obj_dict[ce][obj_name]["obj"].dowebgui and self.thput_obj_dict[ce][obj_name]["obj"].get_live_view):
+                                    self.thput_obj_dict[ce][obj_name]["obj"].add_live_view_images_to_report(self.overall_report)
+                                    
+                                if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
+                                    self.overall_report.set_obj_html(
+                                        _obj_title="Detailed Result Table For Groups ",
+                                        _obj="The below tables provides detailed information for the throughput test on each group.")
+                                else:
+
+                                    self.overall_report.set_obj_html(
+                                        _obj_title="Detailed Result Table ",
+                                        _obj="The below tables provides detailed information for the throughput test on each device.")
+                                self.overall_report.build_objective()
+                                self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list = [item.split()[-1] if ' ' in item else item for item in self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list]
+                                if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                    test_input_list, pass_fail_list = self.thput_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(device_type, incremental_capacity_list[i], devices_on_running, download_data, upload_data)
+                                if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
+                                    for key, val in self.thput_obj_dict[ce][obj_name]["obj"].group_device_map.items():
+                                        if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                            # Generating Dataframe when Groups with their profiles and pass_fail case is specified
+                                            dataframe = self.thput_obj_dict[ce][obj_name]["obj"].generate_dataframe(val,
+                                                                                device_type[0:int(incremental_capacity_list[i])],
+                                                                                devices_on_running[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
+                                                                                direction_in_table[0:int(incremental_capacity_list[i])],
+                                                                                download_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) for n in avg_rtt_data[0:int(incremental_capacity_list[i])]],
+                                                                                [str(n) + " Mbps" for n in download_data[0:int(incremental_capacity_list[i])]],
+                                                                                upload_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) + " Mbps" for n in upload_data[0:int(incremental_capacity_list[i])]],
+                                                                                ['' if n == 0 else '-' + str(n) + " dbm" for n in rssi_data[0:int(incremental_capacity_list[i])]],
+                                                                                test_input_list,
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
+                                                                                pass_fail_list,
+                                                                                upload_drop,
+                                                                                download_drop)
+                                        # Generating Dataframe for groups when pass_fail case is not specified
+                                        else:
+                                            dataframe = self.thput_obj_dict[ce][obj_name]["obj"].generate_dataframe(val,
+                                                                                device_type[0:int(incremental_capacity_list[i])],
+                                                                                devices_on_running[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
+                                                                                direction_in_table[0:int(incremental_capacity_list[i])],
+                                                                                download_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) for n in avg_rtt_data[0:int(incremental_capacity_list[i])]],
+                                                                                [str(n) + " Mbps" for n in download_data[0:int(incremental_capacity_list[i])]],
+                                                                                upload_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) + " Mbps" for n in upload_data[0:int(incremental_capacity_list[i])]],
+                                                                                ['' if n == 0 else '-' + str(n) + " dbm" for n in rssi_data[0:int(incremental_capacity_list[i])]],
+                                                                                [],
+                                                                                self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
+                                                                                [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
+                                                                                [],
+                                                                                upload_drop,
+                                                                                download_drop)
+                                        if dataframe:
+                                            self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                            self.overall_report.build_objective()
+                                            dataframe1 = pd.DataFrame(dataframe)
+                                            self.overall_report.set_table_dataframe(dataframe1)
+                                            self.overall_report.build_table()
+                                else:
+                                    bk_dataframe = {
+                                        " Device Type ": device_type[0:int(incremental_capacity_list[i])],
+                                        " Username": devices_on_running[0:int(incremental_capacity_list[i])],
+                                        " SSID ": self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
+                                        " MAC ": self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
+                                        " Channel ": self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
+                                        " Mode": self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
+                                        # " Direction":direction_in_table[0:int(incremental_capacity_list[i])],
+                                        " Offered download rate (Mbps) ": download_list[0:int(incremental_capacity_list[i])],
+                                        " Observed Average download rate (Mbps) ": [str(n)  for n in download_data[0:int(incremental_capacity_list[i])]],
+                                        " Offered upload rate (Mbps) ": upload_list[0:int(incremental_capacity_list[i])],
+                                        " Observed Average upload rate (Mbps) ": [str(n)  for n in upload_data[0:int(incremental_capacity_list[i])]],
+                                        " RSSI (dBm) ": ['' if n == 0 else '-' + str(n)  for n in rssi_data[0:int(incremental_capacity_list[i])]],
+                                        # " Link Speed ":self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
+                                        " Average RTT (ms)" : avg_rtt_data[0:int(incremental_capacity_list[i])],
+                                        " Packet Size(Bytes) ": [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
+                                    }
+                                    if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+                                        bk_dataframe[" Average Tx Drop % "] = upload_drop
+                                        bk_dataframe[" Average Rx Drop % "] = download_drop
+                                    elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+                                        bk_dataframe[" Average Rx Drop % "] = download_drop
+                                        # adding rx drop while uploading as 0
+                                        bk_dataframe[" Average Tx Drop % "] = [0.0] * len(download_drop)
+
+                                    else:
+                                        bk_dataframe[" Average Tx Drop % "] = upload_drop
+                                        # adding rx drop while downloading as 0
+                                        bk_dataframe[" Average Rx Drop % "] = [0.0] * len(upload_drop)
+                                    if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                        bk_dataframe[" Expected " + self.thput_obj_dict[ce][obj_name]["obj"].direction + " rate "] = [str(n) + " Mbps" for n in test_input_list]
+                                        bk_dataframe[" Status "] = pass_fail_list
+                                    dataframe1 = pd.DataFrame(bk_dataframe)
+                                    self.overall_report.set_table_dataframe(dataframe1)
+                                    self.overall_report.build_table()
+
+                                self.overall_report.set_custom_html('<hr>')
+                                self.overall_report.build_custom()
+
+                        elif self.thput_obj_dict[ce][obj_name]["obj"].do_interopability:
+
+                            self.overall_report.set_obj_html(_obj_title="Input Parameters",
+                                                _obj="The below tables provides the input parameters for the test")
+                            self.overall_report.build_objective()
+
+                            # Initialize counts and lists for device types
+                            android_devices, windows_devices, linux_devices, mac_devices, ios_devices = 0, 0, 0, 0, 0
+                            all_devices_names = []
+                            device_type = []
+                            total_devices = ""
+
+                            for i in self.thput_obj_dict[ce][obj_name]["obj"].real_client_list:
+                                split_device_name = i.split(" ")
+                                if 'android' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Android)"))
+                                    device_type.append("Android")
+                                    android_devices += 1
+                                elif 'Win' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Windows)"))
+                                    device_type.append("Windows")
+                                    windows_devices += 1
+                                elif 'Lin' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Linux)"))
+                                    device_type.append("Linux")
+                                    linux_devices += 1
+                                elif 'Mac' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(Mac)"))
+                                    device_type.append("Mac")
+                                    mac_devices += 1
+                                elif 'iOS' in split_device_name:
+                                    all_devices_names.append(split_device_name[2] + ("(iOS)"))
+                                    device_type.append("iOS")
+                                    ios_devices += 1
+
+                            # Build total_devices string based on counts
+                            if android_devices > 0:
+                                total_devices += f" Android({android_devices})"
+                            if windows_devices > 0:
+                                total_devices += f" Windows({windows_devices})"
+                            if linux_devices > 0:
+                                total_devices += f" Linux({linux_devices})"
+                            if mac_devices > 0:
+                                total_devices += f" Mac({mac_devices})"
+                            if ios_devices > 0:
+                                total_devices += f" iOS({ios_devices})"
+
+                            # Construct test_setup_info dictionary for test setup table
                             test_setup_info = {
                                 "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
                                 "Device List": ", ".join(all_devices_names),
                                 "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
-                                "Increment": incremental_capacity_data,
                                 "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
                                 "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
                                 "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
                                 "Upload Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)) + "Mbps",
                                 "Download Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)) + "Mbps",
-                                "Load Type": load_type_name,
-                                "Packet Size": packet_size_text
+                                # "Packet Size" : str(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu) + " Bytes"
                             }
-                        self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
+                            self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
 
-                        # Loop through iterations and build graphs, tables for each iteration
-                        for i in range(len(iterations_before_test_stopped_by_user)):
-                            # rssi_signal_data=[]
-                            devices_on_running = []
-                            download_data = []
-                            upload_data = []
-                            upload_drop = []
-                            download_drop = []
-                            devices_data_to_create_bar_graph = []
-                            # signal_data=[]
-                            direction_in_table = []
-                            packet_size_in_table = []
-                            upload_list, download_list = [], []
-                            rssi_data = []
-                            data_iter = data[data['Iteration'] == i + 1]
-                            avg_rtt_data = []
+                            if(not self.thput_obj_dict[ce][obj_name]["obj"].default_config):
 
-                            # for sig in self.thput_obj_dict[ce][obj_name]["obj"].signal_list[0:int(incremental_capacity_list[i])]:
-                            #     signal_data.append(int(sig)*(-1))
-                            # rssi_signal_data.append(signal_data)
+                                self.overall_report.set_obj_html(_obj_title="Configuration Status of Devices",
+                                                    _obj="The table below shows the configuration status of each device (except iOS) with respect to the SSID connection.")
+                                self.overall_report.build_objective()
 
-                            # Fetch devices_on_running from real_client_list
-                            for j in range(data1[i][-1]):
-                                devices_on_running.append(self.thput_obj_dict[ce][obj_name]["obj"].real_client_list[j].split(" ")[-1])
+                                configured_dataframe = self.thput_obj_dict[ce][obj_name]["obj"].convert_to_table(self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check)
+                                dataframe1 = pd.DataFrame(configured_dataframe)
+                                self.overall_report.set_table_dataframe(dataframe1)
+                                self.overall_report.build_table()
 
-                            # Fetch download_data and upload_data based on load_type and direction
-                            for k in devices_on_running:
-                                # individual_device_data=[]
+                            # Loop through iterations and build graphs, tables for each device
+                            for i in range(len(iterations_before_test_stopped_by_user)):
+                                rssi_signal_data = []
+                                devices_on_running = []
+                                download_data = []
+                                upload_data = []
+                                devices_data_to_create_bar_graph = []
+                                signal_data = []
+                                upload_drop = []
+                                download_drop = []
+                                direction_in_table = []
+                                # packet_size_in_table=[]
+                                upload_list, download_list = [], []
+                                rssi_data = []
+                                data_iter = data[data['Iteration'] == i + 1]
+                                avg_rtt_data = []
 
-                                # Checking individual device download and upload rate by searching device name in dataframe
-                                columns_with_substring = [col for col in data_iter.columns if k in col]
-                                filtered_df = data_iter[columns_with_substring]
-                                dl_len = len(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()) - 1
-                                ul_len = len(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()) - 1
-                                if self.thput_obj_dict[ce][obj_name]["obj"].load_type == "wc_intended_load":
+                                # Fetch devices_on_running from real_client_list
+                                devices_on_running.append(self.thput_obj_dict[ce][obj_name]["obj"].real_client_list[data1[i][-1] - 1].split(" ")[-1])
+
+                                if not self.thput_obj_dict[ce][obj_name]["obj"].default_config and devices_on_running[0] in self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check and not self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check[devices_on_running[0]]:
+                                    continue
+
+                                for k in devices_on_running:
+                                    # individual_device_data=[]
+
+                                    # Checking individual device download and upload rate by searching device name in dataframe
+                                    columns_with_substring = [col for col in data_iter.columns if k in col]
+                                    filtered_df = data_iter[columns_with_substring]
+                                    dl_len = len(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()) - 1
+                                    ul_len = len(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()) - 1
                                     if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
 
-                                        # Append average download and upload data from filtered dataframe
+                                        # Append download and upload data from filtered dataframe
                                         download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
                                         upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        # Append average upload and download drop from filtered dataframe
                                         upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
                                         download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                        avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                        rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                        len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                                        # Calculate and append upload and download throughput to lists
-                                        upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-                                        download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
-                                        direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-
-                                    elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-
-                                        # Append average download data from filtered dataframe
-                                        download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-
-                                        # Append 0 for upload data
-                                        upload_data.append(0)
-
-                                        rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                        len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-
-                                        # Calculate and append upload and download throughput to lists
-                                        upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-                                        download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-                                        avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                        # Append average download drop data from filtered dataframe
-                                        download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
-                                        direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-
-                                    elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
-
-                                        # Calculate and append upload and download throughput to lists
-                                        upload_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-                                        download_list.append(str(round((int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000) / int(incremental_capacity_list[i]), 2)))
-
-                                        rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                        len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-
-                                        # Append Average upload data from filtered dataframe
-                                        upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        # Append 0 for download data
-                                        download_data.append(0)
-                                        # Append average upload drop data from filtered dataframe
-                                        upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
-                                        direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-
-                                else:
-
-                                    if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-                                        # Append average download and upload data from filtered dataframe
-                                        download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                        upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        # Append average download and upload drop data from filtered dataframe
-                                        upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                        # upload_data.append(filtered_df[[col for col in  filtered_df.columns if "Upload" in col][0]].values.tolist()[-1])
                                         rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
                                                         len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
                                         avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
@@ -5835,29 +6211,22 @@ class Candela(Realm):
                                         upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
                                         download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
 
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
                                         direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
                                     elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
 
-                                        # Append average download data from filtered dataframe
+                                        # Append download data from filtered dataframe
                                         download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
+
                                         # Append 0 for upload data
                                         upload_data.append(0)
                                         rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
                                                         len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                        download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
                                         avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
                                         # Calculate and append upload and download throughput to lists
                                         upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
                                         download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
-                                        # Append average download drop data from filtered dataframe
-                                        download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
+
                                         direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
                                     elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
 
@@ -5866,703 +6235,357 @@ class Candela(Realm):
                                         download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
                                         rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
                                                         len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                                        avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                        # Append average upload data from filtered dataframe
-                                        upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                        # Append average upload drop data from filtered dataframe
                                         upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
+                                        avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
+                                        # Append upload data from filtered dataframe
+                                        upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
 
                                         # Append 0 for download data
                                         download_data.append(0)
 
-                                        if self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu == -1:
-                                            packet_size_in_table.append('AUTO')
-                                        else:
-                                            packet_size_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu)
                                         direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
 
-                            data_set_in_graph = []
+                                data_set_in_graph = []
 
-                            # Depending on the test direction, retrieve corresponding throughput data,
-                            # organize it into datasets for graphing, and calculate real-time average throughput values accordingly.
-                            if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-                                download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
-                                upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(download_values_list)
-                                data_set_in_graph.append(upload_values_list)
-                                devices_data_to_create_bar_graph.append(download_data)
-                                devices_data_to_create_bar_graph.append(upload_data)
-                                label_data = ['Download', 'Upload']
-                                real_time_data = (
-                                    f"Real Time Throughput: Achieved Throughput: Download: {round(sum(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps, "
-                                    f"Upload: {round(sum(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
-                                )
+                                # Depending on the test direction, retrieve corresponding throughput data,
+                                # organize it into datasets for graphing, and calculate real-time average throughput values accordingly.
+                                if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+                                    download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
+                                    upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(download_values_list)
+                                    data_set_in_graph.append(upload_values_list)
+                                    devices_data_to_create_bar_graph.append(download_data)
+                                    devices_data_to_create_bar_graph.append(upload_data)
+                                    label_data = ['Download', 'Upload']
+                                    real_time_data = (
+                                        f"Real Time Throughput: Achieved Throughput: Download: "
+                                        f"{round(sum(download_data[0:int(incremental_capacity_list[i])]) / len(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps, "
+                                        f"Upload: {round(sum(upload_data[0:int(incremental_capacity_list[i])]) / len(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
+                                    )
 
-                            elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-                                download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(download_values_list)
-                                devices_data_to_create_bar_graph.append(download_data)
-                                label_data = ['Download']
-                                real_time_data = f"Real Time Throughput: Achieved Throughput: Download : {round(((sum(download_data[0:int(incremental_capacity_list[i])]))), 2)} Mbps"
+                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+                                    download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(download_values_list)
+                                    devices_data_to_create_bar_graph.append(download_data)
+                                    label_data = ['Download']
+                                    real_time_data = (
+                                        f"Real Time Throughput: Achieved Throughput: Download: "
+                                        f"{round(sum(download_data[0:int(incremental_capacity_list[i])]) / len(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
+                                    )
 
-                            elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
-                                upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(upload_values_list)
-                                devices_data_to_create_bar_graph.append(upload_data)
-                                label_data = ['Upload']
-                                real_time_data = f"Real Time Throughput: Achieved Throughput: Upload : {round((sum(upload_data[0:int(incremental_capacity_list[i])])), 2)} Mbps"
+                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
+                                    upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
+                                    data_set_in_graph.append(upload_values_list)
+                                    devices_data_to_create_bar_graph.append(upload_data)
+                                    label_data = ['Upload']
+                                    real_time_data = (
+                                        f"Real Time Throughput: Achieved Throughput: Upload: "
+                                        f"{round(sum(upload_data[0:int(incremental_capacity_list[i])]) / len(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
+                                    )
 
-                            if len(incremental_capacity_list) > 1:
-                                self.overall_report.set_custom_html(f"<h2><u>Iteration-{i + 1}: Number of Devices Running : {len(devices_on_running)}</u></h2>")
+                                self.overall_report.set_custom_html(f"<h2><u>{i + 1}. Test On Device {', '.join(devices_on_running)}:</u></h2>")
                                 self.overall_report.build_custom()
 
-                            self.overall_report.set_obj_html(
-                                _obj_title=f"{real_time_data}",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            graph_png = self.thput_obj_dict[ce][obj_name]["obj"].build_line_graph(
-                                data_set=data_set_in_graph,
-                                xaxis_name="Time",
-                                yaxis_name="Throughput (Mbps)",
-                                xaxis_categories=data['TIMESTAMP'][data['Iteration'] == i + 1].values.tolist(),
-                                label=label_data,
-                                graph_image_name=f"line_graph{i}"
-                            )
-                            logger.info("graph name {}".format(graph_png))
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-
-                            self.overall_report.build_graph()
-                            x_fig_size = 15
-                            y_fig_size = len(devices_on_running) * .5 + 4
-                            self.overall_report.set_obj_html(
-                                _obj_title="Per Client Avg-Throughput",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            devices_on_running_trimmed = [n[:17] if len(n) > 17 else n for n in devices_on_running]
-                            graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_bar_graph,
-                                                            _xaxis_name="Avg Throughput(Mbps)",
-                                                            _yaxis_name="Devices",
-                                                            _graph_image_name=f"image_name{i}_{obj_no}",
-                                                            _label=label_data,
-                                                            _yaxis_categories=devices_on_running_trimmed,
-                                                            _legend_loc="best",
-                                                            _legend_box=(1.0, 1.0),
-                                                            _show_bar_value=True,
-                                                            _figsize=(x_fig_size, y_fig_size)
-                                                            )
-
-                            graph_png = graph.build_bar_graph_horizontal()
-                            logger.info("graph name {}".format(graph_png))
-                            graph.build_bar_graph_horizontal()
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-                            self.overall_report.build_graph()
-                            self.overall_report.set_obj_html(
-                                _obj_title="RSSI Of The Clients Connected",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            graph = lf_bar_graph_horizontal(_data_set=[rssi_data],
-                                                            _xaxis_name="Signal(-dBm)",
-                                                            _yaxis_name="Devices",
-                                                            _graph_image_name=f"signal_image_name{i}_{obj_no}",
-                                                            _label=['RSSI'],
-                                                            _yaxis_categories=devices_on_running_trimmed,
-                                                            _legend_loc="best",
-                                                            _legend_box=(1.0, 1.0),
-                                                            _show_bar_value=True,
-                                                            _figsize=(x_fig_size, y_fig_size)
-                                                            #    _color=['lightcoral']
-                                                            )
-                            graph_png = graph.build_bar_graph_horizontal()
-                            logger.info("graph name {}".format(graph_png))
-                            graph.build_bar_graph_horizontal()
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-                            self.overall_report.build_graph()
-                            if(self.thput_obj_dict[ce][obj_name]["obj"].dowebgui and self.thput_obj_dict[ce][obj_name]["obj"].get_live_view):
-                                self.thput_obj_dict[ce][obj_name]["obj"].add_live_view_images_to_report(self.overall_report)
-                                
-                            if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
                                 self.overall_report.set_obj_html(
-                                    _obj_title="Detailed Result Table For Groups ",
-                                    _obj="The below tables provides detailed information for the throughput test on each group.")
-                            else:
+                                    _obj_title=f"{real_time_data}",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                graph_png = self.thput_obj_dict[ce][obj_name]["obj"].build_line_graph(
+                                    data_set=data_set_in_graph,
+                                    xaxis_name="Time",
+                                    yaxis_name="Throughput (Mbps)",
+                                    xaxis_categories=data['TIMESTAMP'][data['Iteration'] == i + 1].values.tolist(),
+                                    label=label_data,
+                                    graph_image_name=f"line_graph{i}"
+                                )
+                                logger.info("graph name {}".format(graph_png))
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+
+                                self.overall_report.build_graph()
+                                x_fig_size = 15
+                                y_fig_size = len(devices_on_running) * .5 + 4
+                                self.overall_report.set_obj_html(
+                                    _obj_title="Per Client Avg-Throughput",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                devices_on_running_trimmed = [n[:17] if len(n) > 17 else n for n in devices_on_running]
+                                graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_bar_graph,
+                                                                _xaxis_name="Avg Throughput(Mbps)",
+                                                                _yaxis_name="Devices",
+                                                                _graph_image_name=f"image_name{i}_{obj_no}",
+                                                                _label=label_data,
+                                                                _yaxis_categories=devices_on_running_trimmed,
+                                                                _legend_loc="best",
+                                                                _legend_box=(1.0, 1.0),
+                                                                _show_bar_value=True,
+                                                                _figsize=(x_fig_size, y_fig_size)
+                                                                )
+
+                                graph_png = graph.build_bar_graph_horizontal()
+                                logger.info("graph name {}".format(graph_png))
+                                graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
+                                self.overall_report.set_obj_html(
+                                    _obj_title="RSSI Of The Clients Connected",
+                                    _obj=" ")
+                                self.overall_report.build_objective()
+                                graph = lf_bar_graph_horizontal(_data_set=[rssi_data],
+                                                                _xaxis_name="Signal(-dBm)",
+                                                                _yaxis_name="Devices",
+                                                                _graph_image_name=f"signal_image_name{i}_{obj_no}",
+                                                                _label=['RSSI'],
+                                                                _yaxis_categories=devices_on_running_trimmed,
+                                                                _legend_loc="best",
+                                                                _legend_box=(1.0, 1.0),
+                                                                _show_bar_value=True,
+                                                                _figsize=(x_fig_size, y_fig_size)
+                                                                #    _color=['lightcoral']
+                                                                )
+                                graph_png = graph.build_bar_graph_horizontal()
+                                logger.info("graph name {}".format(graph_png))
+                                graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
 
                                 self.overall_report.set_obj_html(
                                     _obj_title="Detailed Result Table ",
                                     _obj="The below tables provides detailed information for the throughput test on each device.")
-                            self.overall_report.build_objective()
-                            self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list = [item.split()[-1] if ' ' in item else item for item in self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list]
-                            if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                test_input_list, pass_fail_list = self.thput_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(device_type, incremental_capacity_list[i], devices_on_running, download_data, upload_data)
-                            if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
-                                for key, val in self.thput_obj_dict[ce][obj_name]["obj"].group_device_map.items():
-                                    if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                        # Generating Dataframe when Groups with their profiles and pass_fail case is specified
-                                        dataframe = self.thput_obj_dict[ce][obj_name]["obj"].generate_dataframe(val,
-                                                                            device_type[0:int(incremental_capacity_list[i])],
-                                                                            devices_on_running[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
-                                                                            direction_in_table[0:int(incremental_capacity_list[i])],
-                                                                            download_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) for n in avg_rtt_data[0:int(incremental_capacity_list[i])]],
-                                                                            [str(n) + " Mbps" for n in download_data[0:int(incremental_capacity_list[i])]],
-                                                                            upload_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) + " Mbps" for n in upload_data[0:int(incremental_capacity_list[i])]],
-                                                                            ['' if n == 0 else '-' + str(n) + " dbm" for n in rssi_data[0:int(incremental_capacity_list[i])]],
-                                                                            test_input_list,
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
-                                                                            pass_fail_list,
-                                                                            upload_drop,
-                                                                            download_drop)
-                                    # Generating Dataframe for groups when pass_fail case is not specified
+                                self.overall_report.build_objective()
+                                self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list = [item.split()[-1] if ' ' in item else item for item in self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list]
+                                if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                    test_input_list, pass_fail_list = self.thput_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(device_type, incremental_capacity_list[i], devices_on_running, download_data, upload_data)
+                                bk_dataframe = {}
+
+                                # Dataframe changes with respect to groups and profiles in case of interopability
+                                if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
+                                    interop_tab_data = self.thput_obj_dict[ce][obj_name]["obj"].json_get('/adb/')["devices"]
+                                    res_list = []
+                                    grp_name = []
+                                    if device_type[int(incremental_capacity_list[i]) - 1] != 'Android':
+                                        res_list.append(devices_on_running[-1])
                                     else:
-                                        dataframe = self.thput_obj_dict[ce][obj_name]["obj"].generate_dataframe(val,
-                                                                            device_type[0:int(incremental_capacity_list[i])],
-                                                                            devices_on_running[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
-                                                                            direction_in_table[0:int(incremental_capacity_list[i])],
-                                                                            download_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) for n in avg_rtt_data[0:int(incremental_capacity_list[i])]],
-                                                                            [str(n) + " Mbps" for n in download_data[0:int(incremental_capacity_list[i])]],
-                                                                            upload_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) + " Mbps" for n in upload_data[0:int(incremental_capacity_list[i])]],
-                                                                            ['' if n == 0 else '-' + str(n) + " dbm" for n in rssi_data[0:int(incremental_capacity_list[i])]],
-                                                                            [],
-                                                                            self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
-                                                                            [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
-                                                                            [],
-                                                                            upload_drop,
-                                                                            download_drop)
+                                        for dev in interop_tab_data:
+                                            for item in dev.values():
+                                                if item['user-name'] == devices_on_running[-1]:
+                                                    res_list.append(item['name'].split('.')[2])
+                                                    break
+                                    for key, value in self.thput_obj_dict[ce][obj_name]["obj"].group_device_map.items():
+                                        if res_list[-1] in value:
+                                            grp_name.append(key)
+                                            break
+                                    bk_dataframe["Group Name"] = grp_name[-1]
+
+                                bk_dataframe[" Device Type "] = device_type[int(incremental_capacity_list[i]) - 1]
+                                bk_dataframe[" Username"] = devices_on_running[-1]
+                                bk_dataframe[" SSID "] = self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[int(incremental_capacity_list[i]) - 1]
+                                bk_dataframe[" MAC "] = self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[int(incremental_capacity_list[i]) - 1]
+                                bk_dataframe[" Channel "] = self.thput_obj_dict[ce][obj_name]["obj"].channel_list[int(incremental_capacity_list[i]) - 1]
+                                bk_dataframe[" Mode"] = self.thput_obj_dict[ce][obj_name]["obj"].mode_list[int(incremental_capacity_list[i]) - 1]
+                                bk_dataframe[" Offered download rate (Mbps)"] = download_list[-1]
+                                bk_dataframe[" Observed Average download rate (Mbps)"] = [str(download_data[-1])]
+                                bk_dataframe[" Offered upload rate (Mbps)"] = upload_list[-1]
+                                bk_dataframe[" Observed Average upload rate (Mbps)"] = [str(upload_data[-1])]
+                                bk_dataframe[" Average RTT (ms) "] = avg_rtt_data[-1]
+                                bk_dataframe[" RSSI (dBm)"] = ['' if rssi_data[-1] == 0 else '-' + str(rssi_data[-1])]
+                                if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
+                                    bk_dataframe[" Average Tx Drop % "] = upload_drop
+                                    bk_dataframe[" Average Rx Drop % "] = download_drop
+                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
+                                    bk_dataframe[" Average Rx Drop % "] = download_drop
+                                    bk_dataframe[" Average Tx Drop % "] = [0.0] * len(download_drop)
+                                else:
+                                    bk_dataframe[" Average Tx Drop % "] = upload_drop
+                                    bk_dataframe[" Average Rx Drop % "] = [0.0] * len(upload_drop)
+                                # When pass fail criteria is specified
+                                if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                    bk_dataframe[" Expected " + self.thput_obj_dict[ce][obj_name]["obj"].direction + " rate "] = test_input_list
+                                    bk_dataframe[" Status "] = pass_fail_list
+                                dataframe1 = pd.DataFrame(bk_dataframe)
+                                self.overall_report.set_table_dataframe(dataframe1)
+                                self.overall_report.build_table()
+
+                                self.overall_report.set_custom_html('<hr>')
+                                self.overall_report.build_custom()
+
+                            if(self.thput_obj_dict[ce][obj_name]["obj"].dowebgui and self.thput_obj_dict[ce][obj_name]["obj"].get_live_view and self.thput_obj_dict[ce][obj_name]["obj"].do_interopability):
+                                self.thput_obj_dict[ce][obj_name]["obj"].add_live_view_images_to_report(self.overall_report)
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"ftp_test_{obj_no}"
+                        else:
+                            break
+                
+                elif test_name == "ping_test":
+                    obj_no = 1
+                    obj_name = 'ping_test'
+                    if ce == "series":
+                        obj_name += "_1" 
+                    while obj_name in self.ping_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        params = self.ping_obj_dict[ce][obj_name]["data"].copy()
+                        result_json = params["result_json"]
+                        result_dir = params["result_dir"]
+                        report_path = params["report_path"]
+                        config_devices = params["config_devices"]
+                        group_device_map = params["group_device_map"]
+                        if result_json is not None:
+                            self.ping_obj_dict[ce][obj_name]["obj"].result_json = result_json
+                        self.overall_report.set_obj_html(_obj_title=f'PING Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        # Test setup information table for devices in device list
+                        if config_devices == '':
+                            test_setup_info = {
+                                'SSID': self.ping_obj_dict[ce][obj_name]["obj"].ssid,
+                                'Security': self.ping_obj_dict[ce][obj_name]["obj"].security,
+                                'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
+                                'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
+                                'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
+                            }
+                        # Test setup information table for devices in groups
+                        else:
+                            group_names = ', '.join(config_devices.keys())
+                            profile_names = ', '.join(config_devices.values())
+                            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                            test_setup_info = {
+                                'Configuration': configmap,
+                                'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
+                                'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
+                                'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
+                            }
+                        self.overall_report.test_setup_table(
+                            test_setup_data=test_setup_info, value='Test Setup Information')
+
+                        # packets sent vs received vs dropped
+                        self.overall_report.set_table_title(
+                            'Packets sent vs packets received vs packets dropped')
+                        self.overall_report.build_table_title()
+                        # graph for the above
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_sent = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_received = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_names = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_channels = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_min = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_max = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_avg = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_mac = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].report_names = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].remarks = []
+                        self.ping_obj_dict[ce][obj_name]["obj"].device_ssid = []
+                        # packet_count_data = {}
+                        os_type = []
+                        for device, device_data in self.ping_obj_dict[ce][obj_name]["obj"].result_json.items():
+                            logging.info('Device data: {} {}'.format(device, device_data))
+                            os_type.append(device_data['os'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].packets_sent.append(int(device_data['sent']))
+                            self.ping_obj_dict[ce][obj_name]["obj"].packets_received.append(int(device_data['recv']))
+                            self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped.append(int(device_data['dropped']))
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_names.append(device_data['name'] + ' ' + device_data['os'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_modes.append(device_data['mode'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_channels.append(device_data['channel'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_mac.append(device_data['mac'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_ssid.append(device_data['ssid'])
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_min.append(float(device_data['min_rtt'].replace(',', '')))
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_max.append(float(device_data['max_rtt'].replace(',', '')))
+                            self.ping_obj_dict[ce][obj_name]["obj"].device_avg.append(float(device_data['avg_rtt'].replace(',', '')))
+                            if (device_data['os'] == 'Virtual'):
+                                self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {}'.format(device, device_data['os'])[0:25])
+                            else:
+                                self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {} {}'.format(device, device_data['os'], device_data['name']))
+                            if (device_data['remarks'] != []):
+                                self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors.append(device_data['name'])
+                                self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors.append(device)
+                                self.ping_obj_dict[ce][obj_name]["obj"].remarks.append(','.join(device_data['remarks']))
+                        x_fig_size = 15
+                        y_fig_size = len(self.ping_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
+                        graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent],
+                                                        _xaxis_name='Packets Count',
+                                                        _yaxis_name='Wireless Clients',
+                                                        _label=[
+                                                            'Packets Loss', 'Packets Received', 'Packets Sent'],
+                                                        _graph_image_name=f'Packets sent vs received vs dropped {obj_no}',
+                                                        _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                        _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                        _yaxis_step=1,
+                                                        _yticks_font=8,
+                                                        _graph_title='Packets sent vs received vs dropped',
+                                                        _title_size=16,
+                                                        _color=['lightgrey',
+                                                                'orange', 'steelblue'],
+                                                        _color_edge=['black'],
+                                                        _bar_height=0.15,
+                                                        _figsize=(x_fig_size, y_fig_size),
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _dpi=96,
+                                                        _show_bar_value=False,
+                                                        _enable_csv=True,
+                                                        _color_name=['lightgrey', 'orange', 'steelblue'])
+
+                        graph_png = graph.build_bar_graph_horizontal()
+                        logging.info('graph name {}'.format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        # need to move the graph image to the results directory
+                        self.overall_report.move_graph_image()
+                        self.overall_report.set_csv_filename(graph_png)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.build_graph()
+                        if self.ping_obj_dict[ce][obj_name]["obj"].real:
+                            # Calculating the pass/fail criteria when either expected_passfail_val or csv_name is provided
+                            if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                                self.ping_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(os_type)
+                            # When groups are provided a seperate table will be generated for each group using generate_dataframe
+                            if self.ping_obj_dict[ce][obj_name]["obj"].group_name:
+                                for key, val in group_device_map.items():
+                                    if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                                        dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                            val,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].test_input_list,
+                                            self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list)
+                                    else:
+                                        dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, self.ping_obj_dict[ce][obj_name]["obj"].device_names, self.ping_obj_dict[ce][obj_name]["obj"].device_mac, self.ping_obj_dict[ce][obj_name]["obj"].device_channels, self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                                                            self.ping_obj_dict[ce][obj_name]["obj"].device_modes, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, [], [], [])
                                     if dataframe:
                                         self.overall_report.set_obj_html("", "Group: {}".format(key))
                                         self.overall_report.build_objective()
                                         dataframe1 = pd.DataFrame(dataframe)
                                         self.overall_report.set_table_dataframe(dataframe1)
                                         self.overall_report.build_table()
-                            else:
-                                bk_dataframe = {
-                                    " Device Type ": device_type[0:int(incremental_capacity_list[i])],
-                                    " Username": devices_on_running[0:int(incremental_capacity_list[i])],
-                                    " SSID ": self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[0:int(incremental_capacity_list[i])],
-                                    " MAC ": self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[0:int(incremental_capacity_list[i])],
-                                    " Channel ": self.thput_obj_dict[ce][obj_name]["obj"].channel_list[0:int(incremental_capacity_list[i])],
-                                    " Mode": self.thput_obj_dict[ce][obj_name]["obj"].mode_list[0:int(incremental_capacity_list[i])],
-                                    # " Direction":direction_in_table[0:int(incremental_capacity_list[i])],
-                                    " Offered download rate (Mbps) ": download_list[0:int(incremental_capacity_list[i])],
-                                    " Observed Average download rate (Mbps) ": [str(n)  for n in download_data[0:int(incremental_capacity_list[i])]],
-                                    " Offered upload rate (Mbps) ": upload_list[0:int(incremental_capacity_list[i])],
-                                    " Observed Average upload rate (Mbps) ": [str(n)  for n in upload_data[0:int(incremental_capacity_list[i])]],
-                                    " RSSI (dBm) ": ['' if n == 0 else '-' + str(n)  for n in rssi_data[0:int(incremental_capacity_list[i])]],
-                                    # " Link Speed ":self.thput_obj_dict[ce][obj_name]["obj"].link_speed_list[0:int(incremental_capacity_list[i])],
-                                    " Average RTT (ms)" : avg_rtt_data[0:int(incremental_capacity_list[i])],
-                                    " Packet Size(Bytes) ": [str(n) for n in packet_size_in_table[0:int(incremental_capacity_list[i])]],
-                                }
-                                if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-                                    bk_dataframe[" Average Tx Drop % "] = upload_drop
-                                    bk_dataframe[" Average Rx Drop % "] = download_drop
-                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-                                    bk_dataframe[" Average Rx Drop % "] = download_drop
-                                    # adding rx drop while uploading as 0
-                                    bk_dataframe[" Average Tx Drop % "] = [0.0] * len(download_drop)
 
-                                else:
-                                    bk_dataframe[" Average Tx Drop % "] = upload_drop
-                                    # adding rx drop while downloading as 0
-                                    bk_dataframe[" Average Rx Drop % "] = [0.0] * len(upload_drop)
-                                if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                    bk_dataframe[" Expected " + self.thput_obj_dict[ce][obj_name]["obj"].direction + " rate "] = [str(n) + " Mbps" for n in test_input_list]
-                                    bk_dataframe[" Status "] = pass_fail_list
-                                dataframe1 = pd.DataFrame(bk_dataframe)
+                            else:
+                                dataframe1 = pd.DataFrame({
+                                    'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
+                                    'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
+                                    'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
+                                    'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
+                                    'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
+                                    'Packets Sent': self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
+                                    'Packets Received': self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
+                                    'Packets Loss': self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                                })
+                                if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
+                                    dataframe1[" Percentage of Packet loss %"] = self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss
+                                    dataframe1['Expected Packet loss %'] = self.ping_obj_dict[ce][obj_name]["obj"].test_input_list
+                                    dataframe1['Status'] = self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list
                                 self.overall_report.set_table_dataframe(dataframe1)
                                 self.overall_report.build_table()
-
-                            self.overall_report.set_custom_html('<hr>')
-                            self.overall_report.build_custom()
-
-                    elif self.thput_obj_dict[ce][obj_name]["obj"].do_interopability:
-
-                        self.overall_report.set_obj_html(_obj_title="Input Parameters",
-                                            _obj="The below tables provides the input parameters for the test")
-                        self.overall_report.build_objective()
-
-                        # Initialize counts and lists for device types
-                        android_devices, windows_devices, linux_devices, mac_devices, ios_devices = 0, 0, 0, 0, 0
-                        all_devices_names = []
-                        device_type = []
-                        total_devices = ""
-
-                        for i in self.thput_obj_dict[ce][obj_name]["obj"].real_client_list:
-                            split_device_name = i.split(" ")
-                            if 'android' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Android)"))
-                                device_type.append("Android")
-                                android_devices += 1
-                            elif 'Win' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Windows)"))
-                                device_type.append("Windows")
-                                windows_devices += 1
-                            elif 'Lin' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Linux)"))
-                                device_type.append("Linux")
-                                linux_devices += 1
-                            elif 'Mac' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(Mac)"))
-                                device_type.append("Mac")
-                                mac_devices += 1
-                            elif 'iOS' in split_device_name:
-                                all_devices_names.append(split_device_name[2] + ("(iOS)"))
-                                device_type.append("iOS")
-                                ios_devices += 1
-
-                        # Build total_devices string based on counts
-                        if android_devices > 0:
-                            total_devices += f" Android({android_devices})"
-                        if windows_devices > 0:
-                            total_devices += f" Windows({windows_devices})"
-                        if linux_devices > 0:
-                            total_devices += f" Linux({linux_devices})"
-                        if mac_devices > 0:
-                            total_devices += f" Mac({mac_devices})"
-                        if ios_devices > 0:
-                            total_devices += f" iOS({ios_devices})"
-
-                        # Construct test_setup_info dictionary for test setup table
-                        test_setup_info = {
-                            "Test name": self.thput_obj_dict[ce][obj_name]["obj"].test_name,
-                            "Device List": ", ".join(all_devices_names),
-                            "No of Devices": "Total" + f"({str(self.thput_obj_dict[ce][obj_name]['obj'].num_stations)})" + total_devices,
-                            "Traffic Duration in minutes": round(int(self.thput_obj_dict[ce][obj_name]["obj"].test_duration) * len(incremental_capacity_list) / 60, 2),
-                            "Traffic Type": (self.thput_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
-                            "Traffic Direction": self.thput_obj_dict[ce][obj_name]["obj"].direction,
-                            "Upload Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)) + "Mbps",
-                            "Download Rate(Mbps)": str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)) + "Mbps",
-                            # "Packet Size" : str(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_pdu) + " Bytes"
-                        }
-                        self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
-
-                        if(not self.thput_obj_dict[ce][obj_name]["obj"].default_config):
-
-                            self.overall_report.set_obj_html(_obj_title="Configuration Status of Devices",
-                                                _obj="The table below shows the configuration status of each device (except iOS) with respect to the SSID connection.")
-                            self.overall_report.build_objective()
-
-                            configured_dataframe = self.thput_obj_dict[ce][obj_name]["obj"].convert_to_table(self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check)
-                            dataframe1 = pd.DataFrame(configured_dataframe)
-                            self.overall_report.set_table_dataframe(dataframe1)
-                            self.overall_report.build_table()
-
-                        # Loop through iterations and build graphs, tables for each device
-                        for i in range(len(iterations_before_test_stopped_by_user)):
-                            rssi_signal_data = []
-                            devices_on_running = []
-                            download_data = []
-                            upload_data = []
-                            devices_data_to_create_bar_graph = []
-                            signal_data = []
-                            upload_drop = []
-                            download_drop = []
-                            direction_in_table = []
-                            # packet_size_in_table=[]
-                            upload_list, download_list = [], []
-                            rssi_data = []
-                            data_iter = data[data['Iteration'] == i + 1]
-                            avg_rtt_data = []
-
-                            # Fetch devices_on_running from real_client_list
-                            devices_on_running.append(self.thput_obj_dict[ce][obj_name]["obj"].real_client_list[data1[i][-1] - 1].split(" ")[-1])
-
-                            if not self.thput_obj_dict[ce][obj_name]["obj"].default_config and devices_on_running[0] in self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check and not self.thput_obj_dict[ce][obj_name]["obj"].configured_devices_check[devices_on_running[0]]:
-                                continue
-
-                            for k in devices_on_running:
-                                # individual_device_data=[]
-
-                                # Checking individual device download and upload rate by searching device name in dataframe
-                                columns_with_substring = [col for col in data_iter.columns if k in col]
-                                filtered_df = data_iter[columns_with_substring]
-                                dl_len = len(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()) - 1
-                                ul_len = len(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()) - 1
-                                if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-
-                                    # Append download and upload data from filtered dataframe
-                                    download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                    upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                    upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                    download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                    rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                    len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                                    avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                    # Calculate and append upload and download throughput to lists
-                                    upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
-                                    download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
-
-                                    direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-
-                                    # Append download data from filtered dataframe
-                                    download_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Download" in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-
-                                    # Append 0 for upload data
-                                    upload_data.append(0)
-                                    rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                    len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                                    download_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Rx % Drop " in col][0]].values.tolist()[1:dl_len]) / (dl_len - 1)), 2))
-                                    avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                    # Calculate and append upload and download throughput to lists
-                                    upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
-                                    download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
-
-                                    direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-                                elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
-
-                                    # Calculate and append upload and download throughput to lists
-                                    upload_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_a_min_bps) / 1000000, 2)))
-                                    download_list.append(str(round(int(self.thput_obj_dict[ce][obj_name]["obj"].cx_profile.side_b_min_bps) / 1000000, 2)))
-                                    rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                                    len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                                    upload_drop.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Tx % Drop" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-                                    avg_rtt_data.append(filtered_df[[col for col in filtered_df.columns if "Average RTT " in col][0]].values.tolist()[-1])
-                                    # Append upload data from filtered dataframe
-                                    upload_data.append(round((sum(filtered_df[[col for col in filtered_df.columns if "Upload" in col][0]].values.tolist()[1:ul_len]) / (ul_len - 1)), 2))
-
-                                    # Append 0 for download data
-                                    download_data.append(0)
-
-                                    direction_in_table.append(self.thput_obj_dict[ce][obj_name]["obj"].direction)
-
-                            data_set_in_graph = []
-
-                            # Depending on the test direction, retrieve corresponding throughput data,
-                            # organize it into datasets for graphing, and calculate real-time average throughput values accordingly.
-                            if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-                                download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
-                                upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(download_values_list)
-                                data_set_in_graph.append(upload_values_list)
-                                devices_data_to_create_bar_graph.append(download_data)
-                                devices_data_to_create_bar_graph.append(upload_data)
-                                label_data = ['Download', 'Upload']
-                                real_time_data = (
-                                    f"Real Time Throughput: Achieved Throughput: Download: "
-                                    f"{round(sum(download_data[0:int(incremental_capacity_list[i])]) / len(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps, "
-                                    f"Upload: {round(sum(upload_data[0:int(incremental_capacity_list[i])]) / len(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
-                                )
-
-                            elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-                                download_values_list = data['Overall Download'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(download_values_list)
-                                devices_data_to_create_bar_graph.append(download_data)
-                                label_data = ['Download']
-                                real_time_data = (
-                                    f"Real Time Throughput: Achieved Throughput: Download: "
-                                    f"{round(sum(download_data[0:int(incremental_capacity_list[i])]) / len(download_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
-                                )
-
-                            elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Upload':
-                                upload_values_list = data['Overall Upload'][data['Iteration'] == i + 1].values.tolist()
-                                data_set_in_graph.append(upload_values_list)
-                                devices_data_to_create_bar_graph.append(upload_data)
-                                label_data = ['Upload']
-                                real_time_data = (
-                                    f"Real Time Throughput: Achieved Throughput: Upload: "
-                                    f"{round(sum(upload_data[0:int(incremental_capacity_list[i])]) / len(upload_data[0:int(incremental_capacity_list[i])]), 2)} Mbps"
-                                )
-
-                            self.overall_report.set_custom_html(f"<h2><u>{i + 1}. Test On Device {', '.join(devices_on_running)}:</u></h2>")
-                            self.overall_report.build_custom()
-
-                            self.overall_report.set_obj_html(
-                                _obj_title=f"{real_time_data}",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            graph_png = self.thput_obj_dict[ce][obj_name]["obj"].build_line_graph(
-                                data_set=data_set_in_graph,
-                                xaxis_name="Time",
-                                yaxis_name="Throughput (Mbps)",
-                                xaxis_categories=data['TIMESTAMP'][data['Iteration'] == i + 1].values.tolist(),
-                                label=label_data,
-                                graph_image_name=f"line_graph{i}"
-                            )
-                            logger.info("graph name {}".format(graph_png))
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-
-                            self.overall_report.build_graph()
-                            x_fig_size = 15
-                            y_fig_size = len(devices_on_running) * .5 + 4
-                            self.overall_report.set_obj_html(
-                                _obj_title="Per Client Avg-Throughput",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            devices_on_running_trimmed = [n[:17] if len(n) > 17 else n for n in devices_on_running]
-                            graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_bar_graph,
-                                                            _xaxis_name="Avg Throughput(Mbps)",
-                                                            _yaxis_name="Devices",
-                                                            _graph_image_name=f"image_name{i}_{obj_no}",
-                                                            _label=label_data,
-                                                            _yaxis_categories=devices_on_running_trimmed,
-                                                            _legend_loc="best",
-                                                            _legend_box=(1.0, 1.0),
-                                                            _show_bar_value=True,
-                                                            _figsize=(x_fig_size, y_fig_size)
-                                                            )
-
-                            graph_png = graph.build_bar_graph_horizontal()
-                            logger.info("graph name {}".format(graph_png))
-                            graph.build_bar_graph_horizontal()
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-                            self.overall_report.build_graph()
-                            self.overall_report.set_obj_html(
-                                _obj_title="RSSI Of The Clients Connected",
-                                _obj=" ")
-                            self.overall_report.build_objective()
-                            graph = lf_bar_graph_horizontal(_data_set=[rssi_data],
-                                                            _xaxis_name="Signal(-dBm)",
-                                                            _yaxis_name="Devices",
-                                                            _graph_image_name=f"signal_image_name{i}_{obj_no}",
-                                                            _label=['RSSI'],
-                                                            _yaxis_categories=devices_on_running_trimmed,
-                                                            _legend_loc="best",
-                                                            _legend_box=(1.0, 1.0),
-                                                            _show_bar_value=True,
-                                                            _figsize=(x_fig_size, y_fig_size)
-                                                            #    _color=['lightcoral']
-                                                            )
-                            graph_png = graph.build_bar_graph_horizontal()
-                            logger.info("graph name {}".format(graph_png))
-                            graph.build_bar_graph_horizontal()
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-                            self.overall_report.build_graph()
-
-                            self.overall_report.set_obj_html(
-                                _obj_title="Detailed Result Table ",
-                                _obj="The below tables provides detailed information for the throughput test on each device.")
-                            self.overall_report.build_objective()
-                            self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list = [item.split()[-1] if ' ' in item else item for item in self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list]
-                            if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                test_input_list, pass_fail_list = self.thput_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(device_type, incremental_capacity_list[i], devices_on_running, download_data, upload_data)
-                            bk_dataframe = {}
-
-                            # Dataframe changes with respect to groups and profiles in case of interopability
-                            if self.thput_obj_dict[ce][obj_name]["obj"].group_name:
-                                interop_tab_data = self.thput_obj_dict[ce][obj_name]["obj"].json_get('/adb/')["devices"]
-                                res_list = []
-                                grp_name = []
-                                if device_type[int(incremental_capacity_list[i]) - 1] != 'Android':
-                                    res_list.append(devices_on_running[-1])
-                                else:
-                                    for dev in interop_tab_data:
-                                        for item in dev.values():
-                                            if item['user-name'] == devices_on_running[-1]:
-                                                res_list.append(item['name'].split('.')[2])
-                                                break
-                                for key, value in self.thput_obj_dict[ce][obj_name]["obj"].group_device_map.items():
-                                    if res_list[-1] in value:
-                                        grp_name.append(key)
-                                        break
-                                bk_dataframe["Group Name"] = grp_name[-1]
-
-                            bk_dataframe[" Device Type "] = device_type[int(incremental_capacity_list[i]) - 1]
-                            bk_dataframe[" Username"] = devices_on_running[-1]
-                            bk_dataframe[" SSID "] = self.thput_obj_dict[ce][obj_name]["obj"].ssid_list[int(incremental_capacity_list[i]) - 1]
-                            bk_dataframe[" MAC "] = self.thput_obj_dict[ce][obj_name]["obj"].mac_id_list[int(incremental_capacity_list[i]) - 1]
-                            bk_dataframe[" Channel "] = self.thput_obj_dict[ce][obj_name]["obj"].channel_list[int(incremental_capacity_list[i]) - 1]
-                            bk_dataframe[" Mode"] = self.thput_obj_dict[ce][obj_name]["obj"].mode_list[int(incremental_capacity_list[i]) - 1]
-                            bk_dataframe[" Offered download rate (Mbps)"] = download_list[-1]
-                            bk_dataframe[" Observed Average download rate (Mbps)"] = [str(download_data[-1])]
-                            bk_dataframe[" Offered upload rate (Mbps)"] = upload_list[-1]
-                            bk_dataframe[" Observed Average upload rate (Mbps)"] = [str(upload_data[-1])]
-                            bk_dataframe[" Average RTT (ms) "] = avg_rtt_data[-1]
-                            bk_dataframe[" RSSI (dBm)"] = ['' if rssi_data[-1] == 0 else '-' + str(rssi_data[-1])]
-                            if self.thput_obj_dict[ce][obj_name]["obj"].direction == "Bi-direction":
-                                bk_dataframe[" Average Tx Drop % "] = upload_drop
-                                bk_dataframe[" Average Rx Drop % "] = download_drop
-                            elif self.thput_obj_dict[ce][obj_name]["obj"].direction == 'Download':
-                                bk_dataframe[" Average Rx Drop % "] = download_drop
-                                bk_dataframe[" Average Tx Drop % "] = [0.0] * len(download_drop)
-                            else:
-                                bk_dataframe[" Average Tx Drop % "] = upload_drop
-                                bk_dataframe[" Average Rx Drop % "] = [0.0] * len(upload_drop)
-                            # When pass fail criteria is specified
-                            if self.thput_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.thput_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                bk_dataframe[" Expected " + self.thput_obj_dict[ce][obj_name]["obj"].direction + " rate "] = test_input_list
-                                bk_dataframe[" Status "] = pass_fail_list
-                            dataframe1 = pd.DataFrame(bk_dataframe)
-                            self.overall_report.set_table_dataframe(dataframe1)
-                            self.overall_report.build_table()
-
-                            self.overall_report.set_custom_html('<hr>')
-                            self.overall_report.build_custom()
-
-                        if(self.thput_obj_dict[ce][obj_name]["obj"].dowebgui and self.thput_obj_dict[ce][obj_name]["obj"].get_live_view and self.thput_obj_dict[ce][obj_name]["obj"].do_interopability):
-                            self.thput_obj_dict[ce][obj_name]["obj"].add_live_view_images_to_report(self.overall_report)
-                    if ce == "series":
-                        obj_no += 1
-                        obj_name = f"ftp_test_{obj_no}"
-                    else:
-                        break
-            
-            elif test_name == "ping_test":
-                obj_no = 1
-                obj_name = 'ping_test'
-                if ce == "series":
-                    obj_name += "_1" 
-                while obj_name in self.ping_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    params = self.ping_obj_dict[ce][obj_name]["data"].copy()
-                    result_json = params["result_json"]
-                    result_dir = params["result_dir"]
-                    report_path = params["report_path"]
-                    config_devices = params["config_devices"]
-                    group_device_map = params["group_device_map"]
-                    if result_json is not None:
-                        self.ping_obj_dict[ce][obj_name]["obj"].result_json = result_json
-                    self.overall_report.set_obj_html(_obj_title=f'PING Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    # Test setup information table for devices in device list
-                    if config_devices == '':
-                        test_setup_info = {
-                            'SSID': self.ping_obj_dict[ce][obj_name]["obj"].ssid,
-                            'Security': self.ping_obj_dict[ce][obj_name]["obj"].security,
-                            'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
-                            'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
-                            'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
-                        }
-                    # Test setup information table for devices in groups
-                    else:
-                        group_names = ', '.join(config_devices.keys())
-                        profile_names = ', '.join(config_devices.values())
-                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
-                        test_setup_info = {
-                            'Configuration': configmap,
-                            'Website / IP': self.ping_obj_dict[ce][obj_name]["obj"].target,
-                            'No of Devices': '{} (V:{}, A:{}, W:{}, L:{}, M:{})'.format(len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list), len(self.ping_obj_dict[ce][obj_name]["obj"].sta_list) - len(self.ping_obj_dict[ce][obj_name]["obj"].real_sta_list), self.ping_obj_dict[ce][obj_name]["obj"].android, self.ping_obj_dict[ce][obj_name]["obj"].windows, self.ping_obj_dict[ce][obj_name]["obj"].linux, self.ping_obj_dict[ce][obj_name]["obj"].mac),
-                            'Duration (in minutes)': self.ping_obj_dict[ce][obj_name]["obj"].duration
-                        }
-                    self.overall_report.test_setup_table(
-                        test_setup_data=test_setup_info, value='Test Setup Information')
-
-                    # packets sent vs received vs dropped
-                    self.overall_report.set_table_title(
-                        'Packets sent vs packets received vs packets dropped')
-                    self.overall_report.build_table_title()
-                    # graph for the above
-                    self.ping_obj_dict[ce][obj_name]["obj"].packets_sent = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].packets_received = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_names = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_modes = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_channels = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_min = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_max = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_avg = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_mac = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].report_names = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].remarks = []
-                    self.ping_obj_dict[ce][obj_name]["obj"].device_ssid = []
-                    # packet_count_data = {}
-                    os_type = []
-                    for device, device_data in self.ping_obj_dict[ce][obj_name]["obj"].result_json.items():
-                        logging.info('Device data: {} {}'.format(device, device_data))
-                        os_type.append(device_data['os'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].packets_sent.append(int(device_data['sent']))
-                        self.ping_obj_dict[ce][obj_name]["obj"].packets_received.append(int(device_data['recv']))
-                        self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped.append(int(device_data['dropped']))
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_names.append(device_data['name'] + ' ' + device_data['os'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes.append(device_data['mode'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_channels.append(device_data['channel'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_mac.append(device_data['mac'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_ssid.append(device_data['ssid'])
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_min.append(float(device_data['min_rtt'].replace(',', '')))
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_max.append(float(device_data['max_rtt'].replace(',', '')))
-                        self.ping_obj_dict[ce][obj_name]["obj"].device_avg.append(float(device_data['avg_rtt'].replace(',', '')))
-                        if (device_data['os'] == 'Virtual'):
-                            self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {}'.format(device, device_data['os'])[0:25])
-                        else:
-                            self.ping_obj_dict[ce][obj_name]["obj"].report_names.append('{} {} {}'.format(device, device_data['os'], device_data['name']))
-                        if (device_data['remarks'] != []):
-                            self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors.append(device_data['name'])
-                            self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors.append(device)
-                            self.ping_obj_dict[ce][obj_name]["obj"].remarks.append(','.join(device_data['remarks']))
-                    x_fig_size = 15
-                    y_fig_size = len(self.ping_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent],
-                                                    _xaxis_name='Packets Count',
-                                                    _yaxis_name='Wireless Clients',
-                                                    _label=[
-                                                        'Packets Loss', 'Packets Received', 'Packets Sent'],
-                                                    _graph_image_name=f'Packets sent vs received vs dropped {obj_no}',
-                                                    _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
-                                                    _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
-                                                    _yaxis_step=1,
-                                                    _yticks_font=8,
-                                                    _graph_title='Packets sent vs received vs dropped',
-                                                    _title_size=16,
-                                                    _color=['lightgrey',
-                                                            'orange', 'steelblue'],
-                                                    _color_edge=['black'],
-                                                    _bar_height=0.15,
-                                                    _figsize=(x_fig_size, y_fig_size),
-                                                    _legend_loc="best",
-                                                    _legend_box=(1.0, 1.0),
-                                                    _dpi=96,
-                                                    _show_bar_value=False,
-                                                    _enable_csv=True,
-                                                    _color_name=['lightgrey', 'orange', 'steelblue'])
-
-                    graph_png = graph.build_bar_graph_horizontal()
-                    logging.info('graph name {}'.format(graph_png))
-                    self.overall_report.set_graph_image(graph_png)
-                    # need to move the graph image to the results directory
-                    self.overall_report.move_graph_image()
-                    self.overall_report.set_csv_filename(graph_png)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.build_graph()
-                    if self.ping_obj_dict[ce][obj_name]["obj"].real:
-                        # Calculating the pass/fail criteria when either expected_passfail_val or csv_name is provided
-                        if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
-                            self.ping_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(os_type)
-                        # When groups are provided a seperate table will be generated for each group using generate_dataframe
-                        if self.ping_obj_dict[ce][obj_name]["obj"].group_name:
-                            for key, val in group_device_map.items():
-                                if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
-                                    dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(
-                                        val,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].device_names,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].test_input_list,
-                                        self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list)
-                                else:
-                                    dataframe = self.ping_obj_dict[ce][obj_name]["obj"].generate_dataframe(val, self.ping_obj_dict[ce][obj_name]["obj"].device_names, self.ping_obj_dict[ce][obj_name]["obj"].device_mac, self.ping_obj_dict[ce][obj_name]["obj"].device_channels, self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
-                                                                        self.ping_obj_dict[ce][obj_name]["obj"].device_modes, self.ping_obj_dict[ce][obj_name]["obj"].packets_sent, self.ping_obj_dict[ce][obj_name]["obj"].packets_received, self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped, [], [], [])
-                                if dataframe:
-                                    self.overall_report.set_obj_html("", "Group: {}".format(key))
-                                    self.overall_report.build_objective()
-                                    dataframe1 = pd.DataFrame(dataframe)
-                                    self.overall_report.set_table_dataframe(dataframe1)
-                                    self.overall_report.build_table()
-
                         else:
                             dataframe1 = pd.DataFrame({
                                 'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
@@ -6574,579 +6597,593 @@ class Candela(Realm):
                                 'Packets Received': self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
                                 'Packets Loss': self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
                             })
-                            if self.ping_obj_dict[ce][obj_name]["obj"].expected_passfail_val or self.ping_obj_dict[ce][obj_name]["obj"].csv_name:
-                                dataframe1[" Percentage of Packet loss %"] = self.ping_obj_dict[ce][obj_name]["obj"].percent_pac_loss
-                                dataframe1['Expected Packet loss %'] = self.ping_obj_dict[ce][obj_name]["obj"].test_input_list
-                                dataframe1['Status'] = self.ping_obj_dict[ce][obj_name]["obj"].pass_fail_list
                             self.overall_report.set_table_dataframe(dataframe1)
                             self.overall_report.build_table()
-                    else:
-                        dataframe1 = pd.DataFrame({
+
+                        # packets latency graph
+                        self.overall_report.set_table_title('Ping Latency Graph')
+                        self.overall_report.build_table_title()
+
+                        graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].device_min, self.ping_obj_dict[ce][obj_name]["obj"].device_avg, self.ping_obj_dict[ce][obj_name]["obj"].device_max],
+                                                        _xaxis_name='Time (ms)',
+                                                        _yaxis_name='Wireless Clients',
+                                                        _label=[
+                                                            'Min Latency (ms)', 'Average Latency (ms)', 'Max Latency (ms)'],
+                                                        _graph_image_name=f'Ping Latency per client {obj_no}',
+                                                        _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                        _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
+                                                        _yaxis_step=1,
+                                                        _yticks_font=8,
+                                                        _graph_title='Ping Latency per client',
+                                                        _title_size=16,
+                                                        _color=['lightgrey',
+                                                                'orange', 'steelblue'],
+                                                        _color_edge='black',
+                                                        _bar_height=0.15,
+                                                        _figsize=(x_fig_size, y_fig_size),
+                                                        _legend_loc="best",
+                                                        _legend_box=(1.0, 1.0),
+                                                        _dpi=96,
+                                                        _show_bar_value=False,
+                                                        _enable_csv=True,
+                                                        _color_name=['lightgrey', 'orange', 'steelblue'])
+
+                        graph_png = graph.build_bar_graph_horizontal()
+                        logging.info('graph name {}'.format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        # need to move the graph image to the results directory
+                        self.overall_report.move_graph_image()
+                        self.overall_report.set_csv_filename(graph_png)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.build_graph()
+
+                        dataframe2 = pd.DataFrame({
                             'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
                             'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
                             'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
                             'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
                             'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
-                            'Packets Sent': self.ping_obj_dict[ce][obj_name]["obj"].packets_sent,
-                            'Packets Received': self.ping_obj_dict[ce][obj_name]["obj"].packets_received,
-                            'Packets Loss': self.ping_obj_dict[ce][obj_name]["obj"].packets_dropped,
+                            'Min Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_min,
+                            'Average Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_avg,
+                            'Max Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_max
                         })
-                        self.overall_report.set_table_dataframe(dataframe1)
+                        self.overall_report.set_table_dataframe(dataframe2)
                         self.overall_report.build_table()
 
-                    # packets latency graph
-                    self.overall_report.set_table_title('Ping Latency Graph')
-                    self.overall_report.build_table_title()
+                        # check if there are remarks for any device. If there are remarks, build table else don't
+                        if (self.ping_obj_dict[ce][obj_name]["obj"].remarks != []):
+                            self.overall_report.set_table_title('Notes')
+                            self.overall_report.build_table_title()
+                            dataframe3 = pd.DataFrame({
+                                'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors,
+                                'Port': self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors,
+                                'Remarks': self.ping_obj_dict[ce][obj_name]["obj"].remarks
+                            })
+                            self.overall_report.set_table_dataframe(dataframe3)
+                            self.overall_report.build_table()
 
-                    graph = lf_bar_graph_horizontal(_data_set=[self.ping_obj_dict[ce][obj_name]["obj"].device_min, self.ping_obj_dict[ce][obj_name]["obj"].device_avg, self.ping_obj_dict[ce][obj_name]["obj"].device_max],
-                                                    _xaxis_name='Time (ms)',
-                                                    _yaxis_name='Wireless Clients',
-                                                    _label=[
-                                                        'Min Latency (ms)', 'Average Latency (ms)', 'Max Latency (ms)'],
-                                                    _graph_image_name=f'Ping Latency per client {obj_no}',
-                                                    _yaxis_label=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
-                                                    _yaxis_categories=self.ping_obj_dict[ce][obj_name]["obj"].report_names,
-                                                    _yaxis_step=1,
-                                                    _yticks_font=8,
-                                                    _graph_title='Ping Latency per client',
-                                                    _title_size=16,
-                                                    _color=['lightgrey',
-                                                            'orange', 'steelblue'],
-                                                    _color_edge='black',
-                                                    _bar_height=0.15,
-                                                    _figsize=(x_fig_size, y_fig_size),
-                                                    _legend_loc="best",
-                                                    _legend_box=(1.0, 1.0),
-                                                    _dpi=96,
-                                                    _show_bar_value=False,
-                                                    _enable_csv=True,
-                                                    _color_name=['lightgrey', 'orange', 'steelblue'])
+                        # closing
+                        self.overall_report.build_custom()
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"ping_test_{obj_no}"
+                        else:
+                            break
+                elif test_name == "qos_test":
+                    obj_no = 1
+                    obj_name = 'qos_test'
+                    if ce == "series":
+                        obj_name += "_1" 
+                    while obj_name in self.qos_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        params = self.qos_obj_dict[ce][obj_name]["data"]
+                        data = params["data"].copy() if isinstance(params["data"], (list, dict, set)) else params["data"]
+                        input_setup_info = params["input_setup_info"].copy() if isinstance(params["input_setup_info"], (list, dict, set)) else params["input_setup_info"]
+                        connections_download_avg = params["connections_download_avg"].copy() if isinstance(params["connections_download_avg"], (list, dict, set)) else params["connections_download_avg"]
+                        connections_upload_avg = params["connections_upload_avg"].copy() if isinstance(params["connections_upload_avg"], (list, dict, set)) else params["connections_upload_avg"]
+                        avg_drop_a = params["avg_drop_a"].copy() if isinstance(params["avg_drop_a"], (list, dict, set)) else params["avg_drop_a"]
+                        avg_drop_b = params["avg_drop_b"].copy() if isinstance(params["avg_drop_b"], (list, dict, set)) else params["avg_drop_b"]
+                        report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
+                        result_dir_name = params["result_dir_name"].copy() if isinstance(params["result_dir_name"], (list, dict, set)) else params["result_dir_name"]
+                        selected_real_clients_names = params["selected_real_clients_names"].copy() if isinstance(params["selected_real_clients_names"], (list, dict, set)) else params["selected_real_clients_names"]
+                        config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
+                        self.qos_obj_dict[ce][obj_name]["obj"].ssid_list = self.qos_obj_dict[ce][obj_name]["obj"].get_ssid_list(self.qos_obj_dict[ce][obj_name]["obj"].input_devices_list)
+                        if selected_real_clients_names is not None:
+                            self.qos_obj_dict[ce][obj_name]["obj"].num_stations = selected_real_clients_names
+                        data_set, load, res = self.qos_obj_dict[ce][obj_name]["obj"].generate_graph_data_set(data)
+                        # Initialize counts and lists for device types
+                        android_devices, windows_devices, linux_devices, ios_devices, ios_mob_devices = 0, 0, 0, 0, 0
+                        all_devices_names = []
+                        device_type = []
+                        total_devices = ""
+                        for i in self.qos_obj_dict[ce][obj_name]["obj"].real_client_list:
+                            split_device_name = i.split(" ")
+                            if 'android' in split_device_name:
+                                all_devices_names.append(split_device_name[2] + ("(Android)"))
+                                device_type.append("Android")
+                                android_devices += 1
+                            elif 'Win' in split_device_name:
+                                all_devices_names.append(split_device_name[2] + ("(Windows)"))
+                                device_type.append("Windows")
+                                windows_devices += 1
+                            elif 'Lin' in split_device_name:
+                                all_devices_names.append(split_device_name[2] + ("(Linux)"))
+                                device_type.append("Linux")
+                                linux_devices += 1
+                            elif 'Mac' in split_device_name:
+                                all_devices_names.append(split_device_name[2] + ("(Mac)"))
+                                device_type.append("Mac")
+                                ios_devices += 1
+                            elif 'iOS' in split_device_name:
+                                all_devices_names.append(split_device_name[2] + ("(iOS)"))
+                                device_type.append("iOS")
+                                ios_mob_devices += 1
 
-                    graph_png = graph.build_bar_graph_horizontal()
-                    logging.info('graph name {}'.format(graph_png))
-                    self.overall_report.set_graph_image(graph_png)
-                    # need to move the graph image to the results directory
-                    self.overall_report.move_graph_image()
-                    self.overall_report.set_csv_filename(graph_png)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.build_graph()
+                        # Build total_devices string based on counts
+                        if android_devices > 0:
+                            total_devices += f" Android({android_devices})"
+                        if windows_devices > 0:
+                            total_devices += f" Windows({windows_devices})"
+                        if linux_devices > 0:
+                            total_devices += f" Linux({linux_devices})"
+                        if ios_devices > 0:
+                            total_devices += f" Mac({ios_devices})"
+                        if ios_mob_devices > 0:
+                            total_devices += f" iOS({ios_mob_devices})"
 
-                    dataframe2 = pd.DataFrame({
-                        'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names,
-                        'MAC': self.ping_obj_dict[ce][obj_name]["obj"].device_mac,
-                        'Channel': self.ping_obj_dict[ce][obj_name]["obj"].device_channels,
-                        'SSID ': self.ping_obj_dict[ce][obj_name]["obj"].device_ssid,
-                        'Mode': self.ping_obj_dict[ce][obj_name]["obj"].device_modes,
-                        'Min Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_min,
-                        'Average Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_avg,
-                        'Max Latency (ms)': self.ping_obj_dict[ce][obj_name]["obj"].device_max
-                    })
-                    self.overall_report.set_table_dataframe(dataframe2)
-                    self.overall_report.build_table()
-
-                    # check if there are remarks for any device. If there are remarks, build table else don't
-                    if (self.ping_obj_dict[ce][obj_name]["obj"].remarks != []):
-                        self.overall_report.set_table_title('Notes')
+                        # Test setup information table for devices in device list
+                        if config_devices == "":
+                            test_setup_info = {
+                                "Device List": ", ".join(all_devices_names),
+                                "Number of Stations": "Total" + f"({self.qos_obj_dict[ce][obj_name]['obj'].num_stations})" + total_devices,
+                                "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
+                                "SSID": self.qos_obj_dict[ce][obj_name]["obj"].ssid,
+                                "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
+                                "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
+                                "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                                "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
+                                "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
+                                "Per TOS Load in Mbps": load
+                            }
+                        # Test setup information table for devices in groups
+                        else:
+                            group_names = ', '.join(config_devices.keys())
+                            profile_names = ', '.join(config_devices.values())
+                            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                            test_setup_info = {
+                                "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
+                                'Configuration': configmap,
+                                "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
+                                "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
+                                "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
+                                "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
+                                "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
+                                "Per TOS Load in Mbps": load
+                            }
+                        print(res["throughput_table_df"])
+                        self.overall_report.set_obj_html(_obj_title=f'QOS Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
+                        self.overall_report.set_table_title(
+                            f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)")
                         self.overall_report.build_table_title()
-                        dataframe3 = pd.DataFrame({
-                            'Wireless Client': self.ping_obj_dict[ce][obj_name]["obj"].device_names_with_errors,
-                            'Port': self.ping_obj_dict[ce][obj_name]["obj"].devices_with_errors,
-                            'Remarks': self.ping_obj_dict[ce][obj_name]["obj"].remarks
-                        })
-                        self.overall_report.set_table_dataframe(dataframe3)
+                        df_throughput = pd.DataFrame(res["throughput_table_df"])
+                        self.overall_report.set_table_dataframe(df_throughput)
                         self.overall_report.build_table()
-
-                    # closing
-                    self.overall_report.build_custom()
+                        for key in res["graph_df"]:
+                            self.overall_report.set_obj_html(
+                                _obj_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for {len(self.qos_obj_dict[ce][obj_name]['obj'].input_devices_list)} clients with different TOS.",
+                                _obj=f"The below graph represents overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for all "
+                                    "connected stations running BK, BE, VO, VI traffic with different "
+                                    f"intended loads{load} per tos")
+                        self.overall_report.build_objective()
+                        graph = lf_bar_graph(_data_set=data_set,
+                                            _xaxis_name="Load per Type of Service",
+                                            _yaxis_name="Throughput (Mbps)",
+                                            _xaxis_categories=["BK,BE,VI,VO"],
+                                            _xaxis_label=['1 Mbps', '2 Mbps', '3 Mbps', '4 Mbps', '5 Mbps'],
+                                            _graph_image_name=f"tos_download_{key}Hz {obj_no}",
+                                            _label=["BK", "BE", "VI", "VO"],
+                                            _xaxis_step=1,
+                                            _graph_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput – BK,BE,VO,VI traffic streams",
+                                            _title_size=16,
+                                            _color=['orange', 'lightcoral', 'steelblue', 'lightgrey'],
+                                            _color_edge='black',
+                                            _bar_width=0.15,
+                                            _figsize=(18, 6),
+                                            _legend_loc="best",
+                                            _legend_box=(1.0, 1.0),
+                                            _dpi=96,
+                                            _show_bar_value=True,
+                                            _enable_csv=True,
+                                            _color_name=['orange', 'lightcoral', 'steelblue', 'lightgrey'])
+                        graph_png = graph.build_bar_graph()
+                        print("graph name {}".format(graph_png))
+                        self.overall_report.set_graph_image(graph_png)
+                        # need to move the graph image to the results directory
+                        self.overall_report.move_graph_image()
+                        self.overall_report.set_csv_filename(graph_png)
+                        self.overall_report.move_csv_file()
+                        self.overall_report.build_graph()
+                        self.qos_obj_dict[ce][obj_name]["obj"].generate_individual_graph(res, self.overall_report, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b,obj_no)
+                        self.overall_report.test_setup_table(test_setup_data=input_setup_info, value="Information")
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"qos_test_{obj_no}"
+                        else:
+                            break
+                
+                elif test_name == "mcast_test":
+                    obj_no=1
+                    obj_name = "mcast_test"
                     if ce == "series":
-                        obj_no += 1
-                        obj_name = f"ping_test_{obj_no}"
-                    else:
-                        break
-            elif test_name == "qos_test":
-                obj_no = 1
-                obj_name = 'qos_test'
-                if ce == "series":
-                    obj_name += "_1" 
-                while obj_name in self.qos_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    params = self.qos_obj_dict[ce][obj_name]["data"]
-                    data = params["data"].copy() if isinstance(params["data"], (list, dict, set)) else params["data"]
-                    input_setup_info = params["input_setup_info"].copy() if isinstance(params["input_setup_info"], (list, dict, set)) else params["input_setup_info"]
-                    connections_download_avg = params["connections_download_avg"].copy() if isinstance(params["connections_download_avg"], (list, dict, set)) else params["connections_download_avg"]
-                    connections_upload_avg = params["connections_upload_avg"].copy() if isinstance(params["connections_upload_avg"], (list, dict, set)) else params["connections_upload_avg"]
-                    avg_drop_a = params["avg_drop_a"].copy() if isinstance(params["avg_drop_a"], (list, dict, set)) else params["avg_drop_a"]
-                    avg_drop_b = params["avg_drop_b"].copy() if isinstance(params["avg_drop_b"], (list, dict, set)) else params["avg_drop_b"]
-                    report_path = params["report_path"].copy() if isinstance(params["report_path"], (list, dict, set)) else params["report_path"]
-                    result_dir_name = params["result_dir_name"].copy() if isinstance(params["result_dir_name"], (list, dict, set)) else params["result_dir_name"]
-                    selected_real_clients_names = params["selected_real_clients_names"].copy() if isinstance(params["selected_real_clients_names"], (list, dict, set)) else params["selected_real_clients_names"]
-                    config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
-                    self.qos_obj_dict[ce][obj_name]["obj"].ssid_list = self.qos_obj_dict[ce][obj_name]["obj"].get_ssid_list(self.qos_obj_dict[ce][obj_name]["obj"].input_devices_list)
-                    if selected_real_clients_names is not None:
-                        self.qos_obj_dict[ce][obj_name]["obj"].num_stations = selected_real_clients_names
-                    data_set, load, res = self.qos_obj_dict[ce][obj_name]["obj"].generate_graph_data_set(data)
-                    # Initialize counts and lists for device types
-                    android_devices, windows_devices, linux_devices, ios_devices, ios_mob_devices = 0, 0, 0, 0, 0
-                    all_devices_names = []
-                    device_type = []
-                    total_devices = ""
-                    for i in self.qos_obj_dict[ce][obj_name]["obj"].real_client_list:
-                        split_device_name = i.split(" ")
-                        if 'android' in split_device_name:
-                            all_devices_names.append(split_device_name[2] + ("(Android)"))
-                            device_type.append("Android")
-                            android_devices += 1
-                        elif 'Win' in split_device_name:
-                            all_devices_names.append(split_device_name[2] + ("(Windows)"))
-                            device_type.append("Windows")
-                            windows_devices += 1
-                        elif 'Lin' in split_device_name:
-                            all_devices_names.append(split_device_name[2] + ("(Linux)"))
-                            device_type.append("Linux")
-                            linux_devices += 1
-                        elif 'Mac' in split_device_name:
-                            all_devices_names.append(split_device_name[2] + ("(Mac)"))
-                            device_type.append("Mac")
-                            ios_devices += 1
-                        elif 'iOS' in split_device_name:
-                            all_devices_names.append(split_device_name[2] + ("(iOS)"))
-                            device_type.append("iOS")
-                            ios_mob_devices += 1
+                        obj_name += "_1"
+                    while obj_name in self.mcast_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        print('is error',self.mcast_obj_dict)
+                        params = self.mcast_obj_dict[ce][obj_name]["data"].copy()
+                        config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
+                        group_device_map = params["group_device_map"].copy() if isinstance(params["group_device_map"], (list, dict, set)) else params["group_device_map"]
 
-                    # Build total_devices string based on counts
-                    if android_devices > 0:
-                        total_devices += f" Android({android_devices})"
-                    if windows_devices > 0:
-                        total_devices += f" Windows({windows_devices})"
-                    if linux_devices > 0:
-                        total_devices += f" Linux({linux_devices})"
-                    if ios_devices > 0:
-                        total_devices += f" Mac({ios_devices})"
-                    if ios_mob_devices > 0:
-                        total_devices += f" iOS({ios_mob_devices})"
-
-                    # Test setup information table for devices in device list
-                    if config_devices == "":
+                        # self.mcast_obj_dict[ce][obj_name]["obj"].update_a()
+                        # self.mcast_obj_dict[ce][obj_name]["obj"].update_b()
                         test_setup_info = {
-                            "Device List": ", ".join(all_devices_names),
-                            "Number of Stations": "Total" + f"({self.qos_obj_dict[ce][obj_name]['obj'].num_stations})" + total_devices,
-                            "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
-                            "SSID": self.qos_obj_dict[ce][obj_name]["obj"].ssid,
-                            "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
-                            "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
-                            "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
-                            "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
-                            "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
-                            "Per TOS Load in Mbps": load
+                            "DUT Name": self.mcast_obj_dict[ce][obj_name]["obj"].dut_model_num,
+                            "DUT Hardware Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_hw_version,
+                            "DUT Software Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_sw_version,
+                            "DUT Serial Number": self.mcast_obj_dict[ce][obj_name]["obj"].dut_serial_num,
                         }
-                    # Test setup information table for devices in groups
-                    else:
-                        group_names = ', '.join(config_devices.keys())
-                        profile_names = ', '.join(config_devices.values())
-                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
-                        test_setup_info = {
-                            "AP Model": self.qos_obj_dict[ce][obj_name]["obj"].ap_name,
-                            'Configuration': configmap,
-                            "Traffic Duration in hours": round(int(self.qos_obj_dict[ce][obj_name]["obj"].test_duration) / 3600, 2),
-                            "Security": self.qos_obj_dict[ce][obj_name]["obj"].security,
-                            "Protocol": (self.qos_obj_dict[ce][obj_name]["obj"].traffic_type.strip("lf_")).upper(),
-                            "Traffic Direction": self.qos_obj_dict[ce][obj_name]["obj"].direction,
-                            "TOS": self.qos_obj_dict[ce][obj_name]["obj"].tos,
-                            "Per TOS Load in Mbps": load
-                        }
-                    print(res["throughput_table_df"])
-                    self.overall_report.set_obj_html(_obj_title=f'QOS Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.test_setup_table(test_setup_data=test_setup_info, value="Test Configuration")
-                    self.overall_report.set_table_title(
-                        f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)")
-                    self.overall_report.build_table_title()
-                    df_throughput = pd.DataFrame(res["throughput_table_df"])
-                    self.overall_report.set_table_dataframe(df_throughput)
-                    self.overall_report.build_table()
-                    for key in res["graph_df"]:
-                        self.overall_report.set_obj_html(
-                            _obj_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for {len(self.qos_obj_dict[ce][obj_name]['obj'].input_devices_list)} clients with different TOS.",
-                            _obj=f"The below graph represents overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput for all "
-                                "connected stations running BK, BE, VO, VI traffic with different "
-                                f"intended loads{load} per tos")
-                    self.overall_report.build_objective()
-                    graph = lf_bar_graph(_data_set=data_set,
-                                        _xaxis_name="Load per Type of Service",
-                                        _yaxis_name="Throughput (Mbps)",
-                                        _xaxis_categories=["BK,BE,VI,VO"],
-                                        _xaxis_label=['1 Mbps', '2 Mbps', '3 Mbps', '4 Mbps', '5 Mbps'],
-                                        _graph_image_name=f"tos_download_{key}Hz {obj_no}",
-                                        _label=["BK", "BE", "VI", "VO"],
-                                        _xaxis_step=1,
-                                        _graph_title=f"Overall {self.qos_obj_dict[ce][obj_name]['obj'].direction} throughput – BK,BE,VO,VI traffic streams",
-                                        _title_size=16,
-                                        _color=['orange', 'lightcoral', 'steelblue', 'lightgrey'],
-                                        _color_edge='black',
-                                        _bar_width=0.15,
-                                        _figsize=(18, 6),
-                                        _legend_loc="best",
-                                        _legend_box=(1.0, 1.0),
-                                        _dpi=96,
-                                        _show_bar_value=True,
-                                        _enable_csv=True,
-                                        _color_name=['orange', 'lightcoral', 'steelblue', 'lightgrey'])
-                    graph_png = graph.build_bar_graph()
-                    print("graph name {}".format(graph_png))
-                    self.overall_report.set_graph_image(graph_png)
-                    # need to move the graph image to the results directory
-                    self.overall_report.move_graph_image()
-                    self.overall_report.set_csv_filename(graph_png)
-                    self.overall_report.move_csv_file()
-                    self.overall_report.build_graph()
-                    self.qos_obj_dict[ce][obj_name]["obj"].generate_individual_graph(res, self.overall_report, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b,obj_no)
-                    self.overall_report.test_setup_table(test_setup_data=input_setup_info, value="Information")
-                    if ce == "series":
-                        obj_no += 1
-                        obj_name = f"qos_test_{obj_no}"
-                    else:
-                        break
-            
-            elif test_name == "mcast_test":
-                obj_no=1
-                obj_name = "mcast_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.mcast_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    print('is error',self.mcast_obj_dict)
-                    params = self.mcast_obj_dict[ce][obj_name]["data"].copy()
-                    config_devices = params["config_devices"].copy() if isinstance(params["config_devices"], (list, dict, set)) else params["config_devices"]
-                    group_device_map = params["group_device_map"].copy() if isinstance(params["group_device_map"], (list, dict, set)) else params["group_device_map"]
+                        self.overall_report.set_obj_html(_obj_title=f'MULTICAST Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.set_table_title("Device Under Test Information")
+                        self.overall_report.build_table_title()
+                        self.overall_report.test_setup_table(value="Device Under Test",
+                                                    test_setup_data=test_setup_info)
+                        # For real devices when groups specified for configuration
+                        if self.mcast_obj_dict[ce][obj_name]["obj"].real and self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
+                            group_names = ', '.join(config_devices.keys())
+                            profile_names = ', '.join(config_devices.values())
+                            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+                            test_input_info = {
+                                "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
+                                "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
+                                "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
+                                "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
+                                "Test Configuration": configmap,
+                                "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
+                                "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
+                            }
+                        else:
+                            test_input_info = {
+                                "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
+                                "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
+                                "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
+                                "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
+                                "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
+                                "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
+                            }
 
-                    # self.mcast_obj_dict[ce][obj_name]["obj"].update_a()
-                    # self.mcast_obj_dict[ce][obj_name]["obj"].update_b()
-                    test_setup_info = {
-                        "DUT Name": self.mcast_obj_dict[ce][obj_name]["obj"].dut_model_num,
-                        "DUT Hardware Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_hw_version,
-                        "DUT Software Version": self.mcast_obj_dict[ce][obj_name]["obj"].dut_sw_version,
-                        "DUT Serial Number": self.mcast_obj_dict[ce][obj_name]["obj"].dut_serial_num,
-                    }
-                    self.overall_report.set_obj_html(_obj_title=f'MULTICAST Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.set_table_title("Device Under Test Information")
-                    self.overall_report.build_table_title()
-                    self.overall_report.test_setup_table(value="Device Under Test",
-                                                test_setup_data=test_setup_info)
-                    # For real devices when groups specified for configuration
-                    if self.mcast_obj_dict[ce][obj_name]["obj"].real and self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
-                        group_names = ', '.join(config_devices.keys())
-                        profile_names = ', '.join(config_devices.values())
-                        configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
-                        test_input_info = {
-                            "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
-                            "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
-                            "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
-                            "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
-                            "Test Configuration": configmap,
-                            "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
-                            "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
-                        }
-                    else:
-                        test_input_info = {
-                            "LANforge ip": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr,
-                            "LANforge port": self.mcast_obj_dict[ce][obj_name]["obj"].lfmgr_port,
-                            "Upstream": self.mcast_obj_dict[ce][obj_name]["obj"].upstream_port,
-                            "Test Duration": self.mcast_obj_dict[ce][obj_name]["obj"].test_duration,
-                            "Polling Interval": self.mcast_obj_dict[ce][obj_name]["obj"].polling_interval,
-                            "Total No. of Devices": self.mcast_obj_dict[ce][obj_name]["obj"].station_count,
+                        self.overall_report.set_table_title("Test Configuration")
+                        self.overall_report.build_table_title()
+                        self.overall_report.test_setup_table(value="Test Configuration",
+                                                    test_setup_data=test_input_info)
+
+                        self.overall_report.set_table_title("Radio Configuration")
+                        self.overall_report.build_table_title()
+
+                        wifi_mode_dict = {
+                            0: 'AUTO',  # 802.11g
+                            1: '802.11a',  # 802.11a
+                            2: '802.11b',  # 802.11b
+                            3: '802.11g',  # 802.11g
+                            4: '802.11abg',  # 802.11abg
+                            5: '802.11abgn',  # 802.11abgn
+                            6: '802.11bgn',  # 802.11bgn
+                            7: '802.11bg',  # 802.11bg
+                            8: '802.11abgnAC',  # 802.11abgn-AC
+                            9: '802.11anAC',  # 802.11an-AC
+                            10: '802.11an',  # 802.11an
+                            11: '802.11bgnAC',  # 802.11bgn-AC
+                            12: '802.11abgnAX',  # 802.11abgn-A+
+                            #     a/b/g/n/AC/AX (dual-band AX) support
+                            13: '802.11bgnAX',  # 802.11bgn-AX
+                            14: '802.11anAX',  # 802.11an-AX
+                            15: '802.11aAX',  # 802.11a-AX (6E disables /n and /ac)
+                            16: '802.11abgnEHT',  # 802.11abgn-EHT  a/b/g/n/AC/AX/EHT (dual-band AX) support
+                            17: '802.11bgnEHT',  # 802.11bgn-EHT
+                            18: '802.11anEHT',  # 802.11an-ETH
+                            19: '802.11aBE',  # 802.11a-EHT (6E disables /n and /ac)
                         }
 
-                    self.overall_report.set_table_title("Test Configuration")
-                    self.overall_report.build_table_title()
-                    self.overall_report.test_setup_table(value="Test Configuration",
-                                                test_setup_data=test_input_info)
+                        for (
+                                radio_,
+                                ssid_,
+                                _ssid_password_,  # do not print password
+                                ssid_security_,
+                                mode_,
+                                wifi_enable_flags_list_,
+                                _reset_port_enable_,
+                                _reset_port_time_min_,
+                                _reset_port_time_max_) in zip(
+                                self.mcast_obj_dict[ce][obj_name]["obj"].radio_name_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].ssid_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].ssid_password_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].ssid_security_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].wifi_mode_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].enable_flags_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_enable_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_min_list,
+                                self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_max_list):
 
-                    self.overall_report.set_table_title("Radio Configuration")
-                    self.overall_report.build_table_title()
+                            mode_value = wifi_mode_dict[int(mode_)]
 
-                    wifi_mode_dict = {
-                        0: 'AUTO',  # 802.11g
-                        1: '802.11a',  # 802.11a
-                        2: '802.11b',  # 802.11b
-                        3: '802.11g',  # 802.11g
-                        4: '802.11abg',  # 802.11abg
-                        5: '802.11abgn',  # 802.11abgn
-                        6: '802.11bgn',  # 802.11bgn
-                        7: '802.11bg',  # 802.11bg
-                        8: '802.11abgnAC',  # 802.11abgn-AC
-                        9: '802.11anAC',  # 802.11an-AC
-                        10: '802.11an',  # 802.11an
-                        11: '802.11bgnAC',  # 802.11bgn-AC
-                        12: '802.11abgnAX',  # 802.11abgn-A+
-                        #     a/b/g/n/AC/AX (dual-band AX) support
-                        13: '802.11bgnAX',  # 802.11bgn-AX
-                        14: '802.11anAX',  # 802.11an-AX
-                        15: '802.11aAX',  # 802.11a-AX (6E disables /n and /ac)
-                        16: '802.11abgnEHT',  # 802.11abgn-EHT  a/b/g/n/AC/AX/EHT (dual-band AX) support
-                        17: '802.11bgnEHT',  # 802.11bgn-EHT
-                        18: '802.11anEHT',  # 802.11an-ETH
-                        19: '802.11aBE',  # 802.11a-EHT (6E disables /n and /ac)
-                    }
+                            radio_info = {
+                                "SSID": ssid_,
+                                "Security": ssid_security_,
+                                "Wifi mode set": mode_value,
+                                'Wifi Enable Flags': wifi_enable_flags_list_
+                            }
+                            self.overall_report.test_setup_table(value=radio_, test_setup_data=radio_info)
 
-                    for (
-                            radio_,
-                            ssid_,
-                            _ssid_password_,  # do not print password
-                            ssid_security_,
-                            mode_,
-                            wifi_enable_flags_list_,
-                            _reset_port_enable_,
-                            _reset_port_time_min_,
-                            _reset_port_time_max_) in zip(
-                            self.mcast_obj_dict[ce][obj_name]["obj"].radio_name_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_password_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].ssid_security_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].wifi_mode_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].enable_flags_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_enable_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_min_list,
-                            self.mcast_obj_dict[ce][obj_name]["obj"].reset_port_time_max_list):
+                        # TODO move the graphing to the class so it may be called as a service
 
-                        mode_value = wifi_mode_dict[int(mode_)]
+                        # Graph TOS data
+                        # Once the data is stopped can collect the data for the cx's both multi cast and uni cast
+                        # if the traffic is still running will gather the running traffic
+                        # self.mcast_obj_dict[ce][obj_name]["obj"].evaluate_qos()
 
-                        radio_info = {
-                            "SSID": ssid_,
-                            "Security": ssid_security_,
-                            "Wifi mode set": mode_value,
-                            'Wifi Enable Flags': wifi_enable_flags_list_
-                        }
-                        self.overall_report.test_setup_table(value=radio_, test_setup_data=radio_info)
+                        # graph BK A
+                        # try to do as a loop
+                        logger.info(f"BEFORE REAL A {self.mcast_obj_dict[ce][obj_name]['obj'].client_dict_A}")
+                        tos_list = ['BK', 'BE', 'VI', 'VO']
+                        if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                            tos_types = ['BE', 'BK', 'VI', 'VO']
+                            print("BOOLLLLL",self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B is self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A)
+                            for tos_key in tos_types:
+                                if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A:
+                                    tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos_key]
 
-                    # TODO move the graphing to the class so it may be called as a service
+                                    # Filter A side
+                                    traffic_proto_A = tos_data.get("traffic_protocol_A", [])
+                                    indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
 
-                    # Graph TOS data
-                    # Once the data is stopped can collect the data for the cx's both multi cast and uni cast
-                    # if the traffic is still running will gather the running traffic
-                    # self.mcast_obj_dict[ce][obj_name]["obj"].evaluate_qos()
+                                    # Filter B side
+                                    traffic_proto_B = tos_data.get("traffic_protocol_B", [])
+                                    indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
 
-                    # graph BK A
-                    # try to do as a loop
-                    logger.info(f"BEFORE REAL A {self.mcast_obj_dict[ce][obj_name]['obj'].client_dict_A}")
-                    tos_list = ['BK', 'BE', 'VI', 'VO']
-                    if self.mcast_obj_dict[ce][obj_name]["obj"].real:
-                        tos_types = ['BE', 'BK', 'VI', 'VO']
-                        print("BOOLLLLL",self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B is self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A)
-                        for tos_key in tos_types:
-                            if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A:
-                                tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos_key]
+                                    for key in list(tos_data.keys()):
+                                        if key in ["colors", "labels"]:
+                                            continue  # Keep as-is
 
-                                # Filter A side
-                                traffic_proto_A = tos_data.get("traffic_protocol_A", [])
-                                indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
+                                        if key.endswith('_A'):
+                                            filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
+                                            tos_data[key] = filtered_list
 
-                                # Filter B side
-                                traffic_proto_B = tos_data.get("traffic_protocol_B", [])
-                                indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
+                                        elif key.endswith('_B'):
+                                            filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
+                                            tos_data[key] = filtered_list
+                            for tos_key in tos_types:
+                                if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B:
+                                    tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos_key]
 
-                                for key in list(tos_data.keys()):
-                                    if key in ["colors", "labels"]:
-                                        continue  # Keep as-is
+                                    # Filter A side
+                                    traffic_proto_A = tos_data.get("traffic_protocol_A", [])
+                                    indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
 
-                                    if key.endswith('_A'):
-                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
-                                        tos_data[key] = filtered_list
+                                    # Filter B side
+                                    traffic_proto_B = tos_data.get("traffic_protocol_B", [])
+                                    indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
 
-                                    elif key.endswith('_B'):
-                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
-                                        tos_data[key] = filtered_list
-                        for tos_key in tos_types:
-                            if tos_key in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B:
-                                tos_data = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos_key]
+                                    for key in list(tos_data.keys()):
+                                        if key in ["colors", "labels"]:
+                                            continue  # Keep as-is
 
-                                # Filter A side
-                                traffic_proto_A = tos_data.get("traffic_protocol_A", [])
-                                indices_to_keep_A = [i for i, proto in enumerate(traffic_proto_A) if proto == "Mcast"]
+                                        if key.endswith('_A'):
+                                            filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
+                                            tos_data[key] = filtered_list
 
-                                # Filter B side
-                                traffic_proto_B = tos_data.get("traffic_protocol_B", [])
-                                indices_to_keep_B = [i for i, proto in enumerate(traffic_proto_B) if proto == "Mcast"]
+                                        elif key.endswith('_B'):
+                                            filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
+                                            tos_data[key] = filtered_list
+                        # logger.info(f"AFTER REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
+                        for tos in tos_list:
+                            print(self.mcast_obj_dict[ce][obj_name]["obj"].tos)
+                            if tos not in self.mcast_obj_dict[ce][obj_name]["obj"].tos:
+                                continue
+                            if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]):
+                                min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_a"]
+                                min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_b"]
 
-                                for key in list(tos_data.keys()):
-                                    if key in ["colors", "labels"]:
-                                        continue  # Keep as-is
+                                dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]]
+                                # TODO possibly explain the wording for upload and download
+                                dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"])
+                                x_fig_size = 20
+                                y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]) * .4 + 5
+                                logger.debug("length of clients_A {clients} resource_alias_A {alias_A}".format(
+                                    clients=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]), alias_A=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"])))
+                                logger.debug("clients_A {clients}".format(clients=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]))
+                                logger.debug("resource_alias_A {alias_A}".format(alias_A=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"]))
 
-                                    if key.endswith('_A'):
-                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_A if i < len(tos_data[key])]
-                                        tos_data[key] = filtered_list
+                                if int(min_bps_a) != 0:
+                                    self.overall_report.set_obj_html(
+                                        _obj_title=f"Individual throughput measured  upload tcp or udp bps: {min_bps_a},  download tcp, udp, or mcast  bps: {min_bps_b} station for traffic {tos} (WiFi).",
+                                        _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                        f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                        f"Throughput in Mbps”.")
+                                else:
+                                    self.overall_report.set_obj_html(
+                                        _obj_title=f"Individual throughput mcast download bps: {min_bps_b} traffic {tos} (WiFi).",
+                                        _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                        f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                        f"Throughput in Mbps”.")
 
-                                    elif key.endswith('_B'):
-                                        filtered_list = [tos_data[key][i] for i in indices_to_keep_B if i < len(tos_data[key])]
-                                        tos_data[key] = filtered_list
-                    # logger.info(f"AFTER REAL A {self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A}")
-                    for tos in tos_list:
-                        print(self.mcast_obj_dict[ce][obj_name]["obj"].tos)
-                        if tos not in self.mcast_obj_dict[ce][obj_name]["obj"].tos:
-                            continue
-                        if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]):
-                            min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_a"]
-                            min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A["min_bps_b"]
+                                self.overall_report.build_objective()
 
-                            dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["dl_A"]]
-                            # TODO possibly explain the wording for upload and download
-                            dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["ul_A"])
-                            x_fig_size = 20
-                            y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]) * .4 + 5
-                            logger.debug("length of clients_A {clients} resource_alias_A {alias_A}".format(
-                                clients=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]), alias_A=len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"])))
-                            logger.debug("clients_A {clients}".format(clients=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"]))
-                            logger.debug("resource_alias_A {alias_A}".format(alias_A=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"]))
+                                graph = lf_bar_graph_horizontal(_data_set=dataset_list,
+                                                                        _xaxis_name="Throughput in bps",
+                                                                        _yaxis_name="Client names",
+                                                                        # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                                        _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"],
+                                                                        _graph_image_name=f"{tos}_A{obj_no}",
+                                                                        _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['labels'],
+                                                                        _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['colors'],
+                                                                        _color_edge=['black'],
+                                                                        # traditional station side -A
+                                                                        _graph_title=f"Individual {tos} client side traffic measurement - side a (downstream)",
+                                                                        _title_size=10,
+                                                                        _figsize=(x_fig_size, y_fig_size),
+                                                                        _show_bar_value=True,
+                                                                        _enable_csv=True,
+                                                                        _text_font=8,
+                                                                        _legend_loc="best",
+                                                                        _legend_box=(1.0, 1.0)
+                                                                        )
+                                graph_png = graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
+                                self.overall_report.set_csv_filename(graph_png)
+                                self.overall_report.move_csv_file()
+                                if(self.mcast_obj_dict[ce][obj_name]["obj"].dowebgui and self.mcast_obj_dict[ce][obj_name]["obj"].get_live_view):
+                                    for floor in range(0,int(self.mcast_obj_dict[ce][obj_name]["obj"].total_floors)):
+                                        script_dir = os.path.dirname(os.path.abspath(__file__))
+                                        throughput_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_throughput_{floor+1}.png")
+                                        rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_rssi_{floor+1}.png")
+                                        timeout = 60  # seconds
+                                        start_time = time.time()
 
-                            if int(min_bps_a) != 0:
-                                self.overall_report.set_obj_html(
-                                    _obj_title=f"Individual throughput measured  upload tcp or udp bps: {min_bps_a},  download tcp, udp, or mcast  bps: {min_bps_b} station for traffic {tos} (WiFi).",
-                                    _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
-                                    f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
-                                    f"Throughput in Mbps”.")
-                            else:
-                                self.overall_report.set_obj_html(
-                                    _obj_title=f"Individual throughput mcast download bps: {min_bps_b} traffic {tos} (WiFi).",
-                                    _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
-                                    f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
-                                    f"Throughput in Mbps”.")
+                                        while not (os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path)):
+                                            if time.time() - start_time > timeout:
+                                                print("Timeout: Images not found within 60 seconds.")
+                                                break
+                                            time.sleep(1)
+                                        while not os.path.exists(throughput_image_path) and not os.path.exists(rssi_image_path):
+                                            if os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path):
+                                                break
+                                            # time.sleep(10)
+                                        if os.path.exists(throughput_image_path):
+                                            self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
+                                            self.overall_report.build_custom()
+                                            # self.overall_report.set_custom_html("<h2>Average Throughput Heatmap: </h2>")
+                                            # self.overall_report.build_custom()
+                                            self.overall_report.set_custom_html(f'<img src="file://{throughput_image_path}"></img>')
+                                            self.overall_report.build_custom()
+                                            # os.remove(throughput_image_path)
 
-                            self.overall_report.build_objective()
+                                        if os.path.exists(rssi_image_path):
+                                            self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
+                                            self.overall_report.build_custom()
+                                            # self.overall_report.set_custom_html("<h2>Average RSSI Heatmap: </h2>")
+                                            # self.overall_report.build_custom()
+                                            self.overall_report.set_custom_html(f'<img src="file://{rssi_image_path}"></img>')
+                                            self.overall_report.build_custom()
+                                            # os.remove(rssi_image_path)
 
-                            graph = lf_bar_graph_horizontal(_data_set=dataset_list,
-                                                                    _xaxis_name="Throughput in bps",
-                                                                    _yaxis_name="Client names",
-                                                                    # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
-                                                                    _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["resource_alias_A"],
-                                                                    _graph_image_name=f"{tos}_A{obj_no}",
-                                                                    _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['labels'],
-                                                                    _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['colors'],
-                                                                    _color_edge=['black'],
-                                                                    # traditional station side -A
-                                                                    _graph_title=f"Individual {tos} client side traffic measurement - side a (downstream)",
-                                                                    _title_size=10,
-                                                                    _figsize=(x_fig_size, y_fig_size),
-                                                                    _show_bar_value=True,
-                                                                    _enable_csv=True,
-                                                                    _text_font=8,
-                                                                    _legend_loc="best",
-                                                                    _legend_box=(1.0, 1.0)
-                                                                    )
-                            graph_png = graph.build_bar_graph_horizontal()
-                            self.overall_report.set_graph_image(graph_png)
-                            self.overall_report.move_graph_image()
-                            self.overall_report.build_graph()
-                            self.overall_report.set_csv_filename(graph_png)
-                            self.overall_report.move_csv_file()
-                            if(self.mcast_obj_dict[ce][obj_name]["obj"].dowebgui and self.mcast_obj_dict[ce][obj_name]["obj"].get_live_view):
-                                for floor in range(0,int(self.mcast_obj_dict[ce][obj_name]["obj"].total_floors)):
-                                    script_dir = os.path.dirname(os.path.abspath(__file__))
-                                    throughput_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_throughput_{floor+1}.png")
-                                    rssi_image_path = os.path.join(script_dir, "heatmap_images", f"{self.mcast_obj_dict[ce][obj_name]['obj'].test_name}_rssi_{floor+1}.png")
-                                    timeout = 60  # seconds
-                                    start_time = time.time()
+                                # For real devices appending the required data for pass fail criteria
+                                if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                                    up, down, off_up, off_down = [], [], [], []
+                                    for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A']:
+                                        up.append(int(i) / 1000000)
+                                    for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A']:
+                                        down.append(int(i) / 1000000)
+                                    for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A']:
+                                        off_up.append(int(i) / 1_000_000)
+                                    for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A']:
+                                        off_down.append(int(i) / 1000000)
+                                    # if either 'expected_passfail_value' or 'device_csv_name' is provided for pass/fail evaluation
+                                    if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                        test_input_list, pass_fail_list = self.mcast_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(tos, up, down)
 
-                                    while not (os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path)):
-                                        if time.time() - start_time > timeout:
-                                            print("Timeout: Images not found within 60 seconds.")
-                                            break
-                                        time.sleep(1)
-                                    while not os.path.exists(throughput_image_path) and not os.path.exists(rssi_image_path):
-                                        if os.path.exists(throughput_image_path) and os.path.exists(rssi_image_path):
-                                            break
-                                        # time.sleep(10)
-                                    if os.path.exists(throughput_image_path):
-                                        self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
-                                        self.overall_report.build_custom()
-                                        # self.overall_report.set_custom_html("<h2>Average Throughput Heatmap: </h2>")
-                                        # self.overall_report.build_custom()
-                                        self.overall_report.set_custom_html(f'<img src="file://{throughput_image_path}"></img>')
-                                        self.overall_report.build_custom()
-                                        # os.remove(throughput_image_path)
-
-                                    if os.path.exists(rssi_image_path):
-                                        self.overall_report.set_custom_html('<div style="page-break-before: always;"></div>')
-                                        self.overall_report.build_custom()
-                                        # self.overall_report.set_custom_html("<h2>Average RSSI Heatmap: </h2>")
-                                        # self.overall_report.build_custom()
-                                        self.overall_report.set_custom_html(f'<img src="file://{rssi_image_path}"></img>')
-                                        self.overall_report.build_custom()
-                                        # os.remove(rssi_image_path)
-
-                            # For real devices appending the required data for pass fail criteria
-                            if self.mcast_obj_dict[ce][obj_name]["obj"].real:
-                                up, down, off_up, off_down = [], [], [], []
-                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A']:
-                                    up.append(int(i) / 1000000)
-                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A']:
-                                    down.append(int(i) / 1000000)
-                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A']:
-                                    off_up.append(int(i) / 1_000_000)
-                                for i in self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A']:
-                                    off_down.append(int(i) / 1000000)
-                                # if either 'expected_passfail_value' or 'device_csv_name' is provided for pass/fail evaluation
-                                if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                    test_input_list, pass_fail_list = self.mcast_obj_dict[ce][obj_name]["obj"].get_pass_fail_list(tos, up, down)
-
-                            if self.mcast_obj_dict[ce][obj_name]["obj"].real:
-                                # When groups and profiles specifed for configuration
-                                if self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
-                                    for key, val in group_device_map.items():
-                                        # Generating Dataframe when Groups with their profiles and pass_fail case is specified
+                                if self.mcast_obj_dict[ce][obj_name]["obj"].real:
+                                    # When groups and profiles specifed for configuration
+                                    if self.mcast_obj_dict[ce][obj_name]["obj"].group_name:
+                                        for key, val in group_device_map.items():
+                                            # Generating Dataframe when Groups with their profiles and pass_fail case is specified
+                                            if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                                                dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                                    val,
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                                    off_up,
+                                                    off_down,
+                                                    up,
+                                                    down,
+                                                    test_input_list,
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                                    pass_fail_list)
+                                            # Generating Dataframe for groups when pass_fail case is not specified
+                                            else:
+                                                dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
+                                                    val,
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                                    off_up,
+                                                    off_down,
+                                                    up,
+                                                    down,
+                                                    [],
+                                                    self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                                    [],)
+                                            # When the client exists in either group.
+                                            if dataframe:
+                                                self.overall_report.set_obj_html("", "Group: {}".format(key))
+                                                self.overall_report.build_objective()
+                                                dataframe1 = pd.DataFrame(dataframe)
+                                                self.overall_report.set_table_dataframe(dataframe1)
+                                                self.overall_report.build_table()
+                                    else:
+                                        tos_dataframe_A = {
+                                            " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
+                                            " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
+                                            " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
+                                            " Device Type / Hw Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
+                                            " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
+                                            # TODO : port A being set to many times
+                                            " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
+                                            " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
+                                            " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
+                                            " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
+                                            " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
+                                            " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
+                                            " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
+                                            " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A'],
+                                            " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A'],
+                                            " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A'],
+                                            " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A'],
+                                            " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                                        }
+                                        # When pass_Fail criteria specified
                                         if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                            dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
-                                                val,
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
-                                                off_up,
-                                                off_down,
-                                                up,
-                                                down,
-                                                test_input_list,
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
-                                                pass_fail_list)
-                                        # Generating Dataframe for groups when pass_fail case is not specified
-                                        else:
-                                            dataframe = self.mcast_obj_dict[ce][obj_name]["obj"].generate_dataframe(
-                                                val,
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
-                                                off_up,
-                                                off_down,
-                                                up,
-                                                down,
-                                                [],
-                                                self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
-                                                [],)
-                                        # When the client exists in either group.
-                                        if dataframe:
-                                            self.overall_report.set_obj_html("", "Group: {}".format(key))
-                                            self.overall_report.build_objective()
-                                            dataframe1 = pd.DataFrame(dataframe)
-                                            self.overall_report.set_table_dataframe(dataframe1)
-                                            self.overall_report.build_table()
+                                            tos_dataframe_A[" Expected " + 'Download' + " Rate"] = [float(x) * 10**6 for x in test_input_list]
+                                            tos_dataframe_A[" Status "] = pass_fail_list
+
+                                        dataframe3 = pd.DataFrame(tos_dataframe_A)
+                                        self.overall_report.set_table_dataframe(dataframe3)
+                                        self.overall_report.build_table()
+
+                                # For virtual clients
                                 else:
                                     tos_dataframe_A = {
                                         " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
@@ -7154,7 +7191,6 @@ class Candela(Realm):
                                         " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
                                         " Device Type / Hw Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
                                         " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
-                                        # TODO : port A being set to many times
                                         " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
                                         " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
                                         " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
@@ -7168,1426 +7204,1398 @@ class Candela(Realm):
                                         " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A'],
                                         " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
                                     }
-                                    # When pass_Fail criteria specified
-                                    if self.mcast_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.mcast_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                                        tos_dataframe_A[" Expected " + 'Download' + " Rate"] = [float(x) * 10**6 for x in test_input_list]
-                                        tos_dataframe_A[" Status "] = pass_fail_list
-
                                     dataframe3 = pd.DataFrame(tos_dataframe_A)
                                     self.overall_report.set_table_dataframe(dataframe3)
                                     self.overall_report.build_table()
 
-                            # For virtual clients
-                            else:
-                                tos_dataframe_A = {
-                                    " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_alias_A'],
-                                    " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_eid_A'],
-                                    " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_host_A'],
-                                    " Device Type / Hw Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['resource_hw_ver_A'],
-                                    " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]["clients_A"],
-                                    " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['port_A'],
-                                    " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mode_A'],
-                                    " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['mac_A'],
-                                    " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ssid_A'],
-                                    " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['channel_A'],
-                                    " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_type_A'],
-                                    " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['traffic_protocol_A'],
-                                    " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_upload_rate_A'],
-                                    " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['offered_download_rate_A'],
-                                    " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['ul_A'],
-                                    " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['dl_A'],
-                                    " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_A[tos]['download_rx_drop_percent_A'],
+                        # TODO both client_dict_A and client_dict_B contains the same information
+                        for tos in tos_list:
+                            if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]):
+                                min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_a"]
+                                min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_b"]
+
+                                dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]]
+                                dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"])
+
+                                x_fig_size = 20
+                                y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"]) * .4 + 5
+
+                                self.overall_report.set_obj_html(
+                                    _obj_title=f"Individual throughput upstream endp,  offered upload bps: {min_bps_a} offered download bps: {min_bps_b} /station for traffic {tos} (WiFi).",
+                                    _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
+                                    f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
+                                    f"Throughput in Mbps”.")
+                                self.overall_report.build_objective()
+
+                                graph = lf_bar_graph_horizontal(_data_set=dataset_list,
+                                                                        _xaxis_name="Throughput in bps",
+                                                                        _yaxis_name="Client names",
+                                                                        # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
+                                                                        _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["resource_alias_B"],
+                                                                        _graph_image_name=f"{tos}_B{obj_no}",
+                                                                        _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['labels'],
+                                                                        _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['colors'],
+                                                                        _color_edge=['black'],
+                                                                        _graph_title=f"Individual {tos} upstream side traffic measurement - side b (WIFI) traffic",
+                                                                        _title_size=10,
+                                                                        _figsize=(x_fig_size, y_fig_size),
+                                                                        _show_bar_value=True,
+                                                                        _enable_csv=True,
+                                                                        _text_font=8,
+                                                                        _legend_loc="best",
+                                                                        _legend_box=(1.0, 1.0)
+                                                                        )
+                                graph_png = graph.build_bar_graph_horizontal()
+                                self.overall_report.set_graph_image(graph_png)
+                                self.overall_report.move_graph_image()
+                                self.overall_report.build_graph()
+                                self.overall_report.set_csv_filename(graph_png)
+                                self.overall_report.move_csv_file()
+
+                                tos_dataframe_B = {
+                                    " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_alias_B'],
+                                    " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_eid_B'],
+                                    " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_host_B'],
+                                    " Device Type / HW Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_hw_ver_B'],
+                                    " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
+                                    # TODO get correct size
+                                    " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['port_B'],
+                                    " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mode_B'],
+                                    " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mac_B'],
+                                    " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ssid_B'],
+                                    " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['channel_B'],
+                                    " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_type_B'],
+                                    " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_protocol_B'],
+                                    " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_upload_rate_B'],
+                                    " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_download_rate_B'],
+                                    " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ul_B'],
+                                    " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['dl_B'],
+                                    " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['download_rx_drop_percent_B']
                                 }
-                                dataframe3 = pd.DataFrame(tos_dataframe_A)
+
+                                dataframe3 = pd.DataFrame(tos_dataframe_B)
                                 self.overall_report.set_table_dataframe(dataframe3)
                                 self.overall_report.build_table()
 
-                    # TODO both client_dict_A and client_dict_B contains the same information
-                    for tos in tos_list:
-                        if (self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"] and self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]):
-                            min_bps_a = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_a"]
-                            min_bps_b = self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B["min_bps_b"]
+                        # L3 total traffic # TODO csv_results_file present yet not readable
+                        # self.overall_report.set_table_title("Total Layer 3 Cross-Connect Traffic across all Stations")
+                        # self.overall_report.build_table_title()
+                        # self.overall_report.set_table_dataframe_from_csv(self.mcast_obj_dict[ce][obj_name]["obj"].csv_results_file)
+                        # self.overall_report.build_table()
 
-                            dataset_list = [self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"], self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["dl_B"]]
-                            dataset_length = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["ul_B"])
+                        # empty dictionarys evaluate to false , placing tables in output
+                        if bool(self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files):
+                            for key, value in self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files.items():
+                                if self.mcast_obj_dict[ce][obj_name]["obj"].csv_data_to_report:
+                                    # read the csv file
+                                    self.overall_report.set_table_title("Layer 3 Cx Traffic  {key}".format(key=key))
+                                    self.overall_report.build_table_title()
+                                    self.overall_report.set_table_dataframe_from_csv(value.name)
+                                    self.overall_report.build_table()
 
-                            x_fig_size = 20
-                            y_fig_size = len(self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"]) * .4 + 5
+                                # read in column heading and last line
+                                df = pd.read_csv(value.name)
+                                last_row = df.tail(1)
+                                self.overall_report.set_table_title(
+                                    "Layer 3 Cx Traffic Last Reporting Interval {key}".format(key=key))
+                                self.overall_report.build_table_title()
+                                self.overall_report.set_table_dataframe(last_row)
+                                self.overall_report.build_table()
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"mcast_test_{obj_no}"
+                        else:
+                            break        
+                
+                elif test_name == "vs_test":
+                    obj_no=1
+                    obj_name = "vs_test"
+                    if ce == "series":
+                        obj_name += "_1"
+                    while obj_name in self.vs_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        params = self.vs_obj_dict[ce][obj_name]["data"].copy()
+                        date = params["date"]
+
+                        iterations_before_test_stopped_by_user = (
+                            params["iterations_before_test_stopped_by_user"].copy()
+                            if isinstance(params["iterations_before_test_stopped_by_user"], (list, dict, set))
+                            else params["iterations_before_test_stopped_by_user"]
+                        )
+
+                        test_setup_info = (
+                            params["test_setup_info"].copy()
+                            if isinstance(params["test_setup_info"], (list, dict, set))
+                            else params["test_setup_info"]
+                        )
+
+                        realtime_dataset = (
+                            params["realtime_dataset"].copy()
+                            if isinstance(params["realtime_dataset"], (list, dict, set))
+                            else params["realtime_dataset"]
+                        )
+
+                        report_path = (
+                            params["report_path"].copy()
+                            if isinstance(params["report_path"], (list, dict, set))
+                            else params["report_path"]
+                        )
+
+                        cx_order_list = (
+                            params["cx_order_list"].copy()
+                            if isinstance(params["cx_order_list"], (list, dict, set))
+                            else params["cx_order_list"]
+                        )
+                        self.overall_report.set_obj_html(_obj_title=f'Video Streaming Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        created_incremental_values = self.vs_obj_dict[ce][obj_name]["obj"].get_incremental_capacity_list()
+                        keys = list(self.vs_obj_dict[ce][obj_name]["obj"].http_profile.created_cx.keys())
+
+                        self.overall_report.set_table_title("Input Parameters")
+                        self.overall_report.build_table_title()
+                        if self.vs_obj_dict[ce][obj_name]["obj"].config:
+                            test_setup_info["SSID"] = self.vs_obj_dict[ce][obj_name]["obj"].ssid
+                            test_setup_info["Password"] = self.vs_obj_dict[ce][obj_name]["obj"].passwd
+                            test_setup_info["ENCRYPTION"] = self.vs_obj_dict[ce][obj_name]["obj"].encryp
+                        elif len(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                            # Map each group with a profile
+                            gp_pairs = zip(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups, self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles)
+                            # Create a string by joining the mapped pairs
+                            gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+                            test_setup_info["Configuration"] = gp_map
+
+                        self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
+
+                        device_type = []
+                        username = []
+                        ssid = []
+                        mac = []
+                        channel = []
+                        mode = []
+                        rssi = []
+                        channel = []
+                        tx_rate = []
+                        resource_ids = list(map(int, self.vs_obj_dict[ce][obj_name]["obj"].resource_ids.split(',')))
+                        try:
+                            eid_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("ports?fields=alias,mac,mode,Parent Dev,rx-rate,tx-rate,ssid,signal,channel")
+                        except KeyError:
+                            logger.error("Error: 'interfaces' key not found in port data")
+                            exit(1)
+
+                        # Loop through interfaces
+                        for alias in eid_data["interfaces"]:
+                            for i in alias:
+                                # Check interface index and alias
+                                if int(i.split(".")[1]) > 1 and alias[i]["alias"] == 'wlan0':
+
+                                    # Get resource data for specific interface
+                                    resource_hw_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("/resource/" + i.split(".")[0] + "/" + i.split(".")[1])
+                                    hw_version = resource_hw_data['resource']['hw version']
+
+                                    # Filter based on OS and resource ID
+                                    if not hw_version.startswith(('Win', 'Linux', 'Apple')) and int(resource_hw_data['resource']['eid'].split('.')[1]) in resource_ids:
+                                        device_type.append('Android')
+                                        username.append(resource_hw_data['resource']['user'])
+                                        ssid.append(alias[i]['ssid'])
+                                        mac.append(alias[i]['mac'])
+                                        mode.append(alias[i]['mode'])
+                                        rssi.append(alias[i]['signal'])
+                                        channel.append(alias[i]['channel'])
+                                        tx_rate.append(alias[i]['tx-rate'])
+                        total_urls = self.vs_obj_dict[ce][obj_name]["obj"].data["total_urls"]
+                        total_err = self.vs_obj_dict[ce][obj_name]["obj"].data["total_err"]
+                        total_buffer = self.vs_obj_dict[ce][obj_name]["obj"].data["total_buffer"]
+                        max_bytes_rd_list = []
+                        avg_rx_rate_list = []
+                        # Iterate through the length of cx_order_list
+                        for iter in range(len(iterations_before_test_stopped_by_user)):
+                            data_set_in_graph, wait_time_data, devices_on_running_state, device_names_on_running = [], [], [], []
+                            devices_data_to_create_wait_time_bar_graph = []
+                            max_video_rate, min_video_rate, avg_video_rate = [], [], []
+                            total_url_data, rssi_data = [], []
+                            trimmed_data_set_in_graph = []
+                            max_bytes_rd_list = []
+                            avg_rx_rate_list = []
+                            # Retrieve data for the previous iteration, if it's not the first iteration
+                            if iter != 0:
+                                before_data_iter = realtime_dataset[realtime_dataset['iteration'] == iter]
+                            # Retrieve data for the current iteration
+                            data_iter = realtime_dataset[realtime_dataset['iteration'] == iter + 1]
+
+                            # Populate the list of devices on running state and their corresponding usernames
+                            for j in range(created_incremental_values[iter]):
+                                devices_on_running_state.append(keys[j])
+                                device_names_on_running.append(username[j])
+
+                            # Iterate through each device currently running
+                            for k in devices_on_running_state:
+                                # Filter columns related to the current device
+                                columns_with_substring = [col for col in data_iter.columns if k in col]
+                                filtered_df = data_iter[columns_with_substring]
+                                min_val = self.vs_obj_dict[ce][obj_name]["obj"].process_list(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist())
+                                if iter != 0:
+                                    # Filter columns related to the current device from the previous iteration
+                                    before_iter_columns_with_substring = [col for col in before_data_iter.columns if k in col]
+                                    before_filtered_df = before_data_iter[before_iter_columns_with_substring]
+
+                                # Extract and compute max, min, and average video rates
+                                max_video_rate.append(max(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()))
+                                min_video_rate.append(min_val)
+                                avg_video_rate.append(round(sum(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()) /
+                                                    len(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()), 2))
+                                wait_time_data.append(filtered_df[[col for col in filtered_df.columns if "total_wait_time" in col][0]].values.tolist()[-1])
+                                rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
+                                                len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
+                                # Extract maximum bytes read for the device
+                                max_bytes_rd = max(filtered_df[[col for col in filtered_df.columns if "bytes_rd" in col][0]].values.tolist())
+                                max_bytes_rd_list.append(max_bytes_rd)
+
+                                # Calculate and append the average RX rate in Mbps
+                                rx_rate_values = filtered_df[[col for col in filtered_df.columns if "rx rate" in col][0]].values.tolist()
+                                avg_rx_rate_list.append(round((sum(rx_rate_values) / len(rx_rate_values)) / 1_000_000, 2))  # Convert bps to Mbps
+
+                                if iter != 0:
+                                    # Calculate the difference in total URLs between the current and previous iterations
+                                    total_url_data.append(abs(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1] -
+                                                        before_filtered_df[[col for col in before_filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1]))
+                                else:
+                                    # Append the total URLs for the first iteration
+                                    total_url_data.append(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1])
+
+                            # Append the wait time data to the list for creating the wait time bar graph
+                            devices_data_to_create_wait_time_bar_graph.append(wait_time_data)
+
+                            # Extract overall video format bitrate values for the current iteration and append to data_set_in_graph
+                            video_streaming_values_list = realtime_dataset['overall_video_format_bitrate'][realtime_dataset['iteration'] == iter + 1].values.tolist()
+                            data_set_in_graph.append(video_streaming_values_list)
+
+                            # Trim the data in data_set_in_graph and append to trimmed_data_set_in_graph
+                            for _ in range(len(data_set_in_graph)):
+                                trimmed_data_set_in_graph.append(self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(data_set_in_graph[_]), data_set_in_graph[_]))
+
+                            # If there are multiple incremental values, add custom HTML content to the report for the current iteration
+                            if len(created_incremental_values) > 1:
+                                self.overall_report.set_custom_html(f"<h2><u>Iteration-{iter + 1}</u></h2>")
+                                self.overall_report.build_custom()
 
                             self.overall_report.set_obj_html(
-                                _obj_title=f"Individual throughput upstream endp,  offered upload bps: {min_bps_a} offered download bps: {min_bps_b} /station for traffic {tos} (WiFi).",
-                                _obj=f"The below graph represents individual throughput for {dataset_length} clients running {tos} "
-                                f"(WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “"
-                                f"Throughput in Mbps”.")
+                                _obj_title=f"Realtime Video Rate: Number of devices running: {len(device_names_on_running)}",
+                                _obj="")
                             self.overall_report.build_objective()
 
-                            graph = lf_bar_graph_horizontal(_data_set=dataset_list,
-                                                                    _xaxis_name="Throughput in bps",
-                                                                    _yaxis_name="Client names",
-                                                                    # _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
-                                                                    _yaxis_categories=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["resource_alias_B"],
-                                                                    _graph_image_name=f"{tos}_B{obj_no}",
-                                                                    _label=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['labels'],
-                                                                    _color_name=self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['colors'],
-                                                                    _color_edge=['black'],
-                                                                    _graph_title=f"Individual {tos} upstream side traffic measurement - side b (WIFI) traffic",
-                                                                    _title_size=10,
-                                                                    _figsize=(x_fig_size, y_fig_size),
-                                                                    _show_bar_value=True,
-                                                                    _enable_csv=True,
-                                                                    _text_font=8,
-                                                                    _legend_loc="best",
-                                                                    _legend_box=(1.0, 1.0)
-                                                                    )
+                            # Create a line graph for video rate over time
+                            graph = lf_line_graph(_data_set=trimmed_data_set_in_graph,
+                                                _xaxis_name="Time",
+                                                _yaxis_name="Video Rate (Mbps)",
+                                                _xaxis_categories=self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
+                                                                                realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
+                                                _label=['Rate'],
+                                                _graph_image_name=f"vs_line_graph{iter}{obj_no}"
+                                                )
+                            graph_png = graph.build_line_graph()
+                            logger.info("graph name {}".format(graph_png))
+                            self.overall_report.set_graph_image(graph_png)
+                            self.overall_report.move_graph_image()
+
+                            self.overall_report.build_graph()
+
+                            # Define figure size for horizontal bar graphs
+                            x_fig_size = 15
+                            y_fig_size = len(devices_on_running_state) * .5 + 4
+
+                            self.overall_report.set_obj_html(
+                                _obj_title="Total Urls Per Device",
+                                _obj="")
+                            self.overall_report.build_objective()
+                            # Create a horizontal bar graph for total URLs per device
+                            graph = lf_bar_graph_horizontal(_data_set=[total_urls[:created_incremental_values[iter]]],
+                                                            _xaxis_name="Total Urls",
+                                                            _yaxis_name="Devices",
+                                                            _graph_image_name=f"total_urls_image_name{iter}{obj_no}",
+                                                            _label=["Total Urls"],
+                                                            _yaxis_categories=device_names_on_running,
+                                                            _legend_loc="best",
+                                                            _legend_box=(1.0, 1.0),
+                                                            _show_bar_value=True,
+                                                            _figsize=(x_fig_size, y_fig_size)
+                                                            #    _color=['lightcoral']
+                                                            )
                             graph_png = graph.build_bar_graph_horizontal()
+                            logger.info("wait time graph name {}".format(graph_png))
+                            graph.build_bar_graph_horizontal()
                             self.overall_report.set_graph_image(graph_png)
                             self.overall_report.move_graph_image()
                             self.overall_report.build_graph()
-                            self.overall_report.set_csv_filename(graph_png)
-                            self.overall_report.move_csv_file()
 
-                            tos_dataframe_B = {
-                                " Client Alias ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_alias_B'],
-                                " Host eid ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_eid_B'],
-                                " Host Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_host_B'],
-                                " Device Type / HW Ver ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['resource_hw_ver_B'],
-                                " Endp Name": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]["clients_B"],
-                                # TODO get correct size
-                                " Port Name ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['port_B'],
-                                " Mode ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mode_B'],
-                                " Mac ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['mac_B'],
-                                " SSID ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ssid_B'],
-                                " Channel ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['channel_B'],
-                                " Type of traffic ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_type_B'],
-                                " Traffic Protocol ": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['traffic_protocol_B'],
-                                " Offered Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_upload_rate_B'],
-                                " Offered Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['offered_download_rate_B'],
-                                " Upload Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['ul_B'],
-                                " Download Rate Per Client": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['dl_B'],
-                                " Drop Percentage (%)": self.mcast_obj_dict[ce][obj_name]["obj"].client_dict_B[tos]['download_rx_drop_percent_B']
+                            self.overall_report.set_obj_html(
+                                _obj_title="Max/Min Video Rate Per Device",
+                                _obj="")
+                            self.overall_report.build_objective()
+
+                            # Create a horizontal bar graph for max and min video rates per device
+                            graph = lf_bar_graph_horizontal(_data_set=[max_video_rate, min_video_rate],
+                                                            _xaxis_name="Max/Min Video Rate(Mbps)",
+                                                            _yaxis_name="Devices",
+                                                            _graph_image_name=f"max-min-video-rate_image_name{iter}{obj_no}",
+                                                            _label=['Max Video Rate', 'Min Video Rate'],
+                                                            _yaxis_categories=device_names_on_running,
+                                                            _legend_loc="best",
+                                                            _legend_box=(1.0, 1.0),
+                                                            _show_bar_value=True,
+                                                            _figsize=(x_fig_size, y_fig_size)
+                                                            #    _color=['lightcoral']
+                                                            )
+                            graph_png = graph.build_bar_graph_horizontal()
+                            logger.info("max/min graph name {}".format(graph_png))
+                            graph.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_png)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_obj_html(
+                                _obj_title="Wait Time Per Device",
+                                _obj="")
+                            self.overall_report.build_objective()
+
+                            # Create a horizontal bar graph for wait time per device
+                            graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_wait_time_bar_graph,
+                                                            _xaxis_name="Wait Time(seconds)",
+                                                            _yaxis_name="Devices",
+                                                            _graph_image_name=f"wait_time_image_name{iter}{obj_no}",
+                                                            _label=['Wait Time'],
+                                                            _yaxis_categories=device_names_on_running,
+                                                            _legend_loc="best",
+                                                            _legend_box=(1.0, 1.0),
+                                                            _show_bar_value=True,
+                                                            _figsize=(x_fig_size, y_fig_size)
+                                                            #    _color=['lightcoral']
+                                                            )
+                            graph_png = graph.build_bar_graph_horizontal()
+                            logger.info("wait time graph name {}".format(graph_png))
+                            graph.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_png)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            if self.vs_obj_dict[ce][obj_name]["obj"].dowebgui and self.vs_obj_dict[ce][obj_name]["obj"].get_live_view:
+                                script_dir = os.path.dirname(os.path.abspath(__file__))
+
+                                self.overall_report.set_custom_html("<h2>No of Buffers and Wait Time %</h2>")
+                                self.overall_report.build_custom()
+
+                                for floor in range(int(self.vs_obj_dict[ce][obj_name]["obj"].floors)):
+                                    # Construct expected image paths
+                                    vs_buffer_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_buffer_{floor+1}.png")
+                                    vs_wait_time_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_wait_time_{floor+1}.png")
+
+
+                                    # Wait for all required images to be generated (up to timeout)
+                                    timeout = 60  # seconds
+                                    start_time = time.time()
+
+                                    while not (os.path.exists(vs_buffer_image) and os.path.exists(vs_wait_time_image)):
+                                        if time.time() - start_time > timeout:
+                                            print(f"Timeout: Heatmap images for floor {floor + 1} not found within {timeout} seconds.")
+                                            break
+                                        time.sleep(1)
+
+                                    # Generate report sections for each image if it exists
+                                    for image_path in [vs_buffer_image, vs_wait_time_image,]:
+                                        if os.path.exists(image_path):
+                                            self.overall_report.set_custom_html(f'<img src="file://{image_path}"  style="width:1200px; height:800px;"></img>')
+                                            self.overall_report.build_custom()
+
+                            # Table 1
+                            self.overall_report.set_obj_html("Overall - Detailed Result Table", "The below tables provides detailed information for the Video Streaming test.")
+                            self.overall_report.build_objective()
+                            test_data = {
+                                "iter": iter,
+                                "created_incremental_values": created_incremental_values,
+                                "device_type": device_type,
+                                "username": username,
+                                "ssid": ssid,
+                                "mac": mac,
+                                "channel": channel,
+                                "mode": mode,
+                                "total_buffer": total_buffer,
+                                "wait_time_data": wait_time_data,
+                                "min_video_rate": min_video_rate,
+                                "avg_video_rate": avg_video_rate,
+                                "max_video_rate": max_video_rate,
+                                "total_urls": total_urls,
+                                "total_err": total_err,
+                                "rssi_data": rssi_data,
+                                "tx_rate": tx_rate,
+                                "max_bytes_rd_list": max_bytes_rd_list,
+                                "avg_rx_rate_list": avg_rx_rate_list
                             }
 
-                            dataframe3 = pd.DataFrame(tos_dataframe_B)
+                            dataframe = self.vs_obj_dict[ce][obj_name]["obj"].handle_passfail_criteria(test_data)
+
+                            dataframe1 = pd.DataFrame(dataframe)
+                            self.overall_report.set_table_dataframe(dataframe1)
+                            self.overall_report.build_table()
+
+                            # Set and build title for the overall results table
+                            self.overall_report.set_obj_html("Detailed Total Errors Table", "The below tables provides detailed information of total errors for the web browsing test.")
+                            self.overall_report.build_objective()
+                            dataframe2 = {
+                                " DEVICE": username[:created_incremental_values[iter]],
+                                " TOTAL ERRORS ": total_err[:created_incremental_values[iter]],
+                            }
+                            dataframe3 = pd.DataFrame(dataframe2)
                             self.overall_report.set_table_dataframe(dataframe3)
                             self.overall_report.build_table()
-
-                    # L3 total traffic # TODO csv_results_file present yet not readable
-                    # self.overall_report.set_table_title("Total Layer 3 Cross-Connect Traffic across all Stations")
-                    # self.overall_report.build_table_title()
-                    # self.overall_report.set_table_dataframe_from_csv(self.mcast_obj_dict[ce][obj_name]["obj"].csv_results_file)
-                    # self.overall_report.build_table()
-
-                    # empty dictionarys evaluate to false , placing tables in output
-                    if bool(self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files):
-                        for key, value in self.mcast_obj_dict[ce][obj_name]["obj"].dl_port_csv_files.items():
-                            if self.mcast_obj_dict[ce][obj_name]["obj"].csv_data_to_report:
-                                # read the csv file
-                                self.overall_report.set_table_title("Layer 3 Cx Traffic  {key}".format(key=key))
-                                self.overall_report.build_table_title()
-                                self.overall_report.set_table_dataframe_from_csv(value.name)
-                                self.overall_report.build_table()
-
-                            # read in column heading and last line
-                            df = pd.read_csv(value.name)
-                            last_row = df.tail(1)
-                            self.overall_report.set_table_title(
-                                "Layer 3 Cx Traffic Last Reporting Interval {key}".format(key=key))
-                            self.overall_report.build_table_title()
-                            self.overall_report.set_table_dataframe(last_row)
-                            self.overall_report.build_table()
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"vs_test_{obj_no}"
+                        else:
+                            break
+                
+                elif test_name =="rb_test":
+                    obj_no=1
+                    obj_name = "rb_test"
                     if ce == "series":
-                        obj_no += 1
-                        obj_name = f"mcast_test_{obj_no}"
-                    else:
-                        break        
-            
-            elif test_name == "vs_test":
-                obj_no=1
-                obj_name = "vs_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.vs_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    params = self.vs_obj_dict[ce][obj_name]["data"].copy()
-                    date = params["date"]
+                        obj_name += "_1"
+                    while obj_name in self.rb_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        self.overall_report.set_obj_html(_obj_title=f'Real Browser Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.set_table_title("Test Parameters:")
+                        self.overall_report.build_table_title()
 
-                    iterations_before_test_stopped_by_user = (
-                        params["iterations_before_test_stopped_by_user"].copy()
-                        if isinstance(params["iterations_before_test_stopped_by_user"], (list, dict, set))
-                        else params["iterations_before_test_stopped_by_user"]
-                    )
+                        final_eid_data = []
+                        mac_data = []
+                        channel_data = []
+                        signal_data = []
+                        ssid_data = []
+                        tx_rate_data = []
+                        device_type_data = []
+                        device_names = []
+                        total_urls = []
+                        time_to_target_urls = []
+                        uc_min_data = []
+                        uc_max_data = []
+                        uc_avg_data = []
+                        total_err_data = []
 
-                    test_setup_info = (
-                        params["test_setup_info"].copy()
-                        if isinstance(params["test_setup_info"], (list, dict, set))
-                        else params["test_setup_info"]
-                    )
+                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
 
-                    realtime_dataset = (
-                        params["realtime_dataset"].copy()
-                        if isinstance(params["realtime_dataset"], (list, dict, set))
-                        else params["realtime_dataset"]
-                    )
+                        test_setup_info = self.rb_obj_dict[ce][obj_name]["obj"].generate_test_setup_info()
+                        self.overall_report.test_setup_table(
+                            test_setup_data=test_setup_info, value='Test Parameters')
+                        self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names
+                        for i in range(0, len(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names)):
+                            if self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i].startswith("real_time_data.csv"):
+                                continue
 
-                    report_path = (
-                        params["report_path"].copy()
-                        if isinstance(params["report_path"], (list, dict, set))
-                        else params["report_path"]
-                    )
+                            final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
+                            self.overall_report.set_graph_title("Successful URL's per Device")
+                            self.overall_report.build_graph_title()
 
-                    cx_order_list = (
-                        params["cx_order_list"].copy()
-                        if isinstance(params["cx_order_list"], (list, dict, set))
-                        else params["cx_order_list"]
-                    )
-                    self.overall_report.set_obj_html(_obj_title=f'Video Streaming Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    created_incremental_values = self.vs_obj_dict[ce][obj_name]["obj"].get_incremental_capacity_list()
-                    keys = list(self.vs_obj_dict[ce][obj_name]["obj"].http_profile.created_cx.keys())
+                            data = pd.read_csv("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
 
-                    self.overall_report.set_table_title("Input Parameters")
-                    self.overall_report.build_table_title()
-                    if self.vs_obj_dict[ce][obj_name]["obj"].config:
-                        test_setup_info["SSID"] = self.vs_obj_dict[ce][obj_name]["obj"].ssid
-                        test_setup_info["Password"] = self.vs_obj_dict[ce][obj_name]["obj"].passwd
-                        test_setup_info["ENCRYPTION"] = self.vs_obj_dict[ce][obj_name]["obj"].encryp
-                    elif len(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
-                        # Map each group with a profile
-                        gp_pairs = zip(self.vs_obj_dict[ce][obj_name]["obj"].selected_groups, self.vs_obj_dict[ce][obj_name]["obj"].selected_profiles)
-                        # Create a string by joining the mapped pairs
-                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
-                        test_setup_info["Configuration"] = gp_map
-
-                    self.overall_report.test_setup_table(value="Test Setup Information", test_setup_data=test_setup_info)
-
-                    device_type = []
-                    username = []
-                    ssid = []
-                    mac = []
-                    channel = []
-                    mode = []
-                    rssi = []
-                    channel = []
-                    tx_rate = []
-                    resource_ids = list(map(int, self.vs_obj_dict[ce][obj_name]["obj"].resource_ids.split(',')))
-                    try:
-                        eid_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("ports?fields=alias,mac,mode,Parent Dev,rx-rate,tx-rate,ssid,signal,channel")
-                    except KeyError:
-                        logger.error("Error: 'interfaces' key not found in port data")
-                        exit(1)
-
-                    # Loop through interfaces
-                    for alias in eid_data["interfaces"]:
-                        for i in alias:
-                            # Check interface index and alias
-                            if int(i.split(".")[1]) > 1 and alias[i]["alias"] == 'wlan0':
-
-                                # Get resource data for specific interface
-                                resource_hw_data = self.vs_obj_dict[ce][obj_name]["obj"].json_get("/resource/" + i.split(".")[0] + "/" + i.split(".")[1])
-                                hw_version = resource_hw_data['resource']['hw version']
-
-                                # Filter based on OS and resource ID
-                                if not hw_version.startswith(('Win', 'Linux', 'Apple')) and int(resource_hw_data['resource']['eid'].split('.')[1]) in resource_ids:
-                                    device_type.append('Android')
-                                    username.append(resource_hw_data['resource']['user'])
-                                    ssid.append(alias[i]['ssid'])
-                                    mac.append(alias[i]['mac'])
-                                    mode.append(alias[i]['mode'])
-                                    rssi.append(alias[i]['signal'])
-                                    channel.append(alias[i]['channel'])
-                                    tx_rate.append(alias[i]['tx-rate'])
-                    total_urls = self.vs_obj_dict[ce][obj_name]["obj"].data["total_urls"]
-                    total_err = self.vs_obj_dict[ce][obj_name]["obj"].data["total_err"]
-                    total_buffer = self.vs_obj_dict[ce][obj_name]["obj"].data["total_buffer"]
-                    max_bytes_rd_list = []
-                    avg_rx_rate_list = []
-                    # Iterate through the length of cx_order_list
-                    for iter in range(len(iterations_before_test_stopped_by_user)):
-                        data_set_in_graph, wait_time_data, devices_on_running_state, device_names_on_running = [], [], [], []
-                        devices_data_to_create_wait_time_bar_graph = []
-                        max_video_rate, min_video_rate, avg_video_rate = [], [], []
-                        total_url_data, rssi_data = [], []
-                        trimmed_data_set_in_graph = []
-                        max_bytes_rd_list = []
-                        avg_rx_rate_list = []
-                        # Retrieve data for the previous iteration, if it's not the first iteration
-                        if iter != 0:
-                            before_data_iter = realtime_dataset[realtime_dataset['iteration'] == iter]
-                        # Retrieve data for the current iteration
-                        data_iter = realtime_dataset[realtime_dataset['iteration'] == iter + 1]
-
-                        # Populate the list of devices on running state and their corresponding usernames
-                        for j in range(created_incremental_values[iter]):
-                            devices_on_running_state.append(keys[j])
-                            device_names_on_running.append(username[j])
-
-                        # Iterate through each device currently running
-                        for k in devices_on_running_state:
-                            # Filter columns related to the current device
-                            columns_with_substring = [col for col in data_iter.columns if k in col]
-                            filtered_df = data_iter[columns_with_substring]
-                            min_val = self.vs_obj_dict[ce][obj_name]["obj"].process_list(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist())
-                            if iter != 0:
-                                # Filter columns related to the current device from the previous iteration
-                                before_iter_columns_with_substring = [col for col in before_data_iter.columns if k in col]
-                                before_filtered_df = before_data_iter[before_iter_columns_with_substring]
-
-                            # Extract and compute max, min, and average video rates
-                            max_video_rate.append(max(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()))
-                            min_video_rate.append(min_val)
-                            avg_video_rate.append(round(sum(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()) /
-                                                len(filtered_df[[col for col in filtered_df.columns if "video_format_bitrate" in col][0]].values.tolist()), 2))
-                            wait_time_data.append(filtered_df[[col for col in filtered_df.columns if "total_wait_time" in col][0]].values.tolist()[-1])
-                            rssi_data.append(int(round(sum(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()) /
-                                            len(filtered_df[[col for col in filtered_df.columns if "RSSI" in col][0]].values.tolist()), 2)) * -1)
-                            # Extract maximum bytes read for the device
-                            max_bytes_rd = max(filtered_df[[col for col in filtered_df.columns if "bytes_rd" in col][0]].values.tolist())
-                            max_bytes_rd_list.append(max_bytes_rd)
-
-                            # Calculate and append the average RX rate in Mbps
-                            rx_rate_values = filtered_df[[col for col in filtered_df.columns if "rx rate" in col][0]].values.tolist()
-                            avg_rx_rate_list.append(round((sum(rx_rate_values) / len(rx_rate_values)) / 1_000_000, 2))  # Convert bps to Mbps
-
-                            if iter != 0:
-                                # Calculate the difference in total URLs between the current and previous iterations
-                                total_url_data.append(abs(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1] -
-                                                    before_filtered_df[[col for col in before_filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1]))
+                            # Extract device names from CSV
+                            if 'total_urls' in data.columns:
+                                total_urls = data['total_urls'].tolist()
                             else:
-                                # Append the total URLs for the first iteration
-                                total_url_data.append(filtered_df[[col for col in filtered_df.columns if "total_urls" in col][0]].values.tolist()[-1])
+                                raise ValueError("The 'total_urls' column was not found in the CSV file.")
 
-                        # Append the wait time data to the list for creating the wait time bar graph
-                        devices_data_to_create_wait_time_bar_graph.append(wait_time_data)
+                            x_fig_size = 18
+                            y_fig_size = len(device_type_data) * 1 + 4
+                            print('DEVICE NAMES',device_names)
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=[total_urls],
+                                _xaxis_name="URL",
+                                _yaxis_name="Devices",
+                                _yaxis_label=device_names,
+                                _yaxis_categories=device_names,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="URLs",
+                                _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_urls_per_device{obj_no}",
+                                _label=["URLs"]
+                            )
+                            # print('yaxssss)
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
 
-                        # Extract overall video format bitrate values for the current iteration and append to data_set_in_graph
-                        video_streaming_values_list = realtime_dataset['overall_video_format_bitrate'][realtime_dataset['iteration'] == iter + 1].values.tolist()
-                        data_set_in_graph.append(video_streaming_values_list)
+                            self.overall_report.set_graph_title(f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]['obj'].count} RealTime URLs")
+                            self.overall_report.build_graph_title()
 
-                        # Trim the data in data_set_in_graph and append to trimmed_data_set_in_graph
-                        for _ in range(len(data_set_in_graph)):
-                            trimmed_data_set_in_graph.append(self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(data_set_in_graph[_]), data_set_in_graph[_]))
+                            # Extract device names from CSV
+                            if 'time_to_target_urls' in data.columns:
+                                time_to_target_urls = data['time_to_target_urls'].tolist()
+                            else:
+                                raise ValueError("The 'time_to_target_urls' column was not found in the CSV file.")
 
-                        # If there are multiple incremental values, add custom HTML content to the report for the current iteration
-                        if len(created_incremental_values) > 1:
-                            self.overall_report.set_custom_html(f"<h2><u>Iteration-{iter + 1}</u></h2>")
-                            self.overall_report.build_custom()
+                            x_fig_size = 18
+                            y_fig_size = len(device_type_data) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=[time_to_target_urls],
+                                _xaxis_name="Time (in Seconds)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=device_names,
+                                _yaxis_categories=device_names,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Time Taken",
+                                _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_time_taken_for_urls{obj_no}",
+                                _label=["Time (in sec)"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
 
-                        self.overall_report.set_obj_html(
-                            _obj_title=f"Realtime Video Rate: Number of devices running: {len(device_names_on_running)}",
-                            _obj="")
-                        self.overall_report.build_objective()
+                            if 'uc_min' in data.columns:
+                                uc_min_data = data['uc_min'].tolist()
+                            else:
+                                raise ValueError("The 'uc_min' column was not found in the CSV file.")
 
-                        # Create a line graph for video rate over time
-                        graph = lf_line_graph(_data_set=trimmed_data_set_in_graph,
-                                            _xaxis_name="Time",
-                                            _yaxis_name="Video Rate (Mbps)",
-                                            _xaxis_categories=self.vs_obj_dict[ce][obj_name]["obj"].trim_data(len(realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
-                                                                            realtime_dataset['timestamp'][realtime_dataset['iteration'] == iter + 1].values.tolist()),
-                                            _label=['Rate'],
-                                            _graph_image_name=f"vs_line_graph{iter}{obj_no}"
-                                            )
-                        graph_png = graph.build_line_graph()
-                        logger.info("graph name {}".format(graph_png))
-                        self.overall_report.set_graph_image(graph_png)
-                        self.overall_report.move_graph_image()
+                            if 'uc_max' in data.columns:
+                                uc_max_data = data['uc_max'].tolist()
+                            else:
+                                raise ValueError("The 'uc_max' column was not found in the CSV file.")
 
-                        self.overall_report.build_graph()
+                            if 'uc_avg' in data.columns:
+                                uc_avg_data = data['uc_avg'].tolist()
+                            else:
+                                raise ValueError("The 'uc_avg' column was not found in the CSV file.")
 
-                        # Define figure size for horizontal bar graphs
-                        x_fig_size = 15
-                        y_fig_size = len(devices_on_running_state) * .5 + 4
+                            if 'total_err' in data.columns:
+                                total_err_data = data['total_err'].tolist()
+                            else:
+                                raise ValueError("The 'total_err' column was not found in the CSV file.")
 
-                        self.overall_report.set_obj_html(
-                            _obj_title="Total Urls Per Device",
-                            _obj="")
-                        self.overall_report.build_objective()
-                        # Create a horizontal bar graph for total URLs per device
-                        graph = lf_bar_graph_horizontal(_data_set=[total_urls[:created_incremental_values[iter]]],
-                                                        _xaxis_name="Total Urls",
-                                                        _yaxis_name="Devices",
-                                                        _graph_image_name=f"total_urls_image_name{iter}{obj_no}",
-                                                        _label=["Total Urls"],
-                                                        _yaxis_categories=device_names_on_running,
-                                                        _legend_loc="best",
-                                                        _legend_box=(1.0, 1.0),
-                                                        _show_bar_value=True,
-                                                        _figsize=(x_fig_size, y_fig_size)
-                                                        #    _color=['lightcoral']
-                                                        )
-                        graph_png = graph.build_bar_graph_horizontal()
-                        logger.info("wait time graph name {}".format(graph_png))
-                        graph.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_png)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
+                        self.overall_report.set_table_title("Final Test Results")
+                        self.overall_report.build_table_title()
+                        if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
+                            pass_fail_list, test_input_list = self.rb_obj_dict[ce][obj_name]["obj"].generate_pass_fail_list(device_type_data, device_names, total_urls)
 
-                        self.overall_report.set_obj_html(
-                            _obj_title="Max/Min Video Rate Per Device",
-                            _obj="")
-                        self.overall_report.build_objective()
+                            final_test_results = {
 
-                        # Create a horizontal bar graph for max and min video rates per device
-                        graph = lf_bar_graph_horizontal(_data_set=[max_video_rate, min_video_rate],
-                                                        _xaxis_name="Max/Min Video Rate(Mbps)",
-                                                        _yaxis_name="Devices",
-                                                        _graph_image_name=f"max-min-video-rate_image_name{iter}{obj_no}",
-                                                        _label=['Max Video Rate', 'Min Video Rate'],
-                                                        _yaxis_categories=device_names_on_running,
-                                                        _legend_loc="best",
-                                                        _legend_box=(1.0, 1.0),
-                                                        _show_bar_value=True,
-                                                        _figsize=(x_fig_size, y_fig_size)
-                                                        #    _color=['lightcoral']
-                                                        )
-                        graph_png = graph.build_bar_graph_horizontal()
-                        logger.info("max/min graph name {}".format(graph_png))
-                        graph.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_png)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
+                                "Device Type": device_type_data,
+                                "Hostname": device_names,
+                                "SSID": ssid_data,
+                                "MAC": mac_data,
+                                "Channel": channel_data,
+                                "UC-MIN (ms)": uc_min_data,
+                                "UC-MAX (ms)": uc_max_data,
+                                "UC-AVG (ms)": uc_avg_data,
+                                "Total Successful URLs": total_urls,
+                                "Expected URLS": test_input_list,
+                                "Total Erros": total_err_data,
+                                "RSSI": signal_data,
+                                "Link Speed": tx_rate_data,
+                                "Status ": pass_fail_list
 
-                        self.overall_report.set_obj_html(
-                            _obj_title="Wait Time Per Device",
-                            _obj="")
-                        self.overall_report.build_objective()
+                            }
+                        else:
+                            final_test_results = {
 
-                        # Create a horizontal bar graph for wait time per device
-                        graph = lf_bar_graph_horizontal(_data_set=devices_data_to_create_wait_time_bar_graph,
-                                                        _xaxis_name="Wait Time(seconds)",
-                                                        _yaxis_name="Devices",
-                                                        _graph_image_name=f"wait_time_image_name{iter}{obj_no}",
-                                                        _label=['Wait Time'],
-                                                        _yaxis_categories=device_names_on_running,
-                                                        _legend_loc="best",
-                                                        _legend_box=(1.0, 1.0),
-                                                        _show_bar_value=True,
-                                                        _figsize=(x_fig_size, y_fig_size)
-                                                        #    _color=['lightcoral']
-                                                        )
-                        graph_png = graph.build_bar_graph_horizontal()
-                        logger.info("wait time graph name {}".format(graph_png))
-                        graph.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_png)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
+                                "Device Type": device_type_data,
+                                "Hostname": device_names,
+                                "SSID": ssid_data,
+                                "MAC": mac_data,
+                                "Channel": channel_data,
+                                "UC-MIN (ms)": uc_min_data,
+                                "UC-MAX (ms)": uc_max_data,
+                                "UC-AVG (ms)": uc_avg_data,
+                                "Total Successful URLs": total_urls,
+                                "Total Erros": total_err_data,
+                                "RSSI": signal_data,
+                                "Link Speed": tx_rate_data,
 
-                        if self.vs_obj_dict[ce][obj_name]["obj"].dowebgui and self.vs_obj_dict[ce][obj_name]["obj"].get_live_view:
-                            script_dir = os.path.dirname(os.path.abspath(__file__))
-
-                            self.overall_report.set_custom_html("<h2>No of Buffers and Wait Time %</h2>")
-                            self.overall_report.build_custom()
-
-                            for floor in range(int(self.vs_obj_dict[ce][obj_name]["obj"].floors)):
-                                # Construct expected image paths
-                                vs_buffer_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_buffer_{floor+1}.png")
-                                vs_wait_time_image = os.path.join(script_dir, "heatmap_images", f"{self.vs_obj_dict[ce][obj_name]['obj'].test_name}_vs_wait_time_{floor+1}.png")
-
-
-                                # Wait for all required images to be generated (up to timeout)
-                                timeout = 60  # seconds
-                                start_time = time.time()
-
-                                while not (os.path.exists(vs_buffer_image) and os.path.exists(vs_wait_time_image)):
-                                    if time.time() - start_time > timeout:
-                                        print(f"Timeout: Heatmap images for floor {floor + 1} not found within {timeout} seconds.")
-                                        break
-                                    time.sleep(1)
-
-                                # Generate report sections for each image if it exists
-                                for image_path in [vs_buffer_image, vs_wait_time_image,]:
-                                    if os.path.exists(image_path):
-                                        self.overall_report.set_custom_html(f'<img src="file://{image_path}"  style="width:1200px; height:800px;"></img>')
-                                        self.overall_report.build_custom()
-
-                        # Table 1
-                        self.overall_report.set_obj_html("Overall - Detailed Result Table", "The below tables provides detailed information for the Video Streaming test.")
-                        self.overall_report.build_objective()
-                        test_data = {
-                            "iter": iter,
-                            "created_incremental_values": created_incremental_values,
-                            "device_type": device_type,
-                            "username": username,
-                            "ssid": ssid,
-                            "mac": mac,
-                            "channel": channel,
-                            "mode": mode,
-                            "total_buffer": total_buffer,
-                            "wait_time_data": wait_time_data,
-                            "min_video_rate": min_video_rate,
-                            "avg_video_rate": avg_video_rate,
-                            "max_video_rate": max_video_rate,
-                            "total_urls": total_urls,
-                            "total_err": total_err,
-                            "rssi_data": rssi_data,
-                            "tx_rate": tx_rate,
-                            "max_bytes_rd_list": max_bytes_rd_list,
-                            "avg_rx_rate_list": avg_rx_rate_list
-                        }
-
-                        dataframe = self.vs_obj_dict[ce][obj_name]["obj"].handle_passfail_criteria(test_data)
-
-                        dataframe1 = pd.DataFrame(dataframe)
-                        self.overall_report.set_table_dataframe(dataframe1)
+                            }
+                        logger.info(f"dataframe realbrowser {final_test_results}")
+                        test_results_df = pd.DataFrame(final_test_results)
+                        self.overall_report.set_table_dataframe(test_results_df)
                         self.overall_report.build_table()
 
-                        # Set and build title for the overall results table
-                        self.overall_report.set_obj_html("Detailed Total Errors Table", "The below tables provides detailed information of total errors for the web browsing test.")
+                        if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
+
+                            os.chdir(self.rb_obj_dict[ce][obj_name]["obj"].original_dir)
+
+                        self.overall_report.build_custom()
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"rb_test_{obj_no}"
+                        else:
+                            break                    
+
+                elif test_name == "yt_test":
+                    obj_no=1
+                    obj_name = "yt_test"
+                    if ce == "series":
+                        obj_name += "_1"
+                    while obj_name in self.yt_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        result_data = self.yt_obj_dict[ce][obj_name]["obj"].stats_api_response
+                        for device, stats in result_data.items():
+                            self.yt_obj_dict[ce][obj_name]["obj"].mydatajson.setdefault(device, {}).update({
+                                "Viewport": stats.get("Viewport", ""),
+                                "DroppedFrames": stats.get("DroppedFrames", "0"),
+                                "TotalFrames": stats.get("TotalFrames", "0"),
+                                "CurrentRes": stats.get("CurrentRes", ""),
+                                "OptimalRes": stats.get("OptimalRes", ""),
+                                "BufferHealth": stats.get("BufferHealth", "0.0"),
+                                "Timestamp": stats.get("Timestamp", ""),
+                            })
+
+                        if self.yt_obj_dict[ce][obj_name]["obj"].config:
+
+                            # Test setup info
+                            test_setup_info = {
+                                'Test Name': 'YouTube Streaming Test',
+                                'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                                'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                                'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                                "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+                                "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid,
+                                "Security": self.yt_obj_dict[ce][obj_name]["obj"].security,
+
+                            }
+
+                        elif len(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                            gp_pairs = zip(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups, self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles)
+                            gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+
+                            # Test setup info
+                            test_setup_info = {
+                                'Test Name': 'YouTube Streaming Test',
+                                'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                                'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                                "Configuration": gp_map,
+                                'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                                "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+
+                            }
+                        else:
+                            # Test setup info
+                            test_setup_info = {
+                                'Test Name': 'YouTube Streaming Test',
+                                'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
+                                'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
+                                'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
+                                "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
+
+                            }
+                        self.overall_report.set_obj_html(_obj_title=f'Youtube Streaming Test {obj_no}', _obj="")
                         self.overall_report.build_objective()
-                        dataframe2 = {
-                            " DEVICE": username[:created_incremental_values[iter]],
-                            " TOTAL ERRORS ": total_err[:created_incremental_values[iter]],
-                        }
-                        dataframe3 = pd.DataFrame(dataframe2)
-                        self.overall_report.set_table_dataframe(dataframe3)
-                        self.overall_report.build_table()
-                    if ce == "series":
-                        obj_no += 1
-                        obj_name = f"vs_test_{obj_no}"
-                    else:
-                        break
-            
-            elif test_name =="rb_test":
-                obj_no=1
-                obj_name = "rb_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.rb_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    self.overall_report.set_obj_html(_obj_title=f'Real Browser Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.set_table_title("Test Parameters:")
-                    self.overall_report.build_table_title()
+                        self.overall_report.test_setup_table(
+                            test_setup_data=test_setup_info, value='Test Parameters')
 
-                    final_eid_data = []
-                    mac_data = []
-                    channel_data = []
-                    signal_data = []
-                    ssid_data = []
-                    tx_rate_data = []
-                    device_type_data = []
-                    device_names = []
-                    total_urls = []
-                    time_to_target_urls = []
-                    uc_min_data = []
-                    uc_max_data = []
-                    uc_avg_data = []
-                    total_err_data = []
+                        viewport_list = []
+                        current_res_list = []
+                        optimal_res_list = []
 
-                    final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
+                        dropped_frames_list = []
+                        total_frames_list = []
+                        max_buffer_health_list = []
+                        min_buffer_health_list = []
 
-                    test_setup_info = self.rb_obj_dict[ce][obj_name]["obj"].generate_test_setup_info()
-                    self.overall_report.test_setup_table(
-                        test_setup_data=test_setup_info, value='Test Parameters')
-                    self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names
-                    for i in range(0, len(self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names)):
-                        if self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i].startswith("real_time_data.csv"):
-                            continue
+                        for hostname in self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname:
+                            if hostname in self.yt_obj_dict[ce][obj_name]["obj"].mydatajson:
+                                stats = self.yt_obj_dict[ce][obj_name]["obj"].mydatajson[hostname]
+                                viewport_list.append(stats.get("Viewport", ""))
+                                current_res_list.append(stats.get("CurrentRes", ""))
+                                optimal_res_list.append(stats.get("OptimalRes", ""))
 
-                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
-                        self.overall_report.set_graph_title("Successful URL's per Device")
-                        self.overall_report.build_graph_title()
+                                dropped_frames = stats.get("DroppedFrames", "0")
+                                total_frames = stats.get("TotalFrames", "0")
+                                max_buffer_health = stats.get("maxbufferhealth", "0,0")
+                                min_buffer_health = stats.get("minbufferhealth", "0.0")
+                                try:
+                                    dropped_frames_list.append(int(dropped_frames))
+                                except ValueError:
+                                    dropped_frames_list.append(0)
 
-                        data = pd.read_csv("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
+                                try:
+                                    total_frames_list.append(int(total_frames))
+                                except ValueError:
+                                    total_frames_list.append(0)
+                                try:
+                                    max_buffer_health_list.append(float(max_buffer_health))
+                                except ValueError:
+                                    max_buffer_health_list.append(0.0)
 
-                        # Extract device names from CSV
-                        if 'total_urls' in data.columns:
-                            total_urls = data['total_urls'].tolist()
-                        else:
-                            raise ValueError("The 'total_urls' column was not found in the CSV file.")
+                                try:
+                                    min_buffer_health_list.append(float(min_buffer_health))
+                                except ValueError:
+                                    min_buffer_health_list.append(0.0)
 
-                        x_fig_size = 18
-                        y_fig_size = len(device_type_data) * 1 + 4
-                        print('DEVICE NAMES',device_names)
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=[total_urls],
-                            _xaxis_name="URL",
-                            _yaxis_name="Devices",
-                            _yaxis_label=device_names,
-                            _yaxis_categories=device_names,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="URLs",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_urls_per_device{obj_no}",
-                            _label=["URLs"]
-                        )
-                        # print('yaxssss)
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        self.overall_report.set_graph_title(f"Time Taken Vs Device For Completing {self.rb_obj_dict[ce][obj_name]['obj'].count} RealTime URLs")
-                        self.overall_report.build_graph_title()
-
-                        # Extract device names from CSV
-                        if 'time_to_target_urls' in data.columns:
-                            time_to_target_urls = data['time_to_target_urls'].tolist()
-                        else:
-                            raise ValueError("The 'time_to_target_urls' column was not found in the CSV file.")
-
-                        x_fig_size = 18
-                        y_fig_size = len(device_type_data) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=[time_to_target_urls],
-                            _xaxis_name="Time (in Seconds)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=device_names,
-                            _yaxis_categories=device_names,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Time Taken",
-                            _graph_image_name=f"{self.rb_obj_dict[ce][obj_name]['obj'].csv_file_names[i]}_time_taken_for_urls{obj_no}",
-                            _label=["Time (in sec)"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        if 'uc_min' in data.columns:
-                            uc_min_data = data['uc_min'].tolist()
-                        else:
-                            raise ValueError("The 'uc_min' column was not found in the CSV file.")
-
-                        if 'uc_max' in data.columns:
-                            uc_max_data = data['uc_max'].tolist()
-                        else:
-                            raise ValueError("The 'uc_max' column was not found in the CSV file.")
-
-                        if 'uc_avg' in data.columns:
-                            uc_avg_data = data['uc_avg'].tolist()
-                        else:
-                            raise ValueError("The 'uc_avg' column was not found in the CSV file.")
-
-                        if 'total_err' in data.columns:
-                            total_err_data = data['total_err'].tolist()
-                        else:
-                            raise ValueError("The 'total_err' column was not found in the CSV file.")
-
-                    self.overall_report.set_table_title("Final Test Results")
-                    self.overall_report.build_table_title()
-                    if self.rb_obj_dict[ce][obj_name]["obj"].expected_passfail_value or self.rb_obj_dict[ce][obj_name]["obj"].device_csv_name:
-                        pass_fail_list, test_input_list = self.rb_obj_dict[ce][obj_name]["obj"].generate_pass_fail_list(device_type_data, device_names, total_urls)
-
-                        final_test_results = {
-
-                            "Device Type": device_type_data,
-                            "Hostname": device_names,
-                            "SSID": ssid_data,
-                            "MAC": mac_data,
-                            "Channel": channel_data,
-                            "UC-MIN (ms)": uc_min_data,
-                            "UC-MAX (ms)": uc_max_data,
-                            "UC-AVG (ms)": uc_avg_data,
-                            "Total Successful URLs": total_urls,
-                            "Expected URLS": test_input_list,
-                            "Total Erros": total_err_data,
-                            "RSSI": signal_data,
-                            "Link Speed": tx_rate_data,
-                            "Status ": pass_fail_list
-
-                        }
-                    else:
-                        final_test_results = {
-
-                            "Device Type": device_type_data,
-                            "Hostname": device_names,
-                            "SSID": ssid_data,
-                            "MAC": mac_data,
-                            "Channel": channel_data,
-                            "UC-MIN (ms)": uc_min_data,
-                            "UC-MAX (ms)": uc_max_data,
-                            "UC-AVG (ms)": uc_avg_data,
-                            "Total Successful URLs": total_urls,
-                            "Total Erros": total_err_data,
-                            "RSSI": signal_data,
-                            "Link Speed": tx_rate_data,
-
-                        }
-                    logger.info(f"dataframe realbrowser {final_test_results}")
-                    test_results_df = pd.DataFrame(final_test_results)
-                    self.overall_report.set_table_dataframe(test_results_df)
-                    self.overall_report.build_table()
-
-                    if self.rb_obj_dict[ce][obj_name]["obj"].dowebgui:
-
-                        os.chdir(self.rb_obj_dict[ce][obj_name]["obj"].original_dir)
-
-                    self.overall_report.build_custom()
-                    if ce == "series":
-                        obj_no += 1
-                        obj_name = f"rb_test_{obj_no}"
-                    else:
-                        break                    
-
-            elif test_name == "yt_test":
-                obj_no=1
-                obj_name = "yt_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.yt_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    result_data = self.yt_obj_dict[ce][obj_name]["obj"].stats_api_response
-                    for device, stats in result_data.items():
-                        self.yt_obj_dict[ce][obj_name]["obj"].mydatajson.setdefault(device, {}).update({
-                            "Viewport": stats.get("Viewport", ""),
-                            "DroppedFrames": stats.get("DroppedFrames", "0"),
-                            "TotalFrames": stats.get("TotalFrames", "0"),
-                            "CurrentRes": stats.get("CurrentRes", ""),
-                            "OptimalRes": stats.get("OptimalRes", ""),
-                            "BufferHealth": stats.get("BufferHealth", "0.0"),
-                            "Timestamp": stats.get("Timestamp", ""),
-                        })
-
-                    if self.yt_obj_dict[ce][obj_name]["obj"].config:
-
-                        # Test setup info
-                        test_setup_info = {
-                            'Test Name': 'YouTube Streaming Test',
-                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
-                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
-                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
-                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
-                            "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid,
-                            "Security": self.yt_obj_dict[ce][obj_name]["obj"].security,
-
-                        }
-
-                    elif len(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
-                        gp_pairs = zip(self.yt_obj_dict[ce][obj_name]["obj"].selected_groups, self.yt_obj_dict[ce][obj_name]["obj"].selected_profiles)
-                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
-
-                        # Test setup info
-                        test_setup_info = {
-                            'Test Name': 'YouTube Streaming Test',
-                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
-                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
-                            "Configuration": gp_map,
-                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
-                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
-
-                        }
-                    else:
-                        # Test setup info
-                        test_setup_info = {
-                            'Test Name': 'YouTube Streaming Test',
-                            'Duration (in Minutes)': self.yt_obj_dict[ce][obj_name]["obj"].duration,
-                            'Resolution': self.yt_obj_dict[ce][obj_name]["obj"].resolution,
-                            'Configured Devices': self.yt_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Devices :': f' Total({len(self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types)}) : W({self.yt_obj_dict[ce][obj_name]["obj"].windows}),L({self.yt_obj_dict[ce][obj_name]["obj"].linux}),M({self.yt_obj_dict[ce][obj_name]["obj"].mac})',
-                            "Video URL": self.yt_obj_dict[ce][obj_name]["obj"].url,
-
-                        }
-                    self.overall_report.set_obj_html(_obj_title=f'Youtube Streaming Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.test_setup_table(
-                        test_setup_data=test_setup_info, value='Test Parameters')
-
-                    viewport_list = []
-                    current_res_list = []
-                    optimal_res_list = []
-
-                    dropped_frames_list = []
-                    total_frames_list = []
-                    max_buffer_health_list = []
-                    min_buffer_health_list = []
-
-                    for hostname in self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname:
-                        if hostname in self.yt_obj_dict[ce][obj_name]["obj"].mydatajson:
-                            stats = self.yt_obj_dict[ce][obj_name]["obj"].mydatajson[hostname]
-                            viewport_list.append(stats.get("Viewport", ""))
-                            current_res_list.append(stats.get("CurrentRes", ""))
-                            optimal_res_list.append(stats.get("OptimalRes", ""))
-
-                            dropped_frames = stats.get("DroppedFrames", "0")
-                            total_frames = stats.get("TotalFrames", "0")
-                            max_buffer_health = stats.get("maxbufferhealth", "0,0")
-                            min_buffer_health = stats.get("minbufferhealth", "0.0")
-                            try:
-                                dropped_frames_list.append(int(dropped_frames))
-                            except ValueError:
+                            else:
+                                viewport_list.append("NA")
+                                current_res_list.append("NA")
+                                optimal_res_list.append("NA")
                                 dropped_frames_list.append(0)
-
-                            try:
-                                total_frames_list.append(int(total_frames))
-                            except ValueError:
                                 total_frames_list.append(0)
-                            try:
-                                max_buffer_health_list.append(float(max_buffer_health))
-                            except ValueError:
                                 max_buffer_health_list.append(0.0)
-
-                            try:
-                                min_buffer_health_list.append(float(min_buffer_health))
-                            except ValueError:
                                 min_buffer_health_list.append(0.0)
 
-                        else:
-                            viewport_list.append("NA")
-                            current_res_list.append("NA")
-                            optimal_res_list.append("NA")
-                            dropped_frames_list.append(0)
-                            total_frames_list.append(0)
-                            max_buffer_health_list.append(0.0)
-                            min_buffer_health_list.append(0.0)
-
-                    # graph of frames dropped
-                    self.overall_report.set_graph_title("Total Frames vs Frames dropped")
-                    self.overall_report.build_graph_title()
-                    x_fig_size = 25
-                    y_fig_size = len(self.yt_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
-
-                    graph = lf_bar_graph_horizontal(_data_set=[dropped_frames_list, total_frames_list],
-                                                    _xaxis_name="No of Frames",
-                                                    _yaxis_name="Devices",
-                                                    _yaxis_categories=self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
-                                                    _graph_image_name=f"Dropped Frames vs Total Frames{obj_no}",
-                                                    _label=["dropped Frames", "Total Frames"],
-                                                    _color=None,
-                                                    _color_edge='red',
-                                                    _figsize=(x_fig_size, y_fig_size),
-                                                    _show_bar_value=True,
-                                                    _text_font=6,
-                                                    _text_rotation=True,
-                                                    _enable_csv=True,
-                                                    _legend_loc="upper right",
-                                                    _legend_box=(1.1, 1),
-                                                    )
-                    graph_image = graph.build_bar_graph_horizontal()
-                    self.overall_report.set_graph_image(graph_image)
-                    self.overall_report.move_graph_image()
-                    self.overall_report.build_graph()
-
-                    self.overall_report.set_table_title('Test Results')
-                    self.overall_report.build_table_title()
-
-                    test_results = {
-                        "Hostname": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
-                        "OS Type": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types,
-                        "MAC": self.yt_obj_dict[ce][obj_name]["obj"].mac_list,
-                        "RSSI": self.yt_obj_dict[ce][obj_name]["obj"].rssi_list,
-                        "Link Rate": self.yt_obj_dict[ce][obj_name]["obj"].link_rate_list,
-                        "ViewPort": viewport_list,
-                        "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid_list,
-                        "Video Resoultion": current_res_list,
-                        "Max Buffer Health (Seconds)": max_buffer_health_list,
-                        "Min Buffer health (Seconds)": min_buffer_health_list,
-                        "Total Frames": total_frames_list,
-                        "Dropped Frames": dropped_frames_list,
-
-
-                    }
-
-                    test_results_df = pd.DataFrame(test_results)
-                    self.overall_report.set_table_dataframe(test_results_df)
-                    self.overall_report.build_table()
-
-                    # for file_path in self.yt_obj_dict[ce][obj_name]["obj"].devices_list:
-                    #         self.yt_obj_dict[ce][obj_name]["obj"].move_files(file_path, self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
-
-                    original_dir = os.getcwd()
-
-                    if self.yt_obj_dict[ce][obj_name]["obj"].do_webUI:
-                        csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
-                        os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
-                    else:
-                        csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
-                        os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
-                    print("CSV FILES",csv_files)
-                    print("Script Directory:", os.path.dirname(os.path.abspath(__file__)))
-                    scp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),self.report_path_date_time)
-                    for file_name in csv_files:
-                        data = pd.read_csv(file_name)
-                        print('dataaaaaaaaaaaaa',data)
-                        self.overall_report.set_graph_title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]))
+                        # graph of frames dropped
+                        self.overall_report.set_graph_title("Total Frames vs Frames dropped")
                         self.overall_report.build_graph_title()
+                        x_fig_size = 25
+                        y_fig_size = len(self.yt_obj_dict[ce][obj_name]["obj"].device_names) * .5 + 4
 
-                        try:
-                            data['TimeStamp'] = pd.to_datetime(data['TimeStamp'], format="%H:%M:%S").dt.time
-                        except Exception as e:
-                            logging.error(f"Error in timestamp conversion for {file_name}: {e}")
-                            continue
-
-                        data = data.drop_duplicates(subset='TimeStamp', keep='first')
-
-                        data = data.sort_values(by='TimeStamp')
-
-                        timestamps = data['TimeStamp'].apply(lambda t: t.strftime('%H:%M:%S'))
-                        buffer_health = data['BufferHealth']
-
-                        fig, ax = plt.subplots(figsize=(20, 10))
-                        plt.plot(timestamps, buffer_health, color='blue', linewidth=2)
-
-                        # Customize the plot
-                        plt.xlabel('Time', fontweight='bold', fontsize=15)
-                        plt.ylabel('Buffer Health', fontweight='bold', fontsize=15)
-                        plt.title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]), fontsize=18)
-
-                        if len(timestamps) > 30:
-                            tick_interval = len(timestamps) // 30
-                            selected_ticks = timestamps[::tick_interval]
-                            ax.set_xticks(selected_ticks)
-                        else:
-                            ax.set_xticks(timestamps)
-
-                        plt.xticks(rotation=45, ha='right')
-
-                        # output_file = '{}'.format(file_name.split('_')[0]) + 'buffer_health_vs_time.png'
-                        output_file = os.path.join(scp_path,f"{file_name.split('_')[0]}buffer_health_vs_time.png{obj_no}")
-                        plt.tight_layout()
-                        plt.savefig(output_file, dpi=96)
-                        plt.close()
-                        abs_path = os.path.abspath(output_file)
-                        logging.info(f"Graph saved PATH {file_name}: {abs_path}")
-
-                        logging.info(f"Graph saved for {file_name}: {output_file}")
-
-                        self.overall_report.set_graph_image(output_file)
-
+                        graph = lf_bar_graph_horizontal(_data_set=[dropped_frames_list, total_frames_list],
+                                                        _xaxis_name="No of Frames",
+                                                        _yaxis_name="Devices",
+                                                        _yaxis_categories=self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                                                        _graph_image_name=f"Dropped Frames vs Total Frames{obj_no}",
+                                                        _label=["dropped Frames", "Total Frames"],
+                                                        _color=None,
+                                                        _color_edge='red',
+                                                        _figsize=(x_fig_size, y_fig_size),
+                                                        _show_bar_value=True,
+                                                        _text_font=6,
+                                                        _text_rotation=True,
+                                                        _enable_csv=True,
+                                                        _legend_loc="upper right",
+                                                        _legend_box=(1.1, 1),
+                                                        )
+                        graph_image = graph.build_bar_graph_horizontal()
+                        self.overall_report.set_graph_image(graph_image)
+                        self.overall_report.move_graph_image()
                         self.overall_report.build_graph()
 
-                    os.chdir(original_dir)
-                    if ce == "series":
-                        obj_no += 1
-                        obj_name = f"yt_test_{obj_no}"
-                    else:
-                        break
+                        self.overall_report.set_table_title('Test Results')
+                        self.overall_report.build_table_title()
 
-            elif test_name == "zoom_test":
-                obj_no=1
-                obj_name = "zoom_test"
-                if ce == "series":
-                    obj_name += "_1"
-                while obj_name in self.zoom_obj_dict[ce]:
-                    if ce == "parallel":
-                        obj_no = ''
-                    self.overall_report.set_obj_html(_obj_title=f'ZOOM Test {obj_no}', _obj="")
-                    self.overall_report.build_objective()
-                    self.overall_report.set_table_title("Test Parameters:")
-                    self.overall_report.build_table_title()
-                    testtype = ""
-                    if self.zoom_obj_dict[ce][obj_name]["obj"].audio and self.zoom_obj_dict[ce][obj_name]["obj"].video:
-                        testtype = "AUDIO & VIDEO"
-                    elif self.zoom_obj_dict[ce][obj_name]["obj"].audio:
-                        testtype = "AUDIO"
-                    elif self.zoom_obj_dict[ce][obj_name]["obj"].video:
-                        testtype = "VIDEO"
+                        test_results = {
+                            "Hostname": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                            "OS Type": self.yt_obj_dict[ce][obj_name]["obj"].real_sta_os_types,
+                            "MAC": self.yt_obj_dict[ce][obj_name]["obj"].mac_list,
+                            "RSSI": self.yt_obj_dict[ce][obj_name]["obj"].rssi_list,
+                            "Link Rate": self.yt_obj_dict[ce][obj_name]["obj"].link_rate_list,
+                            "ViewPort": viewport_list,
+                            "SSID": self.yt_obj_dict[ce][obj_name]["obj"].ssid_list,
+                            "Video Resoultion": current_res_list,
+                            "Max Buffer Health (Seconds)": max_buffer_health_list,
+                            "Min Buffer health (Seconds)": min_buffer_health_list,
+                            "Total Frames": total_frames_list,
+                            "Dropped Frames": dropped_frames_list,
 
-                    if self.zoom_obj_dict[ce][obj_name]["obj"].config:
-                        test_parameters = pd.DataFrame([{
-                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
-                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
-                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
-                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
-                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
-                            "TEST TYPE": testtype,
-                            "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid,
-                            "Security": self.zoom_obj_dict[ce][obj_name]["obj"].security
 
-                        }])
-                    elif len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
-                        # Map each group with a profile
-                        gp_pairs = zip(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups, self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles)
-
-                        # Create a string by joining the mapped pairs
-                        gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
-
-                        test_parameters = pd.DataFrame([{
-                            "Configuration": gp_map,
-                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
-                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
-                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
-                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
-                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
-                            "TEST TYPE": testtype,
-
-                        }])
-                    else:
-
-                        test_parameters = pd.DataFrame([{
-                            "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
-                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
-                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
-                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
-                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
-                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
-                            "TEST TYPE": testtype,
-
-                        }])
-
-                    test_parameters = pd.DataFrame([{
-
-                        'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
-                        'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
-                        'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
-                        "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
-                        "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
-                        "TEST TYPE": testtype
-
-                    }])
-                    self.overall_report.set_table_dataframe(test_parameters)
-                    self.overall_report.build_table()
-
-                    client_array = []
-                    accepted_clients = []
-                    no_csv_client = []
-                    rejected_clients = []
-                    final_dataset = []
-                    accepted_ostypes = []
-                    max_audio_jitter_s, min_audio_jitter_s = [], []
-                    max_audio_jitter_r, min_audio_jitter_r = [], []
-                    max_audio_latency_s, min_audio_latency_s = [], []
-                    max_audio_latency_r, min_audio_latency_r = [], []
-                    max_audio_pktloss_s, min_audio_pktloss_s = [], []
-                    max_audio_pktloss_r, min_audio_pktloss_r = [], []
-
-                    max_video_jitter_s, min_video_jitter_s = [], []
-                    max_video_jitter_r, min_video_jitter_r = [], []
-                    max_video_latency_s, min_video_latency_s = [], []
-                    max_video_latency_r, min_video_latency_r = [], []
-                    max_video_pktloss_s, min_video_pktloss_s = [], []
-                    max_video_pktloss_r, min_video_pktloss_r = [], []
-                    for i in range(0, len(self.zoom_obj_dict[ce][obj_name]["obj"].device_names)):
-                        temp_max_audio_jitter_s, temp_min_audio_jitter_s = 0.0, 0.0
-                        temp_max_audio_jitter_r, temp_min_audio_jitter_r = 0.0, 0.0
-                        temp_max_audio_latency_s, temp_min_audio_latency_s = 0.0, 0.0
-                        temp_max_audio_latency_r, temp_min_audio_latency_r = 0.0, 0.0
-                        temp_max_audio_pktloss_s, temp_min_audio_pktloss_s = 0.0, 0.0
-                        temp_max_audio_pktloss_r, temp_min_audio_pktloss_r = 0.0, 0.0
-
-                        temp_max_video_jitter_s, temp_min_video_jitter_s = 0.0, 0.0
-                        temp_max_video_jitter_r, temp_min_video_jitter_r = 0.0, 0.0
-                        temp_max_video_latency_s, temp_min_video_latency_s = 0.0, 0.0
-                        temp_max_video_latency_r, temp_min_video_latency_r = 0.0, 0.0
-                        temp_max_video_pktloss_s, temp_min_video_pktloss_s = 0.0, 0.0
-                        temp_max_video_pktloss_r, temp_min_video_pktloss_r = 0.0, 0.0
-                        per_client_data = {
-                            "audio_jitter_s": [],
-                            "audio_jitter_r": [],
-                            "audio_latency_s": [],
-                            "audio_latency_r": [],
-                            "audio_pktloss_s": [],
-                            "audio_pktloss_r": [],
-                            "video_jitter_s": [],
-                            "video_jitter_r": [],
-                            "video_latency_s": [],
-                            "video_latency_r": [],
-                            "video_pktloss_s": [],
-                            "video_pktloss_r": [],
                         }
-                        try:
-                            file_path = os.path.join(self.zoom_obj_dict[ce][obj_name]["obj"].report_path_date_time, f'{self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i]}.csv')
-                            with open(file_path, mode='r', encoding='utf-8', errors='ignore') as file:
-                                csv_reader = csv.DictReader(file)
-                                for row in csv_reader:
 
-                                    per_client_data["audio_jitter_s"].append(float(row["Sent Audio Jitter (ms)"]))
-                                    per_client_data["audio_jitter_r"].append(float(row["Receive Audio Jitter (ms)"]))
-                                    per_client_data["audio_latency_s"].append(float(row["Sent Audio Latency (ms)"]))
-                                    per_client_data["audio_latency_r"].append(float(row["Receive Audio Latency (ms)"]))
-                                    per_client_data["audio_pktloss_s"].append(float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
-                                    per_client_data["audio_pktloss_r"].append(float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
-                                    per_client_data["video_jitter_s"].append(float(row["Sent Video Jitter (ms)"]))
-                                    per_client_data["video_jitter_r"].append(float(row["Receive Video Jitter (ms)"]))
-                                    per_client_data["video_latency_s"].append(float(row["Sent Video Latency (ms)"]))
-                                    per_client_data["video_latency_r"].append(float(row["Receive Video Latency (ms)"]))
-                                    per_client_data["video_pktloss_s"].append(float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
-                                    per_client_data["video_pktloss_r"].append(float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                        test_results_df = pd.DataFrame(test_results)
+                        self.overall_report.set_table_dataframe(test_results_df)
+                        self.overall_report.build_table()
 
-                                    temp_max_audio_jitter_s = max(temp_max_audio_jitter_s, float(row["Sent Audio Jitter (ms)"]))
-                                    temp_max_audio_jitter_r = max(temp_max_audio_jitter_r, float(row["Receive Audio Jitter (ms)"]))
-                                    temp_max_audio_latency_s = max(temp_max_audio_latency_s, float(row["Sent Audio Latency (ms)"]))
-                                    temp_max_audio_latency_r = max(temp_max_audio_latency_r, float(row["Receive Audio Latency (ms)"]))
-                                    temp_max_audio_pktloss_s = max(temp_max_audio_pktloss_s, float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
-                                    temp_max_audio_pktloss_r = max(temp_max_audio_pktloss_r, float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                        # for file_path in self.yt_obj_dict[ce][obj_name]["obj"].devices_list:
+                        #         self.yt_obj_dict[ce][obj_name]["obj"].move_files(file_path, self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
 
-                                    temp_max_video_jitter_s = max(temp_max_video_jitter_s, float(row["Sent Video Jitter (ms)"]))
-                                    temp_max_video_jitter_r = max(temp_max_video_jitter_r, float(row["Receive Video Jitter (ms)"]))
-                                    temp_max_video_latency_s = max(temp_max_video_latency_s, float(row["Sent Video Latency (ms)"]))
-                                    temp_max_video_latency_r = max(temp_max_video_latency_r, float(row["Receive Video Latency (ms)"]))
-                                    temp_max_video_pktloss_s = max(temp_max_video_pktloss_s, float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
-                                    temp_max_video_pktloss_r = max(temp_max_video_pktloss_r, float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                        original_dir = os.getcwd()
 
-                                    temp_min_audio_jitter_s = min(
-                                        temp_min_audio_jitter_s,
-                                        float(
-                                            row["Sent Audio Jitter (ms)"])) if temp_min_audio_jitter_s > 0 and float(
-                                        row["Sent Audio Jitter (ms)"]) > 0 else (
-                                        float(
-                                            row["Sent Audio Jitter (ms)"]) if float(
-                                            row["Sent Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_s)
-                                    temp_min_audio_jitter_r = min(
-                                        temp_min_audio_jitter_r, float(
-                                            row["Receive Audio Jitter (ms)"])) if temp_min_audio_jitter_r > 0 and float(
-                                        row["Receive Audio Jitter (ms)"]) > 0 else (
-                                        float(
-                                            row["Receive Audio Jitter (ms)"]) if float(
-                                            row["Receive Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_r)
-                                    temp_min_audio_latency_s = min(
-                                        temp_min_audio_latency_s, float(
-                                            row["Sent Audio Latency (ms)"])) if temp_min_audio_latency_s > 0 and float(
-                                        row["Sent Audio Latency (ms)"]) > 0 else (
-                                        float(
-                                            row["Sent Audio Latency (ms)"]) if float(
-                                            row["Sent Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_s)
-                                    temp_min_audio_latency_r = min(
-                                        temp_min_audio_latency_r, float(
-                                            row["Receive Audio Latency (ms)"])) if temp_min_audio_latency_r > 0 and float(
-                                        row["Receive Audio Latency (ms)"]) > 0 else (
-                                        float(
-                                            row["Receive Audio Latency (ms)"]) if float(
-                                            row["Receive Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_r)
+                        if self.yt_obj_dict[ce][obj_name]["obj"].do_webUI:
+                            csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
+                            os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+                        else:
+                            csv_files = [f for f in os.listdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time) if f.endswith('.csv')]
+                            os.chdir(self.yt_obj_dict[ce][obj_name]["obj"].report_path_date_time)
+                        print("CSV FILES",csv_files)
+                        print("Script Directory:", os.path.dirname(os.path.abspath(__file__)))
+                        scp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),self.report_path_date_time)
+                        for file_name in csv_files:
+                            data = pd.read_csv(file_name)
+                            print('dataaaaaaaaaaaaa',data)
+                            self.overall_report.set_graph_title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]))
+                            self.overall_report.build_graph_title()
 
-                                    temp_min_audio_pktloss_s = min(
-                                        temp_min_audio_pktloss_s, float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", ""))) if temp_min_audio_pktloss_s > 0 and float(
-                                        (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                            "%", "")) > 0 else (
-                                        float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) if float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) > 0 else temp_min_audio_pktloss_s)
-                                    temp_min_audio_pktloss_r = min(
-                                        temp_min_audio_pktloss_r, float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", ""))) if temp_min_audio_pktloss_r > 0 and float(
-                                        (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                            "%", "")) > 0 else (
-                                        float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) if float(
-                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) > 0 else temp_min_audio_pktloss_r)
+                            try:
+                                data['TimeStamp'] = pd.to_datetime(data['TimeStamp'], format="%H:%M:%S").dt.time
+                            except Exception as e:
+                                logging.error(f"Error in timestamp conversion for {file_name}: {e}")
+                                continue
 
-                                    temp_min_video_jitter_s = min(
-                                        temp_min_video_jitter_s,
-                                        float(
-                                            row["Sent Video Jitter (ms)"])) if temp_min_video_jitter_s > 0 and float(
-                                        row["Sent Video Jitter (ms)"]) > 0 else (
-                                        float(
-                                            row["Sent Video Jitter (ms)"]) if float(
-                                            row["Sent Video Jitter (ms)"]) > 0 else temp_min_video_jitter_s)
-                                    temp_min_video_jitter_r = min(
-                                        temp_min_video_jitter_r, float(
-                                            row["Receive Video Jitter (ms)"])) if temp_min_video_jitter_r > 0 and float(
-                                        row["Receive Video Jitter (ms)"]) > 0 else (
-                                        float(
-                                            row["Receive Video Jitter (ms)"]) if float(
-                                            row["Receive Video Jitter (ms)"]) > 0 else temp_min_video_jitter_r)
-                                    temp_min_video_latency_s = min(
-                                        temp_min_video_latency_s, float(
-                                            row["Sent Video Latency (ms)"])) if temp_min_video_latency_s > 0 and float(
-                                        row["Sent Video Latency (ms)"]) > 0 else (
-                                        float(
-                                            row["Sent Video Latency (ms)"]) if float(
-                                            row["Sent Video Latency (ms)"]) > 0 else temp_min_video_latency_s)
-                                    temp_min_video_latency_r = min(
-                                        temp_min_video_latency_r, float(
-                                            row["Receive Video Latency (ms)"])) if temp_min_video_latency_r > 0 and float(
-                                        row["Receive Video Latency (ms)"]) > 0 else (
-                                        float(
-                                            row["Receive Video Latency (ms)"]) if float(
-                                            row["Receive Video Latency (ms)"]) > 0 else temp_min_video_latency_r)
+                            data = data.drop_duplicates(subset='TimeStamp', keep='first')
 
-                                    temp_min_video_pktloss_s = min(
-                                        temp_min_video_pktloss_s, float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", ""))) if temp_min_video_pktloss_s > 0 and float(
-                                        (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                            "%", "")) > 0 else (
-                                        float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) if float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) > 0 else temp_min_video_pktloss_s)
-                                    temp_min_video_pktloss_r = min(
-                                        temp_min_video_pktloss_r, float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", ""))) if temp_min_video_pktloss_r > 0 and float(
-                                        (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                            "%", "")) > 0 else (
-                                        float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) if float(
-                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
-                                                "%", "")) > 0 else temp_min_video_pktloss_r)
+                            data = data.sort_values(by='TimeStamp')
 
-                        except Exception as e:
-                            logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]['obj'].device_names[i]}", e)
-                            no_csv_client.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
-                            rejected_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
-                        if self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i] not in no_csv_client:
-                            client_array.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
-                            accepted_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
-                            accepted_ostypes.append(self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type[i])
-                            max_audio_jitter_s.append(temp_max_audio_jitter_s)
-                            min_audio_jitter_s.append(temp_min_audio_jitter_s)
-                            max_audio_jitter_r.append(temp_max_audio_jitter_r)
-                            min_audio_jitter_r.append(temp_min_audio_jitter_r)
-                            max_audio_latency_s.append(temp_max_audio_latency_s)
-                            min_audio_latency_s.append(temp_min_audio_latency_s)
-                            max_audio_latency_r.append(temp_max_audio_latency_r)
-                            min_audio_latency_r.append(temp_min_audio_latency_r)
-                            max_video_jitter_s.append(temp_max_video_jitter_s)
-                            min_video_jitter_s.append(temp_min_video_jitter_s)
-                            max_video_jitter_r.append(temp_max_video_jitter_r)
-                            min_video_jitter_r.append(temp_min_video_jitter_r)
-                            max_video_latency_s.append(temp_max_video_latency_s)
-                            min_video_latency_s.append(temp_min_video_latency_s)
-                            max_video_latency_r.append(temp_max_video_latency_r)
-                            min_video_latency_r.append(temp_min_video_latency_r)
+                            timestamps = data['TimeStamp'].apply(lambda t: t.strftime('%H:%M:%S'))
+                            buffer_health = data['BufferHealth']
 
-                            max_audio_pktloss_s.append(temp_max_audio_pktloss_s)
-                            min_audio_pktloss_s.append(temp_min_audio_pktloss_s)
-                            max_audio_pktloss_r.append(temp_max_audio_pktloss_r)
-                            min_audio_pktloss_r.append(temp_min_audio_pktloss_r)
-                            max_video_pktloss_s.append(temp_max_video_pktloss_s)
-                            min_video_pktloss_s.append(temp_min_video_pktloss_s)
-                            max_video_pktloss_r.append(temp_max_video_pktloss_r)
-                            min_video_pktloss_r.append(temp_min_video_pktloss_r)
+                            fig, ax = plt.subplots(figsize=(20, 10))
+                            plt.plot(timestamps, buffer_health, color='blue', linewidth=2)
 
-                            final_dataset.append(per_client_data.copy())
+                            # Customize the plot
+                            plt.xlabel('Time', fontweight='bold', fontsize=15)
+                            plt.ylabel('Buffer Health', fontweight='bold', fontsize=15)
+                            plt.title('Buffer Health vs Time Graph for {}'.format(file_name.split('_')[0]), fontsize=18)
 
-                    self.overall_report.set_table_title("Test Devices:")
-                    self.overall_report.build_table_title()
+                            if len(timestamps) > 30:
+                                tick_interval = len(timestamps) // 30
+                                selected_ticks = timestamps[::tick_interval]
+                                ax.set_xticks(selected_ticks)
+                            else:
+                                ax.set_xticks(timestamps)
 
-                    device_details = pd.DataFrame({
-                        'Hostname': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
-                        'OS Type': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type,
-                        "MAC": self.zoom_obj_dict[ce][obj_name]["obj"].mac_list,
-                        "RSSI": self.zoom_obj_dict[ce][obj_name]["obj"].rssi_list,
-                        "Link Rate": self.zoom_obj_dict[ce][obj_name]["obj"].link_rate_list,
-                        "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid_list,
+                            plt.xticks(rotation=45, ha='right')
 
-                    })
-                    self.overall_report.set_table_dataframe(device_details)
-                    self.overall_report.build_table()
+                            # output_file = '{}'.format(file_name.split('_')[0]) + 'buffer_health_vs_time.png'
+                            output_file = os.path.join(scp_path,f"{file_name.split('_')[0]}buffer_health_vs_time.png{obj_no}")
+                            plt.tight_layout()
+                            plt.savefig(output_file, dpi=96)
+                            plt.close()
+                            abs_path = os.path.abspath(output_file)
+                            logging.info(f"Graph saved PATH {file_name}: {abs_path}")
 
-                    if self.zoom_obj_dict[ce][obj_name]["obj"].audio:
-                        self.overall_report.set_graph_title("Audio Latency (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_audio_latency_s.copy(), min_audio_latency_s.copy(), max_audio_latency_r.copy(), min_audio_latency_r.copy()]
-                        y_data_set = client_array
+                            logging.info(f"Graph saved for {file_name}: {output_file}")
 
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Latency (ms)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Audio Latency(sent/received)",
-                            _graph_image_name=f"Audio Latency(sent and received){obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
+                            self.overall_report.set_graph_image(output_file)
 
-                        self.overall_report.set_graph_title("Audio Jitter (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_audio_jitter_s.copy(), min_audio_jitter_s.copy(), max_audio_jitter_r.copy(), min_audio_jitter_r.copy()]
-                        y_data_set = client_array
+                            self.overall_report.build_graph()
 
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Jitter (ms)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Audio Jitter(sent/received)",
-                            _graph_image_name=f"Audio Jitter(sent and received) {obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
+                        os.chdir(original_dir)
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"yt_test_{obj_no}"
+                        else:
+                            break
 
-                        self.overall_report.set_graph_title("Audio Packet Loss (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_audio_pktloss_s.copy(), min_audio_pktloss_s.copy(), max_audio_pktloss_r.copy(), min_audio_pktloss_r.copy()]
-                        y_data_set = client_array
-
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Packet Loss (%)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Audio Packet Loss(sent/received)",
-                            _graph_image_name=f"Audio Packet Loss(sent and received){obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        self.overall_report.set_table_title("Test Audio Results Table:")
-                        self.overall_report.build_table_title()
-                        audio_test_details = pd.DataFrame({
-                            'Device Name': [client for client in accepted_clients],
-                            'Avg Latency Sent (ms)': [round(sum(data["audio_latency_s"]) / len(data["audio_latency_s"]), 2) if len(data["audio_latency_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Latency Recv (ms)': [round(sum(data["audio_latency_r"]) / len(data["audio_latency_r"]), 2) if len(data["audio_latency_r"]) != 0 else 0 for data in final_dataset],
-                            'Avg Jitter Sent (ms)': [round(sum(data["audio_jitter_s"]) / len(data["audio_jitter_s"]), 2) if len(data["audio_jitter_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Jitter Recv (ms)': [round(sum(data["audio_jitter_r"]) / len(data["audio_jitter_r"]), 2) if len(data["audio_jitter_r"]) != 0 else 0 for data in final_dataset],
-                            'Avg Pkt Loss Sent': [round(sum(data["audio_pktloss_s"]) / len(data["audio_pktloss_s"]), 2) if len(data["audio_pktloss_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Pkt Loss Recv': [round(sum(data["audio_pktloss_r"]) / len(data["audio_pktloss_r"]), 2) if len(data["audio_pktloss_r"]) != 0 else 0 for data in final_dataset],
-                            'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
-
-                        })
-                        self.overall_report.set_table_dataframe(audio_test_details)
-                        self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
-                                                                        justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
-                        self.overall_report.html += self.overall_report.dataframe_html
-                    if self.zoom_obj_dict[ce][obj_name]["obj"].video:
-                        self.overall_report.set_graph_title("Video Latency (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_video_latency_s.copy(), min_video_latency_s.copy(), max_video_latency_r.copy(), min_video_latency_r.copy()]
-                        y_data_set = client_array
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Latency (ms)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Video Latency(sent/received)",
-                            _graph_image_name=f"Video Latency(sent and received){obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        self.overall_report.set_graph_title("Video Jitter (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_video_jitter_s.copy(), min_video_jitter_s.copy(), max_video_jitter_r.copy(), min_video_jitter_r.copy()]
-                        y_data_set = client_array
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Jitter (ms)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Video Jitter(sent/received)",
-                            _graph_image_name=f"Video Jitter(sent and received){obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        self.overall_report.set_graph_title("Video Packet Loss (Sent/Received)")
-                        self.overall_report.build_graph_title()
-                        x_data_set = [max_video_pktloss_s.copy(), min_video_pktloss_s.copy(), max_video_pktloss_r.copy(), min_video_pktloss_r.copy()]
-                        y_data_set = client_array
-                        x_fig_size = 18
-                        y_fig_size = len(client_array) * 1 + 4
-                        bar_graph_horizontal = lf_bar_graph_horizontal(
-                            _data_set=x_data_set,
-                            _xaxis_name="Packet Loss (%)",
-                            _yaxis_name="Devices",
-                            _yaxis_label=y_data_set,
-                            _yaxis_categories=y_data_set,
-                            _yaxis_step=1,
-                            _yticks_font=8,
-                            _bar_height=.20,
-                            _color_name=["yellow", "blue", "orange", "grey"],
-                            _show_bar_value=True,
-                            _figsize=(x_fig_size, y_fig_size),
-                            _graph_title="Video Packet Loss(sent/received)",
-                            _graph_image_name=f"Video Packet Loss(sent and received){obj_no}",
-                            _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
-                        )
-                        graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
-                        self.overall_report.set_graph_image(graph_image)
-                        self.overall_report.move_graph_image()
-                        self.overall_report.build_graph()
-
-                        self.overall_report.set_table_title("Test Video Results Table:")
-                        self.overall_report.build_table_title()
-                        video_test_details = pd.DataFrame({
-                            'Device Name': [client for client in accepted_clients],
-                            'Avg Latency Sent (ms)': [round(sum(data["video_latency_s"]) / len(data["video_latency_s"]), 2) if len(data["video_latency_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Latency Recv (ms)': [round(sum(data["video_latency_r"]) / len(data["video_latency_r"]), 2) if len(data["video_latency_r"]) != 0 else 0 for data in final_dataset],
-                            'Avg Jitter Sent (ms)': [round(sum(data["video_jitter_s"]) / len(data["video_jitter_s"]), 2) if len(data["video_jitter_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Jitter Recv (ms)': [round(sum(data["video_jitter_r"]) / len(data["video_jitter_r"]), 2) if len(data["video_jitter_r"]) != 0 else 0 for data in final_dataset],
-                            'Avg Pkt Loss Sent': [round(sum(data["video_pktloss_s"]) / len(data["video_pktloss_s"]), 2) if len(data["video_pktloss_s"]) != 0 else 0 for data in final_dataset],
-                            'Avg Pkt Loss Recv': [round(sum(data["video_pktloss_r"]) / len(data["video_pktloss_r"]), 2) if len(data["video_pktloss_r"]) != 0 else 0 for data in final_dataset],
-                            'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
-                        })
-                        self.overall_report.set_table_dataframe(video_test_details)
-
-                        self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
-                                                                        justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
-                        self.overall_report.html += self.overall_report.dataframe_html
-                    self.overall_report.set_custom_html("<br/><hr/>")
-                    self.overall_report.build_custom()
-
+                elif test_name == "zoom_test":
+                    obj_no=1
+                    obj_name = "zoom_test"
                     if ce == "series":
-                        obj_no += 1
-                        obj_name = f"zoom_test_{obj_no}"
-                    else:
-                        break
-                    
+                        obj_name += "_1"
+                    while obj_name in self.zoom_obj_dict[ce]:
+                        if ce == "parallel":
+                            obj_no = ''
+                        self.overall_report.set_obj_html(_obj_title=f'ZOOM Test {obj_no}', _obj="")
+                        self.overall_report.build_objective()
+                        self.overall_report.set_table_title("Test Parameters:")
+                        self.overall_report.build_table_title()
+                        testtype = ""
+                        if self.zoom_obj_dict[ce][obj_name]["obj"].audio and self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                            testtype = "AUDIO & VIDEO"
+                        elif self.zoom_obj_dict[ce][obj_name]["obj"].audio:
+                            testtype = "AUDIO"
+                        elif self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                            testtype = "VIDEO"
+
+                        if self.zoom_obj_dict[ce][obj_name]["obj"].config:
+                            test_parameters = pd.DataFrame([{
+                                "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                                'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                                'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                                "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                                "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                                "TEST TYPE": testtype,
+                                "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid,
+                                "Security": self.zoom_obj_dict[ce][obj_name]["obj"].security
+
+                            }])
+                        elif len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups) > 0 and len(self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles) > 0:
+                            # Map each group with a profile
+                            gp_pairs = zip(self.zoom_obj_dict[ce][obj_name]["obj"].selected_groups, self.zoom_obj_dict[ce][obj_name]["obj"].selected_profiles)
+
+                            # Create a string by joining the mapped pairs
+                            gp_map = ", ".join(f"{group} -> {profile}" for group, profile in gp_pairs)
+
+                            test_parameters = pd.DataFrame([{
+                                "Configuration": gp_map,
+                                "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                                'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                                'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                                "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                                "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                                "TEST TYPE": testtype,
+
+                            }])
+                        else:
+
+                            test_parameters = pd.DataFrame([{
+                                "Configured Devices": self.zoom_obj_dict[ce][obj_name]["obj"].hostname_os_combination,
+                                'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                                'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                                'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                                "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                                "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                                "TEST TYPE": testtype,
+
+                            }])
+
+                        test_parameters = pd.DataFrame([{
+
+                            'No of Clients': f'W({self.zoom_obj_dict[ce][obj_name]["obj"].windows}),L({self.zoom_obj_dict[ce][obj_name]["obj"].linux}),M({self.zoom_obj_dict[ce][obj_name]["obj"].mac})',
+                            'Test Duration(min)': self.zoom_obj_dict[ce][obj_name]["obj"].duration,
+                            'EMAIL ID': self.zoom_obj_dict[ce][obj_name]["obj"].signin_email,
+                            "PASSWORD": self.zoom_obj_dict[ce][obj_name]["obj"].signin_passwd,
+                            "HOST": self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_list[0],
+                            "TEST TYPE": testtype
+
+                        }])
+                        self.overall_report.set_table_dataframe(test_parameters)
+                        self.overall_report.build_table()
+
+                        client_array = []
+                        accepted_clients = []
+                        no_csv_client = []
+                        rejected_clients = []
+                        final_dataset = []
+                        accepted_ostypes = []
+                        max_audio_jitter_s, min_audio_jitter_s = [], []
+                        max_audio_jitter_r, min_audio_jitter_r = [], []
+                        max_audio_latency_s, min_audio_latency_s = [], []
+                        max_audio_latency_r, min_audio_latency_r = [], []
+                        max_audio_pktloss_s, min_audio_pktloss_s = [], []
+                        max_audio_pktloss_r, min_audio_pktloss_r = [], []
+
+                        max_video_jitter_s, min_video_jitter_s = [], []
+                        max_video_jitter_r, min_video_jitter_r = [], []
+                        max_video_latency_s, min_video_latency_s = [], []
+                        max_video_latency_r, min_video_latency_r = [], []
+                        max_video_pktloss_s, min_video_pktloss_s = [], []
+                        max_video_pktloss_r, min_video_pktloss_r = [], []
+                        for i in range(0, len(self.zoom_obj_dict[ce][obj_name]["obj"].device_names)):
+                            temp_max_audio_jitter_s, temp_min_audio_jitter_s = 0.0, 0.0
+                            temp_max_audio_jitter_r, temp_min_audio_jitter_r = 0.0, 0.0
+                            temp_max_audio_latency_s, temp_min_audio_latency_s = 0.0, 0.0
+                            temp_max_audio_latency_r, temp_min_audio_latency_r = 0.0, 0.0
+                            temp_max_audio_pktloss_s, temp_min_audio_pktloss_s = 0.0, 0.0
+                            temp_max_audio_pktloss_r, temp_min_audio_pktloss_r = 0.0, 0.0
+
+                            temp_max_video_jitter_s, temp_min_video_jitter_s = 0.0, 0.0
+                            temp_max_video_jitter_r, temp_min_video_jitter_r = 0.0, 0.0
+                            temp_max_video_latency_s, temp_min_video_latency_s = 0.0, 0.0
+                            temp_max_video_latency_r, temp_min_video_latency_r = 0.0, 0.0
+                            temp_max_video_pktloss_s, temp_min_video_pktloss_s = 0.0, 0.0
+                            temp_max_video_pktloss_r, temp_min_video_pktloss_r = 0.0, 0.0
+                            per_client_data = {
+                                "audio_jitter_s": [],
+                                "audio_jitter_r": [],
+                                "audio_latency_s": [],
+                                "audio_latency_r": [],
+                                "audio_pktloss_s": [],
+                                "audio_pktloss_r": [],
+                                "video_jitter_s": [],
+                                "video_jitter_r": [],
+                                "video_latency_s": [],
+                                "video_latency_r": [],
+                                "video_pktloss_s": [],
+                                "video_pktloss_r": [],
+                            }
+                            try:
+                                file_path = os.path.join(self.zoom_obj_dict[ce][obj_name]["obj"].report_path_date_time, f'{self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i]}.csv')
+                                with open(file_path, mode='r', encoding='utf-8', errors='ignore') as file:
+                                    csv_reader = csv.DictReader(file)
+                                    for row in csv_reader:
+
+                                        per_client_data["audio_jitter_s"].append(float(row["Sent Audio Jitter (ms)"]))
+                                        per_client_data["audio_jitter_r"].append(float(row["Receive Audio Jitter (ms)"]))
+                                        per_client_data["audio_latency_s"].append(float(row["Sent Audio Latency (ms)"]))
+                                        per_client_data["audio_latency_r"].append(float(row["Receive Audio Latency (ms)"]))
+                                        per_client_data["audio_pktloss_s"].append(float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                        per_client_data["audio_pktloss_r"].append(float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                        per_client_data["video_jitter_s"].append(float(row["Sent Video Jitter (ms)"]))
+                                        per_client_data["video_jitter_r"].append(float(row["Receive Video Jitter (ms)"]))
+                                        per_client_data["video_latency_s"].append(float(row["Sent Video Latency (ms)"]))
+                                        per_client_data["video_latency_r"].append(float(row["Receive Video Latency (ms)"]))
+                                        per_client_data["video_pktloss_s"].append(float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                        per_client_data["video_pktloss_r"].append(float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                        temp_max_audio_jitter_s = max(temp_max_audio_jitter_s, float(row["Sent Audio Jitter (ms)"]))
+                                        temp_max_audio_jitter_r = max(temp_max_audio_jitter_r, float(row["Receive Audio Jitter (ms)"]))
+                                        temp_max_audio_latency_s = max(temp_max_audio_latency_s, float(row["Sent Audio Latency (ms)"]))
+                                        temp_max_audio_latency_r = max(temp_max_audio_latency_r, float(row["Receive Audio Latency (ms)"]))
+                                        temp_max_audio_pktloss_s = max(temp_max_audio_pktloss_s, float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                        temp_max_audio_pktloss_r = max(temp_max_audio_pktloss_r, float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                        temp_max_video_jitter_s = max(temp_max_video_jitter_s, float(row["Sent Video Jitter (ms)"]))
+                                        temp_max_video_jitter_r = max(temp_max_video_jitter_r, float(row["Receive Video Jitter (ms)"]))
+                                        temp_max_video_latency_s = max(temp_max_video_latency_s, float(row["Sent Video Latency (ms)"]))
+                                        temp_max_video_latency_r = max(temp_max_video_latency_r, float(row["Receive Video Latency (ms)"]))
+                                        temp_max_video_pktloss_s = max(temp_max_video_pktloss_s, float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+                                        temp_max_video_pktloss_r = max(temp_max_video_pktloss_r, float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", "")))
+
+                                        temp_min_audio_jitter_s = min(
+                                            temp_min_audio_jitter_s,
+                                            float(
+                                                row["Sent Audio Jitter (ms)"])) if temp_min_audio_jitter_s > 0 and float(
+                                            row["Sent Audio Jitter (ms)"]) > 0 else (
+                                            float(
+                                                row["Sent Audio Jitter (ms)"]) if float(
+                                                row["Sent Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_s)
+                                        temp_min_audio_jitter_r = min(
+                                            temp_min_audio_jitter_r, float(
+                                                row["Receive Audio Jitter (ms)"])) if temp_min_audio_jitter_r > 0 and float(
+                                            row["Receive Audio Jitter (ms)"]) > 0 else (
+                                            float(
+                                                row["Receive Audio Jitter (ms)"]) if float(
+                                                row["Receive Audio Jitter (ms)"]) > 0 else temp_min_audio_jitter_r)
+                                        temp_min_audio_latency_s = min(
+                                            temp_min_audio_latency_s, float(
+                                                row["Sent Audio Latency (ms)"])) if temp_min_audio_latency_s > 0 and float(
+                                            row["Sent Audio Latency (ms)"]) > 0 else (
+                                            float(
+                                                row["Sent Audio Latency (ms)"]) if float(
+                                                row["Sent Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_s)
+                                        temp_min_audio_latency_r = min(
+                                            temp_min_audio_latency_r, float(
+                                                row["Receive Audio Latency (ms)"])) if temp_min_audio_latency_r > 0 and float(
+                                            row["Receive Audio Latency (ms)"]) > 0 else (
+                                            float(
+                                                row["Receive Audio Latency (ms)"]) if float(
+                                                row["Receive Audio Latency (ms)"]) > 0 else temp_min_audio_jitter_r)
+
+                                        temp_min_audio_pktloss_s = min(
+                                            temp_min_audio_pktloss_s, float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", ""))) if temp_min_audio_pktloss_s > 0 and float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else (
+                                            float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) if float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) > 0 else temp_min_audio_pktloss_s)
+                                        temp_min_audio_pktloss_r = min(
+                                            temp_min_audio_pktloss_r, float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", ""))) if temp_min_audio_pktloss_r > 0 and float(
+                                            (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else (
+                                            float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) if float(
+                                                (row["Sent Audio Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) > 0 else temp_min_audio_pktloss_r)
+
+                                        temp_min_video_jitter_s = min(
+                                            temp_min_video_jitter_s,
+                                            float(
+                                                row["Sent Video Jitter (ms)"])) if temp_min_video_jitter_s > 0 and float(
+                                            row["Sent Video Jitter (ms)"]) > 0 else (
+                                            float(
+                                                row["Sent Video Jitter (ms)"]) if float(
+                                                row["Sent Video Jitter (ms)"]) > 0 else temp_min_video_jitter_s)
+                                        temp_min_video_jitter_r = min(
+                                            temp_min_video_jitter_r, float(
+                                                row["Receive Video Jitter (ms)"])) if temp_min_video_jitter_r > 0 and float(
+                                            row["Receive Video Jitter (ms)"]) > 0 else (
+                                            float(
+                                                row["Receive Video Jitter (ms)"]) if float(
+                                                row["Receive Video Jitter (ms)"]) > 0 else temp_min_video_jitter_r)
+                                        temp_min_video_latency_s = min(
+                                            temp_min_video_latency_s, float(
+                                                row["Sent Video Latency (ms)"])) if temp_min_video_latency_s > 0 and float(
+                                            row["Sent Video Latency (ms)"]) > 0 else (
+                                            float(
+                                                row["Sent Video Latency (ms)"]) if float(
+                                                row["Sent Video Latency (ms)"]) > 0 else temp_min_video_latency_s)
+                                        temp_min_video_latency_r = min(
+                                            temp_min_video_latency_r, float(
+                                                row["Receive Video Latency (ms)"])) if temp_min_video_latency_r > 0 and float(
+                                            row["Receive Video Latency (ms)"]) > 0 else (
+                                            float(
+                                                row["Receive Video Latency (ms)"]) if float(
+                                                row["Receive Video Latency (ms)"]) > 0 else temp_min_video_latency_r)
+
+                                        temp_min_video_pktloss_s = min(
+                                            temp_min_video_pktloss_s, float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", ""))) if temp_min_video_pktloss_s > 0 and float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else (
+                                            float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) if float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) > 0 else temp_min_video_pktloss_s)
+                                        temp_min_video_pktloss_r = min(
+                                            temp_min_video_pktloss_r, float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", ""))) if temp_min_video_pktloss_r > 0 and float(
+                                            (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                "%", "")) > 0 else (
+                                            float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) if float(
+                                                (row["Sent Video Packet loss (%)"]).split(" ")[0].replace(
+                                                    "%", "")) > 0 else temp_min_video_pktloss_r)
+
+                            except Exception as e:
+                                logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]['obj'].device_names[i]}", e)
+                                no_csv_client.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                                rejected_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                            if self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i] not in no_csv_client:
+                                client_array.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                                accepted_clients.append(self.zoom_obj_dict[ce][obj_name]["obj"].device_names[i])
+                                accepted_ostypes.append(self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type[i])
+                                max_audio_jitter_s.append(temp_max_audio_jitter_s)
+                                min_audio_jitter_s.append(temp_min_audio_jitter_s)
+                                max_audio_jitter_r.append(temp_max_audio_jitter_r)
+                                min_audio_jitter_r.append(temp_min_audio_jitter_r)
+                                max_audio_latency_s.append(temp_max_audio_latency_s)
+                                min_audio_latency_s.append(temp_min_audio_latency_s)
+                                max_audio_latency_r.append(temp_max_audio_latency_r)
+                                min_audio_latency_r.append(temp_min_audio_latency_r)
+                                max_video_jitter_s.append(temp_max_video_jitter_s)
+                                min_video_jitter_s.append(temp_min_video_jitter_s)
+                                max_video_jitter_r.append(temp_max_video_jitter_r)
+                                min_video_jitter_r.append(temp_min_video_jitter_r)
+                                max_video_latency_s.append(temp_max_video_latency_s)
+                                min_video_latency_s.append(temp_min_video_latency_s)
+                                max_video_latency_r.append(temp_max_video_latency_r)
+                                min_video_latency_r.append(temp_min_video_latency_r)
+
+                                max_audio_pktloss_s.append(temp_max_audio_pktloss_s)
+                                min_audio_pktloss_s.append(temp_min_audio_pktloss_s)
+                                max_audio_pktloss_r.append(temp_max_audio_pktloss_r)
+                                min_audio_pktloss_r.append(temp_min_audio_pktloss_r)
+                                max_video_pktloss_s.append(temp_max_video_pktloss_s)
+                                min_video_pktloss_s.append(temp_min_video_pktloss_s)
+                                max_video_pktloss_r.append(temp_max_video_pktloss_r)
+                                min_video_pktloss_r.append(temp_min_video_pktloss_r)
+
+                                final_dataset.append(per_client_data.copy())
+
+                        self.overall_report.set_table_title("Test Devices:")
+                        self.overall_report.build_table_title()
+
+                        device_details = pd.DataFrame({
+                            'Hostname': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_hostname,
+                            'OS Type': self.zoom_obj_dict[ce][obj_name]["obj"].real_sta_os_type,
+                            "MAC": self.zoom_obj_dict[ce][obj_name]["obj"].mac_list,
+                            "RSSI": self.zoom_obj_dict[ce][obj_name]["obj"].rssi_list,
+                            "Link Rate": self.zoom_obj_dict[ce][obj_name]["obj"].link_rate_list,
+                            "SSID": self.zoom_obj_dict[ce][obj_name]["obj"].ssid_list,
+
+                        })
+                        self.overall_report.set_table_dataframe(device_details)
+                        self.overall_report.build_table()
+
+                        if self.zoom_obj_dict[ce][obj_name]["obj"].audio:
+                            self.overall_report.set_graph_title("Audio Latency (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_audio_latency_s.copy(), min_audio_latency_s.copy(), max_audio_latency_r.copy(), min_audio_latency_r.copy()]
+                            y_data_set = client_array
+
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Latency (ms)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Audio Latency(sent/received)",
+                                _graph_image_name=f"Audio Latency(sent and received){obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_graph_title("Audio Jitter (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_audio_jitter_s.copy(), min_audio_jitter_s.copy(), max_audio_jitter_r.copy(), min_audio_jitter_r.copy()]
+                            y_data_set = client_array
+
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Jitter (ms)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Audio Jitter(sent/received)",
+                                _graph_image_name=f"Audio Jitter(sent and received) {obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_graph_title("Audio Packet Loss (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_audio_pktloss_s.copy(), min_audio_pktloss_s.copy(), max_audio_pktloss_r.copy(), min_audio_pktloss_r.copy()]
+                            y_data_set = client_array
+
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Packet Loss (%)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Audio Packet Loss(sent/received)",
+                                _graph_image_name=f"Audio Packet Loss(sent and received){obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_table_title("Test Audio Results Table:")
+                            self.overall_report.build_table_title()
+                            audio_test_details = pd.DataFrame({
+                                'Device Name': [client for client in accepted_clients],
+                                'Avg Latency Sent (ms)': [round(sum(data["audio_latency_s"]) / len(data["audio_latency_s"]), 2) if len(data["audio_latency_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Latency Recv (ms)': [round(sum(data["audio_latency_r"]) / len(data["audio_latency_r"]), 2) if len(data["audio_latency_r"]) != 0 else 0 for data in final_dataset],
+                                'Avg Jitter Sent (ms)': [round(sum(data["audio_jitter_s"]) / len(data["audio_jitter_s"]), 2) if len(data["audio_jitter_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Jitter Recv (ms)': [round(sum(data["audio_jitter_r"]) / len(data["audio_jitter_r"]), 2) if len(data["audio_jitter_r"]) != 0 else 0 for data in final_dataset],
+                                'Avg Pkt Loss Sent': [round(sum(data["audio_pktloss_s"]) / len(data["audio_pktloss_s"]), 2) if len(data["audio_pktloss_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Pkt Loss Recv': [round(sum(data["audio_pktloss_r"]) / len(data["audio_pktloss_r"]), 2) if len(data["audio_pktloss_r"]) != 0 else 0 for data in final_dataset],
+                                'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
+
+                            })
+                            self.overall_report.set_table_dataframe(audio_test_details)
+                            self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
+                                                                            justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
+                            self.overall_report.html += self.overall_report.dataframe_html
+                        if self.zoom_obj_dict[ce][obj_name]["obj"].video:
+                            self.overall_report.set_graph_title("Video Latency (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_video_latency_s.copy(), min_video_latency_s.copy(), max_video_latency_r.copy(), min_video_latency_r.copy()]
+                            y_data_set = client_array
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Latency (ms)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Video Latency(sent/received)",
+                                _graph_image_name=f"Video Latency(sent and received){obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_graph_title("Video Jitter (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_video_jitter_s.copy(), min_video_jitter_s.copy(), max_video_jitter_r.copy(), min_video_jitter_r.copy()]
+                            y_data_set = client_array
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Jitter (ms)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Video Jitter(sent/received)",
+                                _graph_image_name=f"Video Jitter(sent and received){obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_graph_title("Video Packet Loss (Sent/Received)")
+                            self.overall_report.build_graph_title()
+                            x_data_set = [max_video_pktloss_s.copy(), min_video_pktloss_s.copy(), max_video_pktloss_r.copy(), min_video_pktloss_r.copy()]
+                            y_data_set = client_array
+                            x_fig_size = 18
+                            y_fig_size = len(client_array) * 1 + 4
+                            bar_graph_horizontal = lf_bar_graph_horizontal(
+                                _data_set=x_data_set,
+                                _xaxis_name="Packet Loss (%)",
+                                _yaxis_name="Devices",
+                                _yaxis_label=y_data_set,
+                                _yaxis_categories=y_data_set,
+                                _yaxis_step=1,
+                                _yticks_font=8,
+                                _bar_height=.20,
+                                _color_name=["yellow", "blue", "orange", "grey"],
+                                _show_bar_value=True,
+                                _figsize=(x_fig_size, y_fig_size),
+                                _graph_title="Video Packet Loss(sent/received)",
+                                _graph_image_name=f"Video Packet Loss(sent and received){obj_no}",
+                                _label=["Max Sent", "Min Sent", "Max Recv", "Min Recv"]
+                            )
+                            graph_image = bar_graph_horizontal.build_bar_graph_horizontal()
+                            self.overall_report.set_graph_image(graph_image)
+                            self.overall_report.move_graph_image()
+                            self.overall_report.build_graph()
+
+                            self.overall_report.set_table_title("Test Video Results Table:")
+                            self.overall_report.build_table_title()
+                            video_test_details = pd.DataFrame({
+                                'Device Name': [client for client in accepted_clients],
+                                'Avg Latency Sent (ms)': [round(sum(data["video_latency_s"]) / len(data["video_latency_s"]), 2) if len(data["video_latency_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Latency Recv (ms)': [round(sum(data["video_latency_r"]) / len(data["video_latency_r"]), 2) if len(data["video_latency_r"]) != 0 else 0 for data in final_dataset],
+                                'Avg Jitter Sent (ms)': [round(sum(data["video_jitter_s"]) / len(data["video_jitter_s"]), 2) if len(data["video_jitter_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Jitter Recv (ms)': [round(sum(data["video_jitter_r"]) / len(data["video_jitter_r"]), 2) if len(data["video_jitter_r"]) != 0 else 0 for data in final_dataset],
+                                'Avg Pkt Loss Sent': [round(sum(data["video_pktloss_s"]) / len(data["video_pktloss_s"]), 2) if len(data["video_pktloss_s"]) != 0 else 0 for data in final_dataset],
+                                'Avg Pkt Loss Recv': [round(sum(data["video_pktloss_r"]) / len(data["video_pktloss_r"]), 2) if len(data["video_pktloss_r"]) != 0 else 0 for data in final_dataset],
+                                'CSV link': ['<a href="{}.csv" target="_blank">csv data</a>'.format(client) for client in accepted_clients]
+                            })
+                            self.overall_report.set_table_dataframe(video_test_details)
+
+                            self.overall_report.dataframe_html = self.overall_report.dataframe.to_html(index=False,
+                                                                            justify='center', render_links=True, escape=False)  # have the index be able to be passed in.
+                            self.overall_report.html += self.overall_report.dataframe_html
+                        self.overall_report.set_custom_html("<br/><hr/>")
+                        self.overall_report.build_custom()
+
+                        if ce == "series":
+                            obj_no += 1
+                            obj_name = f"zoom_test_{obj_no}"
+                        else:
+                            break
+            
+            except Exception as e:
+                logger.info(f"failed to generate report for {test_name} {e}")
 
 
                 
@@ -9310,8 +9318,27 @@ def main():
                     func, label = test_map[test_name]
                     args.current = "series"
                     if test_name in ['rb_test','zoom_test','yt_test']:
-                        parent_conn, child_conn = multiprocessing.Pipe()
-                        candela_apis.series_connect[idx] = [test_name,parent_conn,child_conn]
+                        if test_name == "rb_test":
+                            obj_no = 1
+                            while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"rb_test_{obj_no}"
+                            candela_apis.rb_obj_dict["series"][obj_name] = manager.dict({"obj":None,"data":None})
+                            print('hiii data',candela_apis.rb_obj_dict)
+                        elif test_name == "yt_test":
+                            obj_no = 1
+                            while f"yt_test_{obj_no}" in candela_apis.yt_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"yt_test_{obj_no}"
+                            candela_apis.yt_obj_dict["series"][obj_name] = manager.dict({"obj":None,"data":None})
+                            print('hiii data',candela_apis.yt_obj_dict)
+                        elif test_name == "zoom_test":
+                            obj_no = 1
+                            while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
+                                obj_no+=1
+                            obj_name = f"zoom_test_{obj_no}"
+                            candela_apis.zoom_obj_dict["series"][obj_name] = manager.dict({"obj":None,"data":None})
+                            print('hiii data',candela_apis.zoom_obj_dict)
                         series_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis)))
                     else:                 
                         series_threads.append(threading.Thread(
@@ -9332,8 +9359,17 @@ def main():
                         # if test_name == "rb_test":
                             # candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])] = {}
                             # candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])]["parent"],candela_apis.rb_pipe_dict["parallel"][len(candela_apis.rb_pipe_dict["parallel"])]["child"] = multiprocessing.Pipe()
-                        parent_conn, child_conn = multiprocessing.Pipe()
-                        candela_apis.parallel_connect[idx] = [test_name,parent_conn,child_conn]
+                        # parent_conn, child_conn = multiprocessing.Pipe()
+                        # candela_apis.parallel_connect[idx] = [test_name,parent_conn,child_conn]
+                        if test_name == "rb_test":
+                            candela_apis.rb_obj_dict["parallel"]["rb_test"] = manager.dict({"obj": None, "data": None})
+                            print('hiii data',candela_apis.rb_obj_dict)
+                        elif test_name == "yt_test":
+                            candela_apis.yt_obj_dict["parallel"]["yt_test"] = manager.dict({"obj": None, "data": None})
+                            print('hiii data',candela_apis.yt_obj_dict)
+                        elif test_name == "zoom_test":
+                            candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = manager.dict({"obj": None, "data": None})
+                            print('hiii data',candela_apis.zoom_obj_dict) 
                         parallel_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis)))
                     else:                 
                         parallel_threads.append(threading.Thread(
@@ -9343,37 +9379,13 @@ def main():
                     print(f"Warning: Unknown test '{test_name}' in --parallel_tests")
         logging.info(f"Series Threads: {series_threads}")
         logging.info(f"Parallel Threads: {parallel_threads}")
+        logging.info(f"connections parallel {candela_apis.parallel_connect}")
+        logging.info(f"connections series{candela_apis.series_connect}")
+        # time.sleep(20)
         if args.order_priority == 'series':
             candela_apis.current_exec="series"
             for t in series_threads:
                 t.start()
-                if candela_apis.series_index in candela_apis.series_connect:
-                    test_name = candela_apis.series_connect[candela_apis.series_index][0]
-                    if test_name == "rb_test":
-                        obj_no = 1
-                        while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
-                            obj_no+=1
-                        obj_name = f"rb_test_{obj_no}"
-                        candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                        candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                        print('hiii data',candela_apis.rb_obj_dict)
-                    elif test_name == "yt_test":
-                        obj_no = 1
-                        while f"yt_test_{obj_no}" in candela_apis.yt_obj_dict["series"]:
-                            obj_no+=1
-                        obj_name = f"yt_test_{obj_no}"
-                        candela_apis.yt_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                        candela_apis.yt_obj_dict["series"][obj_name]["obj"],candela_apis.yt_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                        print('hiii data',candela_apis.yt_obj_dict)
-                    elif test_name == "zoom_test":
-                        obj_no = 1
-                        while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
-                            obj_no+=1
-                        obj_name = f"zoom_test_{obj_no}"
-                        candela_apis.zoom_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                        candela_apis.zoom_obj_dict["series"][obj_name]["obj"],candela_apis.zoom_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                        print('hiii data',candela_apis.zoom_obj_dict)
-
                 t.join()
                 candela_apis.series_index += 1
             # Then run parallel tests
@@ -9388,22 +9400,9 @@ def main():
 
             candela_apis.parallel_index = 0
             for t in parallel_threads:
-                if candela_apis.parallel_index in candela_apis.parallel_connect:
-                    test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
-                    if test_name == "rb_test":
-                        candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
-                        candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.rb_obj_dict)
-                    elif test_name == "yt_test":
-                        candela_apis.yt_obj_dict["parallel"]["yt_test"] = {"obj":None,"data":None}
-                        candela_apis.yt_obj_dict["parallel"]["yt_test"]["obj"],candela_apis.yt_obj_dict["parallel"]["yt_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.yt_obj_dict)
-                    elif test_name == "zoom_test":
-                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = {"obj":None,"data":None}
-                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["obj"],candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.zoom_obj_dict)
                 t.join()
                 candela_apis.parallel_index += 1
+        
         else:
             candela_apis.current_exec="parallel"
             for t in parallel_threads:
@@ -9412,21 +9411,6 @@ def main():
             #     p.start()
 
             for t in parallel_threads:
-                if candela_apis.parallel_index in candela_apis.parallel_connect:
-                    test_name = candela_apis.parallel_connect[candela_apis.parallel_index][0]
-                    if test_name == "rb_test":
-                        candela_apis.rb_obj_dict["parallel"]["rb_test"] = {"obj":None,"data":None}
-                        candela_apis.rb_obj_dict["parallel"]["rb_test"]["obj"],candela_apis.rb_obj_dict["parallel"]["rb_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.rb_obj_dict)
-                    elif test_name == "yt_test":
-                        candela_apis.yt_obj_dict["parallel"]["yt_test"] = {"obj":None,"data":None}
-                        candela_apis.yt_obj_dict["parallel"]["yt_test"]["obj"],candela_apis.yt_obj_dict["parallel"]["yt_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.yt_obj_dict)
-                    elif test_name == "zoom_test":
-                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = {"obj":None,"data":None}
-                        candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["obj"],candela_apis.zoom_obj_dict["parallel"]["zoom_test"]["data"] = candela_apis.parallel_connect[candela_apis.parallel_index][1].recv()
-                        print('hiii data',candela_apis.zoom_obj_dict)
-
                 t.join()
 
             if len(series_threads) != 0:
@@ -9434,37 +9418,10 @@ def main():
                 yt_test = 'yt_test' in tests_to_run_parallel
                 candela_apis.misc_clean_up(layer3=True,layer4=True,generic=True,port_5000=iszoom,port_5002=isyt,port_5003=isrb)
                 print('starting Series tests.......')
-                time.sleep(10)
+                time.sleep(5)
             candela_apis.current_exec="series"
             for t in series_threads:
                 t.start()
-                if candela_apis.series_index in candela_apis.series_connect:
-                    if candela_apis.series_index in candela_apis.series_connect:
-                        test_name = candela_apis.series_connect[candela_apis.series_index][0]
-                        if test_name == "rb_test":
-                            obj_no = 1
-                            while f"rb_test_{obj_no}" in candela_apis.rb_obj_dict["series"]:
-                                obj_no+=1
-                            obj_name = f"rb_test_{obj_no}"
-                            candela_apis.rb_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                            candela_apis.rb_obj_dict["series"][obj_name]["obj"],candela_apis.rb_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                            print('hiii data',candela_apis.rb_obj_dict)
-                        elif test_name == "yt_test":
-                            obj_no = 1
-                            while f"yt_test_{obj_no}" in candela_apis.yt_obj_dict["series"]:
-                                obj_no+=1
-                            obj_name = f"yt_test_{obj_no}"
-                            candela_apis.yt_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                            candela_apis.yt_obj_dict["series"][obj_name]["obj"],candela_apis.yt_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                            print('hiii data',candela_apis.yt_obj_dict)
-                        elif test_name == "zoom_test":
-                            obj_no = 1
-                            while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
-                                obj_no+=1
-                            obj_name = f"zoom_test_{obj_no}"
-                            candela_apis.zoom_obj_dict["series"][obj_name] = {"obj":None,"data":None}
-                            candela_apis.zoom_obj_dict["series"][obj_name]["obj"],candela_apis.zoom_obj_dict["series"][obj_name]["data"] = candela_apis.series_connect[candela_apis.series_index][1].recv()
-                            print('hiii data',candela_apis.zoom_obj_dict)
                 t.join()
             # for p in series_processes:
             #     p.start()
