@@ -1019,49 +1019,26 @@ class FtpTest(LFCliBase):
             max_bytes_rd = list(self.bytes_rd)
 
             self.data['Bytes RD'] = self.bytes_rd
-
-            if 'endpoint' in total_url_data.keys():
-                # list of layer 4 connections name
-                # temp_data can be used to check data as well as check whether the endpoint has data
-                if type(total_url_data['endpoint']) is dict:
-                    temp_data[self.cx_list[0]] = total_url_data['endpoint']['total-urls']
-                else:
-                    for cx in total_url_data['endpoint']:
-                        for CX in cx:
-                            for created_cx in self.cx_list:
-                                if CX == created_cx:
-                                    temp_data[created_cx] = cx[CX]['total-urls']
-
-                if temp_data != {}:
-
-                    self.data["status"] = ["RUNNING"] * len(list(temp_data.keys()))
-                    # self.data["url_data"] = list(temp_data.values())
-                    self.data["url_data"] = self.url_data
-                else:
-                    self.data["status"] = ["RUNNING"] * len(self.cx_list)
-                    self.data["url_data"] = [0] * len(self.cx_list)
-                time_difference = abs(end_time - datetime.now())
-                total_hours = time_difference.total_seconds() / 3600
-                remaining_minutes = (total_hours % 1) * 60
-                self.data["start_time"] = [start_time] * len(self.cx_list)
-                self.data["end_time"] = [end_time.strftime("%d/%m %I:%M:%S %p")] * len(self.cx_list)
-                self.data["remaining_time"] = [[str(int(total_hours)) + " hr and " + str(
-                    int(remaining_minutes)) + " min" if int(total_hours) != 0 or int(
-                    remaining_minutes) != 0 else '<1 min'][0]] * len(self.cx_list)
-                try:
-                    df1 = pd.DataFrame(self.data)
-                except:
-                    logger.info(f'error error data {self.data}')
-                    traceback.print_exc()
-                    exit(1)
-                if self.dowebgui:
-                    df1.to_csv('{}/ftp_datavalues.csv'.format(self.result_dir), index=False)
-                if self.clients_type == 'Real':
-                    df1.to_csv("ftp_datavalues.csv", index=False)
-
-            else:
-
-                logger.info("No layer 4-7 endpoints - No endpoint in reponse")
+            self.data["url_data"] = self.url_data
+            self.data["status"] = ["RUNNING"] * len(self.url_data)
+            time_difference = abs(end_time - datetime.now())
+            total_hours = time_difference.total_seconds() / 3600
+            remaining_minutes = (total_hours % 1) * 60
+            self.data["start_time"] = [start_time] * len(self.cx_list)
+            self.data["end_time"] = [end_time.strftime("%d/%m %I:%M:%S %p")] * len(self.cx_list)
+            self.data["remaining_time"] = [[str(int(total_hours)) + " hr and " + str(
+                int(remaining_minutes)) + " min" if int(total_hours) != 0 or int(
+                remaining_minutes) != 0 else '<1 min'][0]] * len(self.cx_list)
+            try:
+                df1 = pd.DataFrame(self.data)
+            except:
+                logger.info(f'error error data {self.data}')
+                traceback.print_exc()
+                exit(1)
+            if self.dowebgui:
+                df1.to_csv('{}/ftp_datavalues.csv'.format(self.result_dir), index=False)
+            if self.clients_type == 'Real':
+                df1.to_csv("ftp_datavalues.csv", index=False)
 
             time.sleep(5)
             if self.dowebgui == "True":

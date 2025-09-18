@@ -79,6 +79,7 @@ test_results_list = manager.list()
 if 'py-json' not in sys.path:
     sys.path.append(os.path.join(os.path.abspath('..'), 'py-json'))
 
+
 if 'py-scripts' not in sys.path:
     sys.path.append('/home/lanforge/lanforge-scripts/py-scripts')
 lf_report = importlib.import_module("py-scripts.lf_report")
@@ -127,6 +128,7 @@ class Candela(Realm):
         self.current_exec = "series"
         self.order_priority = order_priority
         self.obj_dict = {}
+        self.duration_dict = {}
         self.http_obj_dict = {"parallel":{},"series":{}}
         self.ftp_obj_dict = {"parallel":{},"series":{}}
         self.thput_obj_dict = {"parallel":{},"series":{}}
@@ -5064,6 +5066,8 @@ class Candela(Realm):
         # ce = "series"
         unq_tests = []
         test_map = {}
+        print('self.rb_obj_dict',self.rb_obj_dict)
+        print('self.yt_obj_dict',self.yt_obj_dict)
         if ce == "series":
             series_tests = self.series_tests.copy()
             for test in series_tests:
@@ -5364,7 +5368,7 @@ class Candela(Realm):
                         if 'ftp_test' not in self.test_count_dict:
                             self.test_count_dict['ftp_test']=0
                         self.test_count_dict['ftp_test']+=1
-                        self.overall_report.set_obj_html(_obj_title=f'FTP Test ', _obj="")
+                        self.overall_report.set_obj_html(_obj_title=f'FTP Test {obj_no}', _obj="")
                         self.overall_report.build_objective()
                         self.overall_report.set_table_title("Test Setup Information")
                         self.overall_report.build_table_title()
@@ -6663,7 +6667,7 @@ class Candela(Realm):
                             self.overall_report.build_table()
 
                         # closing
-                        self.overall_report.build_custom()
+                        # self.overall_report.build_custom()
                         if ce == "series":
                             obj_no += 1
                             obj_name = f"ping_test_{obj_no}"
@@ -7827,7 +7831,7 @@ class Candela(Realm):
 
                             os.chdir(self.rb_obj_dict[ce][obj_name]["obj"].original_dir)
 
-                        self.overall_report.build_custom()
+                        # self.overall_report.build_custom()
                         if ce == "series":
                             obj_no += 1
                             obj_name = f"rb_test_{obj_no}"
@@ -8598,34 +8602,76 @@ class Candela(Realm):
                 logger.info(f"failed to generate report for {test_name} {e}")
 
 
-                
-    def generate_overall_report(self,test_results_df=''):
+    def generate_test_exc_df(self,test_results_df,args_dict):
+        series_df = {}
+        parallel_df = {}
+        if self.order_priority == "series":
+            if len(self.series_tests) != 0:
+                series_df = test_results_df[:len(self.series_tests)].copy()
+                series_df["s/no"] = range(1, len(series_df) + 1)
+                series_df = series_df[["s/no", "test_name", "Duration", "status"]]
+            if len(self.parallel_tests) != 0:
+                parallel_df = test_results_df[len(self.series_tests)+1:].copy()
+                parallel_df["s/no"] = range(1, len(parallel_df) + 1)
+                parallel_df = parallel_df[["s/no", "test_name", "Duration", "status"]]
+        else:
+            if len(self.parallel_tests) != 0:
+                parallel_df = test_results_df[:len(self.parallel_tests)].copy()
+                parallel_df["s/no"] = range(1, len(parallel_df) + 1)
+                parallel_df = parallel_df[["s/no", "test_name", "Duration", "status"]]
+
+            if len(self.series_tests) != 0:
+                series_df = test_results_df[len(self.parallel_tests)+1:].copy()
+                series_df["s/no"] = range(1, len(series_df) + 1)
+                series_df = series_df[["s/no", "test_name", "Duration", "status"]]
+        return series_df,parallel_df
+
+    def generate_overall_report(self,test_results_df='',args_dict={}):
         self.overall_report = lf_report.lf_report(_results_dir_name="Base_Class_Test_Overall_report", _output_html="base_class_overall.html",
                                          _output_pdf="base_class_overall.pdf", _path=self.result_path)
         self.report_path_date_time = self.overall_report.get_path_date_time()
         self.overall_report.set_title("Candela Base Class")
         self.overall_report.set_date(datetime.now())
         self.overall_report.build_banner()
-        self.overall_report.set_custom_html(test_results_df.to_html(index=False, justify='center'))
-        self.overall_report.build_custom()
-
+        # self.overall_report.set_custom_html(test_results_df.to_html(index=False, justify='center'))
+        # self.overall_report.build_custom()
+        try:
+            series_df,parallel_df = self.generate_test_exc_df(test_results_df,args_dict)
+        except Exception:
+            traceback.print_exc()
+            print('failed dataframe')
         if self.order_priority == "series":
             if len(self.series_tests) != 0:
-                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Series Tests</h1>')
+                self.overall_report.set_custom_html('<h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Series Tests</h1>')
                 self.overall_report.build_custom()
-                
+                self.overall_report.set_table_title("Traffic Details")
+                self.overall_report.build_table_title()
+                self.overall_report.set_custom_html(series_df.to_html(index=False, justify='center'))
+                self.overall_report.build_custom()
                 self.render_each_test(ce="series")
             if len(self.parallel_tests) != 0:
-                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Parallel Tests</h1>')
+                self.overall_report.set_custom_html('<h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Parallel Tests</h1>')
+                self.overall_report.build_custom()
+                self.overall_report.set_table_title("Traffic Details")
+                self.overall_report.build_table_title()
+                self.overall_report.set_custom_html(parallel_df.to_html(index=False, justify='center'))
                 self.overall_report.build_custom()
                 self.render_each_test(ce="parallel")
         else:
             if len(self.parallel_tests) != 0:
-                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Parallel Tests</h1>')
+                self.overall_report.set_custom_html('<h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Parallel Tests</h1>')
+                self.overall_report.build_custom()
+                self.overall_report.set_table_title("Traffic Details")
+                self.overall_report.build_table_title()
+                self.overall_report.set_custom_html(parallel_df.to_html(index=False, justify='center'))
                 self.overall_report.build_custom()
                 self.render_each_test(ce="parallel")
             if len(self.series_tests) != 0:
-                self.overall_report.set_custom_html('<h1 class="TitleFontPrint" style="color:darkgreen;">Series Tests</h1>')
+                self.overall_report.set_custom_html('<h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Series Tests</h1>')
+                self.overall_report.build_custom()
+                self.overall_report.set_table_title("Traffic Details")
+                self.overall_report.build_table_title()
+                self.overall_report.set_custom_html(series_df.to_html(index=False, justify='center'))
                 self.overall_report.build_custom()
                 self.render_each_test(ce="series")
         # self.overall_report.insert_table_at_marker(test_results_df,"for_table")
@@ -8668,6 +8714,28 @@ def validate_individual_args(args,test_name):
 
 
 
+def validate_time(n: str) -> str:
+    try:
+        if type(n) == int or type(n) == str and n.isdigit():  # just a number, default seconds
+            seconds = int(n)
+        elif n.endswith("s"):
+            seconds = int(n[:-1])
+        elif n.endswith("m"):
+            seconds = int(n[:-1]) * 60
+        elif n.endswith("h"):
+            seconds = int(n[:-1]) * 3600
+        else:
+            return "wrong type"
+
+        # Now normalize
+        if seconds < 60:
+            return f"{seconds} secs"
+        elif seconds < 3600:
+            return f"{seconds // 60} mins"
+        else:
+            return f"{seconds // 3600} hours"
+    except ValueError:
+        return "wrong type"
 
 def validate_args(args):
     # pass/fail , config , groups-profiles arg validation
@@ -9247,6 +9315,9 @@ def main():
 
     args = parser.parse_args()
     args_dict = vars(args)
+    duration_dict = {}
+    
+
     print('argsss',args_dict)
     # exit(0)
     # validate_args(args_dict)
@@ -9294,6 +9365,34 @@ def main():
     if args.parallel_tests and (len(tests_to_run_parallel) != len(set(tests_to_run_parallel))):
         logger.error("in -parallel dont specify duplicate tests")
         exit(0)
+    duration_flag = False
+    if args.series_tests:
+        for test in args.series_tests.split(','):
+            if test == "thput_test":
+                duration_dict[test] = validate_time(args_dict[f"{test}_duration"])
+            elif test == "mcast_test":
+                duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_test_duration"])
+            elif test == "ping_test" or test == "zoom_test":
+                duration_dict[test] = f"{args_dict[f"{test.split('_')[0]}_duration"]} mins"
+            else:
+                duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_duration"])
+    if args.parallel_tests:
+        for test in args.parallel_tests.split(','):
+            if test == "thput_test":
+                duration_dict[test] = validate_time(args_dict[f"{test}_duration"])
+            elif test == "mcast_test":
+                duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_test_duration"])
+            elif test == "ping_test" or test == "zoom_test":
+                duration_dict[test] = f"{args_dict[f"{test.split('_')[0]}_duration"]} mins"
+            else:
+                duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_duration"])
+    for test_name,duration in duration_dict.items():
+        if duration == "wrong type":
+            duration_flag = True
+            print(f"wrong duration type for {test_name}")
+    if duration_flag:
+        exit(1)
+    candela_apis.duration_dict = duration_dict.copy()
     # args.current = "series"
     iszoom = 'zoom_test' in tests_to_run_parallel or 'zoom_test' in tests_to_run_series
     isrb = 'rb_test' in tests_to_run_parallel or 'rb_test' in tests_to_run_series
@@ -9331,7 +9430,6 @@ def main():
                                 obj_no+=1
                             obj_name = f"yt_test_{obj_no}"
                             candela_apis.yt_obj_dict["series"][obj_name] = manager.dict({"obj":None,"data":None})
-                            print('hiii data',candela_apis.yt_obj_dict)
                         elif test_name == "zoom_test":
                             obj_no = 1
                             while f"zoom_test_{obj_no}" in candela_apis.zoom_obj_dict["series"]:
@@ -9339,10 +9437,10 @@ def main():
                             obj_name = f"zoom_test_{obj_no}"
                             candela_apis.zoom_obj_dict["series"][obj_name] = manager.dict({"obj":None,"data":None})
                             print('hiii data',candela_apis.zoom_obj_dict)
-                        series_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis)))
+                        series_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis,duration_dict[test_name])))
                     else:                 
                         series_threads.append(threading.Thread(
-                            target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis)
+                            target=run_test_safe(func, f"{label} [Series {idx+1}]", args, candela_apis,duration_dict[test_name])
                         ))
                 else:
                     print(f"Warning: Unknown test '{test_name}' in --series_tests")
@@ -9370,10 +9468,10 @@ def main():
                         elif test_name == "zoom_test":
                             candela_apis.zoom_obj_dict["parallel"]["zoom_test"] = manager.dict({"obj": None, "data": None})
                             print('hiii data',candela_apis.zoom_obj_dict) 
-                        parallel_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis)))
+                        parallel_threads.append(multiprocessing.Process(target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis,duration_dict[test_name])))
                     else:                 
                         parallel_threads.append(threading.Thread(
-                            target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis)
+                            target=run_test_safe(func, f"{label} [Parallel {idx+1}]", args, candela_apis,duration_dict[test_name])
                         ))
                 else:
                     print(f"Warning: Unknown test '{test_name}' in --parallel_tests")
@@ -9439,7 +9537,7 @@ def main():
     print(f"Logs saved to: {log_file}")
     test_results_df = pd.DataFrame(list(test_results_list))
     # You can also access the test results dataframe:
-    candela_apis.generate_overall_report(test_results_df)
+    candela_apis.generate_overall_report(test_results_df=test_results_df,args_dict=args_dict)
     print("\nTest Results Summary:")
     print(test_results_df)
     # candela_apis.overall_report.insert_table_at_marker(test_results_df,"for_table")
@@ -9449,10 +9547,9 @@ def main():
     # print(html_file)
     # candela_apis.overall_report.write_pdf()
 
-def run_test_safe(test_func, test_name, args, candela_apis):
+def run_test_safe(test_func, test_name, args, candela_apis,duration):
     global error_logs
     # global test_results_df
-    
     def wrapper():
         global error_logs
         # global test_results_df
@@ -9465,10 +9562,9 @@ def run_test_safe(test_func, test_name, args, candela_apis):
             else:
                 status = "EXECUTED"
                 logger.info(f"{test_name} EXECUTED")
-                
             # Update the dataframe with test result
             # test_results_df.loc[len(test_results_df)] = [test_name, status]
-            test_results_list.append({"test_name": test_name, "status": status})
+            test_results_list.append({"test_name": test_name, "Duration":duration, "status": status})
             
         except SystemExit as e:
             if e.code != 0:
@@ -9479,7 +9575,7 @@ def run_test_safe(test_func, test_name, args, candela_apis):
             logger.error(error_msg)
             error_logs += error_msg
             # test_results_df.loc[len(test_results_df)] = [test_name, status]
-            test_results_list.append({"test_name": test_name, "status": status})
+            test_results_list.append({"test_name": test_name,"Duration":duration, "status": status})
             
         except Exception as e:
             status = "NOT EXECUTED"
@@ -9490,7 +9586,7 @@ def run_test_safe(test_func, test_name, args, candela_apis):
             full_error = error_msg + tb_str + "\n"
             error_logs += full_error
             # test_results_df.loc[len(test_results_df)] = [test_name, status]
-            test_results_list.append({"test_name": test_name, "status": status})
+            test_results_list.append({"test_name": test_name,"Duration":duration, "status": status})
             
     return wrapper
 
