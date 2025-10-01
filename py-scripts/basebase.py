@@ -198,12 +198,14 @@ class Candela(Realm):
         return response
     def webgui_stop_check(self,test_name):
         try:
+            print("ENTERED STOP CHECKKK")
             with open(self.result_dir + "/../../Running_instances/{}_{}_running.json".format(self.lanforge_ip, self.test_name), 'r') as file:
                 data = json.load(file)
                 if data["status"] != "Running":
                     logging.info('Test is stopped by the user')
                     self.test_stopped = True
             if not self.test_stopped:
+                print("ENTERED NOT STOPPED")
                 self.overall_status[test_name] = "started"
                 self.overall_status["time"] = datetime.datetime.now().strftime("%Y %d %H:%M:%S")
                 self.overall_status["current_mode"] = self.current_exec
@@ -308,6 +310,9 @@ class Candela(Realm):
         layer3: (Boolean : optional) Default : False To Delete all layer3 connections
         layer4: (Boolean : optional) Default : False To Delete all layer4 connections
         """
+        layer3 = False
+        layer4 = False
+        generic = False
         if layer3:
             self.cleanup.cxs_clean()
             self.cleanup.layer3_endp_clean()
@@ -547,7 +552,7 @@ class Candela(Realm):
         wait_time: int = 60,
         dev_list: str = None
     ):
-
+        try:
         # set the logger level to debug
         logger_config = lf_logger_config.lf_logger_config()
 
@@ -4757,16 +4762,6 @@ class Candela(Realm):
                 args.url = "https://" + args.url
             if args.url.lower().startswith("http://"):
                 args.url = "https://" + args.url.removeprefix("http://")
-            # ce = self.current_exec #seires
-            # if ce == "parallel":
-            #     obj_name = "rb_test"
-            # else:
-            #     obj_no = 1
-            #     while f"rb_test_{obj_no}" in self.rb_obj_dict[ce]:
-            #         obj_no+=1 
-            #     obj_name = f"rb_test_{obj_no}" 
-            # self.rb_obj_dict[ce][obj_name] = {"obj":None,"data":None}
-            # Initialize an instance of RealBrowserTest with various parameters
             self.rb_test = RealBrowserTest(host=args.host,
                                 ssid=args.ssid,
                                 passwd=args.passwd,
@@ -4938,7 +4933,7 @@ class Candela(Realm):
         device_csv_name: str = None,
         wait_time: int = 60,
         config: bool = False,
-        exec_type: str = None
+        exec_type: str = None,
     ):
         args = SimpleNamespace(**locals())
         args.host = self.lanforge_ip
@@ -7656,7 +7651,8 @@ class Candela(Realm):
                         uc_avg_data = []
                         total_err_data = []
 
-                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time))
+                        csv_paths = self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time if not self.dowebgui else self.result_dir
+                        final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data('{}/real_time_data.csv'.format(csv_paths))
 
                         test_setup_info = self.rb_obj_dict[ce][obj_name]["obj"].generate_test_setup_info()
                         self.overall_report.test_setup_table(
@@ -7666,11 +7662,11 @@ class Candela(Realm):
                             if self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i].startswith("real_time_data.csv"):
                                 continue
 
-                            final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
+                            final_eid_data, mac_data, channel_data, signal_data, ssid_data, tx_rate_data, device_names, device_type_data = self.rb_obj_dict[ce][obj_name]["obj"].extract_device_data("{}/{}".format(csv_paths,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
                             self.overall_report.set_graph_title("Successful URL's per Device")
                             self.overall_report.build_graph_title()
 
-                            data = pd.read_csv("{}/{}".format(self.rb_obj_dict[ce][obj_name]["obj"].report_path_date_time,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
+                            data = pd.read_csv("{}/{}".format(csv_paths,self.rb_obj_dict[ce][obj_name]["obj"].csv_file_names[i]))
 
                             # Extract device names from CSV
                             if 'total_urls' in data.columns:
@@ -9203,9 +9199,9 @@ def main():
     parser.add_argument("--rb_url", default="https://google.com", help='specify the url you want to test on')
     parser.add_argument('--rb_duration', type=str, help='time to run traffic')
     parser.add_argument('--rb_device_list', type=str, help='provide resource_ids of android devices. for instance: "10,12,14"')
-    parser.add_argument('--rb_webgui_incremental', '--rb_incremental_capacity', help="Specify the incremental values <1,2,3..>", dest='webgui_incremental', type=str)
+    parser.add_argument('--rb_webgui_incremental', '--rb_incremental_capacity', help="Specify the incremental values <1,2,3..>", dest='rb_webgui_incremental', type=str)
     parser.add_argument('--rb_incremental', help="to add incremental capacity to run the test", action='store_true')
-    parser.add_argument("--rb_urls_per_tenm", type=int, default=100, help='specify the number of url you want to test on '
+    parser.add_argument("--rb_count", type=int, default=100, help='specify the number of url you want to test on '
                                                                     'per minute')
     #mcast pass fail value
     parser.add_argument("--rb_expected_passfail_value", help="Specify the expected number of urls", default=None)
@@ -9478,7 +9474,7 @@ def main():
         if args.dowebgui:
             # overall_path = os.path.join(args.result_dir, directory)
             candela_apis.overall_status = {"ping": "notstarted", "qos": "notstarted", "ftp": "notstarted", "http": "notstarted",
-                            "mc": "notstarted", "vs": "notstarted", "thput": "notstarted", "time": datetime.datetime.now().strftime("%Y %d %H:%M:%S"), "status": "running", "current_mode":"tbd" , "current_test_name": "tbd"}
+                            "mc": "notstarted", "vs": "notstarted", "thput": "notstarted","rb": "notstarted","vs": "notstarted","zoom": "notstarted","yt": "notstarted", "time": datetime.datetime.now().strftime("%Y %d %H:%M:%S"), "status": "running", "current_mode":"tbd" , "current_test_name": "tbd"}
             candela_apis.overall_csv.append(candela_apis.overall_status.copy())
             df1 = pd.DataFrame(candela_apis.overall_csv)
             df1.to_csv('{}/overall_status.csv'.format(args.result_dir), index=False)
@@ -9940,7 +9936,10 @@ def run_yt_test(args, candela_apis):
         client_cert=args.yt_client_cert,
         pk_passwd=args.yt_pk_passwd,
         pac_file=args.yt_pac_file,
-        exec_type=args.current
+        exec_type=args.current,
+        do_webUI="True" if args.dowebgui else False,
+        ui_report_dir = args.result_dir,
+        test_name=args.test_name
     )
 
 def run_rb_test(args, candela_apis):
@@ -9977,7 +9976,11 @@ def run_rb_test(args, candela_apis):
         wait_time=args.rb_wait_time,
         duration=args.rb_duration,
         exec_type=args.current,
-        urls_per_team=args.rb_urls_per_tenm
+        count = args.rb_count,
+        dowebgui = args.dowebgui,
+        result_dir=args.result_dir,
+        test_name=args.test_name,
+        webgui_incremental=args.rb_webgui_incremental
     )
 
 def run_zoom_test(args, candela_apis):
@@ -10018,7 +10021,10 @@ def run_zoom_test(args, candela_apis):
         pk_passwd=args.zoom_pk_passwd,
         pac_file=args.zoom_pac_file,
         wait_time=args.zoom_wait_time,
-        exec_type=args.current
+        exec_type=args.current,
+        do_webUI= args.dowebgui,
+        report_dir= args.result_dir,
+        testname= args.test_name,
     )
 # def browser_cleanup(args,candela_apis):
 #     return candela_apis.browser_cleanup(args)
