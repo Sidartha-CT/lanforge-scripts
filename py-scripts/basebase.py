@@ -552,7 +552,6 @@ class Candela(Realm):
         wait_time: int = 60,
         dev_list: str = None
     ):
-        try:
         # set the logger level to debug
         logger_config = lf_logger_config.lf_logger_config()
 
