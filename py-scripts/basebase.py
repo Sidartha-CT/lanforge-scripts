@@ -4216,7 +4216,7 @@ class Candela(Realm):
                 Devices.get_devices()
 
                 # Create a YouTube object with the specified parameters
-
+                upstream_port = "10.253.8.126"
                 self.yt_test_obj = Youtube(
                     host=mgr_ip,
                     port=mgr_port,
@@ -4395,12 +4395,16 @@ class Candela(Realm):
 
                 self.yt_test_obj.start_time = datetime.datetime.now()
                 self.yt_test_obj.start_generic()
+                logging.info(f"yt_test_obj: {self.yt_test_obj}")
+                logging.info(f"generic_endps_profile: {getattr(self.yt_test_obj, 'generic_endps_profile', None)}")
+                logging.info(f"device_names: {getattr(self.yt_test_obj, 'device_names', None)}")
+                logging.info(f"stats_api_response: {getattr(self.yt_test_obj, 'stats_api_response', None)}")
 
-                duration = duration
+                # duration = duration
                 end_time = datetime.datetime.now() + datetime.timedelta(minutes=duration)
                 initial_data = self.yt_test_obj.get_data_from_api()
 
-                while len(initial_data) == 0:
+                while not initial_data or len(initial_data) == 0:
                     initial_data = self.yt_test_obj.get_data_from_api()
                     time.sleep(1)
                 if initial_data:
@@ -4417,11 +4421,16 @@ class Candela(Realm):
                     self.yt_test_obj.get_data_from_api()
                     time.sleep(1)
 
-                self.yt_test_obj.generic_endps_profile.stop_cx()
+                if getattr(self.yt_test_obj, "generic_endps_profile", None):
+                    logger.info("Stopping all the endpoints")
+                    self.yt_test_obj.generic_endps_profile.stop_cx()
+                else:
+                    logging.warning("⚠️ generic_endps_profile is None — skipping stop_cx()")
                 logging.info("Duration ended")
 
                 logging.info('Stopping the test')
                 if do_webUI:
+                    print("hii here data",self.yt_test_obj.stats_api_response)
                     self.yt_test_obj.create_report(self.yt_test_obj.stats_api_response, self.yt_test_obj.ui_report_dir)
                 else:
 
@@ -4432,10 +4441,10 @@ class Candela(Realm):
                 #     self.yt_test_obj.generic_endps_profile.cleanup()
         except Exception as e:
             logging.error(f"Error occured {e}")
-            traceback.print_exc()
+            # traceback.print_exc()
         finally:
             if not ('--help' in sys.argv or '-h' in sys.argv):
-                traceback.print_exc()
+                # traceback.print_exc()
                 self.yt_test_obj.stop()
                 if self.current_exec == "parallel":
                     self.yt_obj_dict["parallel"]["yt_test"]["obj"] =self.yt_test_obj
@@ -4518,7 +4527,7 @@ class Candela(Realm):
                 else:
                     selected_profiles = []
 
-
+                upstream_port = "10.253.8.126"
                 self.zoom_test_obj = ZoomAutomation(audio=audio, video=video, lanforge_ip=lanforge_ip, wait_time=wait_time, testname=testname,
                                                 upstream_port=upstream_port, config=config, selected_groups=selected_groups, selected_profiles=selected_profiles,no_browser_precleanup = True,no_browser_postcleanup = True)
                 upstream_port = self.zoom_test_obj.change_port_to_ip(upstream_port)
@@ -4697,7 +4706,7 @@ class Candela(Realm):
                 logging.info("Test Completed Sucessfully")
         except Exception as e:
             logging.error(f"AN ERROR OCCURED WHILE RUNNING TEST {e}")
-            traceback.print_exc()
+            # traceback.print_exc()
         finally:
             if not ('--help' in sys.argv or '-h' in sys.argv):
                 if do_webUI:
@@ -4797,7 +4806,7 @@ class Candela(Realm):
                                 client_cert=args.client_cert,
                                 pk_passwd=args.pk_passwd,
                                 pac_file=args.pac_file,
-                                upstream_port=args.upstream_port,
+                                upstream_port="10.253.8.126",
                                 expected_passfail_value=args.expected_passfail_value,
                                 device_csv_name=args.device_csv_name,
                                 wait_time=args.wait_time,
@@ -8021,7 +8030,7 @@ class Candela(Realm):
                             plt.xticks(rotation=45, ha='right')
 
                             # output_file = '{}'.format(file_name.split('_')[0]) + 'buffer_health_vs_time.png'
-                            output_file = os.path.join(scp_path,f"{file_name.split('_')[0]}buffer_health_vs_time.png{obj_no}")
+                            output_file = os.path.join(scp_path,f"{file_name.split('_')[0]}buffer_health_vs_time{obj_no}.png")
                             plt.tight_layout()
                             plt.savefig(output_file, dpi=96)
                             plt.close()
@@ -8578,7 +8587,7 @@ class Candela(Realm):
                 series_df["s/no"] = range(1, len(series_df) + 1)
                 series_df = series_df[["s/no", "test_name", "Duration", "status"]]
             if len(self.parallel_tests) != 0:
-                parallel_df = test_results_df[len(self.series_tests)+1:].copy()
+                parallel_df = test_results_df[len(self.series_tests):].copy()
                 parallel_df["s/no"] = range(1, len(parallel_df) + 1)
                 parallel_df = parallel_df[["s/no", "test_name", "Duration", "status"]]
         else:
@@ -8588,7 +8597,7 @@ class Candela(Realm):
                 parallel_df = parallel_df[["s/no", "test_name", "Duration", "status"]]
 
             if len(self.series_tests) != 0:
-                series_df = test_results_df[len(self.parallel_tests)+1:].copy()
+                series_df = test_results_df[len(self.parallel_tests):].copy()
                 series_df["s/no"] = range(1, len(series_df) + 1)
                 series_df = series_df[["s/no", "test_name", "Duration", "status"]]
         return series_df,parallel_df
@@ -8605,8 +8614,8 @@ class Candela(Realm):
         try:
             series_df,parallel_df = self.generate_test_exc_df(test_results_df,args_dict)
         except Exception:
-            traceback.print_exc()
-            print('failed dataframe')
+            # traceback.print_exc()
+            print('exception failed dataframe')
         if self.order_priority == "series":
             if len(self.series_tests) != 0:
                 self.overall_report.set_custom_html('<h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Series Tests</h1>')
@@ -9347,7 +9356,7 @@ def main():
             elif test == "mcast_test":
                 duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_test_duration"])
             elif test == "ping_test" or test == "zoom_test":
-                duration_dict[test] = f"{args_dict[f"{test.split('_')[0]}_duration"]} mins"
+                duration_dict[test] = "{} mins".format(args_dict["{}_duration".format(test.split('_')[0])])
             else:
                 duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_duration"])
     if args.parallel_tests:
@@ -9357,7 +9366,7 @@ def main():
             elif test == "mcast_test":
                 duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_test_duration"])
             elif test == "ping_test" or test == "zoom_test":
-                duration_dict[test] = f"{args_dict[f"{test.split('_')[0]}_duration"]} mins"
+                duration_dict[test] = "{} mins".format(args_dict["{}_duration".format(test.split('_')[0])])
             else:
                 duration_dict[test] = validate_time(args_dict[f"{test.split('_')[0]}_duration"])
     for test_name,duration in duration_dict.items():
@@ -9580,6 +9589,8 @@ def run_test_safe(test_func, test_name, args, candela_apis,duration):
                 status = "NOT EXECUTED"
             else:
                 status = "EXECUTED"
+            tb = traceback.format_exc()
+            print(tb)
             error_msg = f"{test_name} exited with code {e.code}\n"
             logger.error(error_msg)
             error_logs += error_msg
@@ -9591,7 +9602,8 @@ def run_test_safe(test_func, test_name, args, candela_apis,duration):
             error_msg = f"{test_name} crashed unexpectedly\n"
             logger.exception(error_msg)
             tb_str = traceback.format_exc()
-            traceback.print_exc()
+            logger.info("sussss")
+            # traceback.print_exc()
             full_error = error_msg + tb_str + "\n"
             error_logs += full_error
             # test_results_df.loc[len(test_results_df)] = [test_name, status]
