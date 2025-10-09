@@ -714,7 +714,11 @@ class Youtube(Realm):
         try:
             filename = os.path.basename(source_file)
             dest_file = os.path.join(dest_dir, filename)
-            shutil.move(source_file, dest_file)
+            if self.do_webUI:
+                shutil.copy(source_file, dest_file)
+            else:
+                shutil.move(source_file, dest_file)
+
 
             logging.info(f"Successfully moved '{source_file}' to '{dest_file}'.")
 
