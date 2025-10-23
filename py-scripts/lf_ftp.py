@@ -2743,6 +2743,13 @@ INCLUDE_IN_README: False
 
     optional.add_argument('--get_live_view', help="If true will heatmap will be generated from testhouse automation WebGui ", action='store_true')
     optional.add_argument('--total_floors', help="Total floors from testhouse automation WebGui ", default="0")
+
+    optional.add_argument("--robot_test", help='to trigger robot test', action='store_true')
+    optional.add_argument('--robot_ip', default='localhost', help='hostname for where Robot server is running')
+    optional.add_argument('--robot_port', default=5000, help='port Robot HTTP service is running on')
+    optional.add_argument('--coordinate',help="The coordinate contains list of coordinates to be ")
+    optional.add_argument('--rotation',help="The set of angles to rotate at a particular point")
+    
     # logging configuration
     optional.add_argument(
         "--lf_logger_config_json",
