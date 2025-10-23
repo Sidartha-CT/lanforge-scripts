@@ -171,7 +171,7 @@ Realm = realm.Realm
 from lf_report import lf_report  # noqa: E402
 from lf_graph import lf_bar_graph_horizontal  # noqa: E402
 # from lf_graph import lf_line_graph  # noqa: E402
-
+from monitor_interop_data import MonitorInteropData  # noqa: E402
 from datetime import datetime, timedelta  # noqa: E402
 
 DeviceConfig = importlib.import_module("py-scripts.DeviceConfig")
@@ -972,6 +972,7 @@ class Throughput(Realm):
                 if cx == l3_cx_data[j]['name']:
                     throughput[i][5] = l3_cx_data[j]['avg rtt']
             i += 1
+        
         return throughput
 
     def monitor(self, iteration, individual_df, device_names, incremental_capacity_list, overall_start_time, overall_end_time, is_device_configured):
@@ -983,7 +984,18 @@ class Throughput(Realm):
             raise ValueError("Monitor test duration should be > 1 second")
         if self.cx_profile.created_cx is None:
             raise ValueError("Monitor needs a list of Layer 3 connections")
-
+        cx_list = list(self.cx_profile.created_cx.keys())
+        monitor_data = MonitorInteropData(host=self.host, port=self.port)
+        if self.direction == "Upload":
+            direction = 'upload'
+        elif self.direction == "Download":
+            direction = 'download'
+        else:
+            direction = 'bidirectional'
+        cx_val = monitor_data.monitor_l3_endp_data(cx_list=cx_list,direction=direction)
+        if not cx_val:
+            logger.error("No CX data found to monitor")
+            exit(0)
         start_time = datetime.now()
 
         logger.info("Monitoring cx and endpoints")
@@ -3162,7 +3174,8 @@ Copyright 2023 Candela Technologies Inc.
 
             # Determine device names based on the current iteration
             device_names = created_cx_lists_keys[:to_run_cxs_len[i][-1]]
-
+            print("add clearrr")
+            time.sleep(20)
             # Monitor throughput and capture all dataframes and test stop status
             all_dataframes, test_stopped_by_user = throughput.monitor(i, individual_df, device_names, incremental_capacity_list, overall_start_time, overall_end_time, is_device_configured)
             if args.do_interopability and "iOS" not in to_run_cxs[i][0] and args.interopability_config:
