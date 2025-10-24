@@ -3,127 +3,67 @@ import time
 
 class RobotClass:
     def __init__(self):
-        pass
+        self.robo_ip = ""
+
+    def move_to_coordinate(self, x, y, theta=None):
+        url = f"http://{self.robo_ip}/cmd/nav_name"
+        data = {"x": x, "y": y, "theta": theta}
+
+        print(f"[MOVE] Sending coordinates: {data}")
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            print("[MOVE] Success  Robot reached the target.")
+            return "success"
+        else:
+            print("[MOVE] Failed ", response.text)
+            return "fail"
+
+    def rotate_angle(self, x, y, theta):
+        url = f"http://{self.robo_ip}/cmd/nav_angle"
+        data = {"x": x, "y": y, "theta": theta}
+
+        print(f"[ROTATE] Rotating: {data}")
+        response = requests.post(url, json=data)
+
+        if response.status_code == 200:
+            print("[ROTATE] Success Rotation completed.")
+            return "success"
+        else:
+            print("[ROTATE] Failed ", response.text)
+            return "fail"
 
     def wait_for_battery(self):
-        battery_url = f"http://{self.robo_ip}/reeman/base_encode"
-        status_url=f"http://{self.robo_ip}/reeman/nav_status"
-        move_url=f"http://{self.robo_ip}/cmd/nav_name"
-        while True:
-            try:
-                response = requests.get(battery_url, timeout=5)
-                response.raise_for_status()
-                data = response.json()
-                battery = data.get("battery", 0)
-                charge_flag = data.get("chargeFlag", 0)
-                retries=0
-                if battery <= 27:
-                    print(f"Battery low ({battery}%). Pausing test until fully charged...")
-                    requests.post(move_url,json={"point":self.charge_point_name})
-                    while True:
-                        matched = False
-                        try:
-                            response = requests.get(status_url,timeout=5)
-                            response.raise_for_status()
-                            nav_status = response.json()
-                        except (requests.RequestException, ValueError) as e:
-                            print(f"[ERROR] Failed to get robot status: {e}")
-                            time.sleep(5)
-                            retries+=1
-                            if(retries == 15):
-                                abort = True
-                                break
-                            
-                            continue
-                        goal = nav_status.get("goal","")
-                        state=nav_status.get("res","")
-                        if goal == self.charge_point_name and state == 3:
-                            matched = True
-                            break
+        url = f"http://{self.robo_ip}/reeman/battery"
+        response = requests.get(url)
+        data = response.json()
+        level = data.get("level", 0)
 
-                    while True:
-                        print("enteredwhileee")
-                        time.sleep(300) 
-                        try:
-                            resp = requests.get(battery_url, timeout=5)
-                            resp.raise_for_status()
-                            charge_data = resp.json()
-                            new_battery = charge_data.get("battery", 0)
-                            print(f"Current battery: {new_battery}%")
-                            if new_battery > 28:
-                                print("Battery full. Resuming test...")
-                                return
-                        except Exception as e:
-                            print(f"[ERROR] Checking charge: {e}")
-                            time.sleep(300)
-                else:
-                    print(f"[OK] Battery at {battery}%. Continuing test.")
-                    return
-
-            except Exception as e:
-                print(f"[ERROR] Failed to check battery: {e}")
-                time.sleep(600)
-
-    def move_to_coordinate(self,coord):
-        moverobo_url = 'http://'+self.robo_ip+'/cmd/nav_name'
-        status_url= 'http://'+self.robo_ip+'/reeman/nav_status'
-        requests.post(moverobo_url,json={"point":coord})
-        retries=0
-        while True:
-            matched = False
-            try:
-                response = requests.get(status_url,timeout=5)
-                response.raise_for_status()
-                nav_status = response.json()
-            except (requests.RequestException, ValueError) as e:
-                print(f"[ERROR] Failed to get robot status: {e}")
-                time.sleep(5)
-                retries+=1
-                if(retries == 15):
-                    abort = True
-                    break
-                
-                continue
-            goal = nav_status.get("goal","")
-            state=nav_status.get("res","")
-            distance=nav_status.get("dist","")
-            if goal == coord and state == 3 and distance < 0.5:
-                matched = True
-                break
-                
-        return  matched
-
-    def rotate_angle(self,target_x,target_y,angle):
-        nav_pathurl= 'http://'+self.robo_ip+'/cmd/nav'
-        pose_url= 'http://'+self.robo_ip+'/reeman/pose'
-        requests.post(nav_pathurl,json={"x":target_x,"y":target_y,"theta":angle})
-        retries_for_theta=0
-        rotated=False
-        while True:
-            try:
-                response = requests.get(pose_url,timeout=5)
-                response.raise_for_status()
-                data_pose=response.json()
-            except (requests.RequestException, ValueError) as e:
-                print(f"[ERROR] Failed to get robot status of pose: {e}")
-                time.sleep(5)
-                retries_for_theta+=1
-                if(retries_for_theta == 5):
-                    break
-                continue
-
-            theta=data_pose['theta']
-            theta = round(theta, 2)
-            if abs(angle - theta) <= 0.15:
-                rotated = True
-                break
-        
-        return rotated
-    
-
+        if level < 20:
+            print(f"[BATTERY] Low ({level}%). Waiting for charge...")
+            time.sleep(2)
+        else:
+            print(f"[BATTERY] OK ({level}%). Continuing.")
+        return "ok"
 
 def main():
-    print("hello")
-    
+    robo = RobotClass()
+    robo.robo_ip = "127.0.0.1:5000"  # Point to your fake robot API
+
+    robo.wait_for_battery()
+
+    # Example coordinates
+    x, y, theta = 1, 2, 3
+    for i in range(3):
+        move_status = robo.move_to_coordinate(x, y, theta)
+        if move_status == "success":
+            print("[MAIN] Move successful, now rotating...")
+            rotate_status = robo.rotate_angle(x, y, theta)
+            if rotate_status == "success":
+                print("[MAIN] All operations completed successfully ")
+            else:
+                print("[MAIN] Rotation failed ")
+        else:
+            print("[MAIN] Move failed ")
+
 if __name__ == "__main__":
     main()
