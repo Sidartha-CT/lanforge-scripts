@@ -13,10 +13,10 @@ class RobotClass:
         response = requests.post(url, json=data)
         if response.status_code == 200:
             print("[MOVE] Success  Robot reached the target.")
-            return "success"
+            return True
         else:
             print("[MOVE] Failed ", response.text)
-            return "fail"
+            return False
 
     def rotate_angle(self, x, y, angle):
         url = f"http://{self.robo_ip}/cmd/nav_angle"
@@ -27,10 +27,10 @@ class RobotClass:
 
         if response.status_code == 200:
             print("[ROTATE] Success Rotation completed.")
-            return "success"
+            return True
         else:
             print("[ROTATE] Failed ", response.text)
-            return "fail"
+            return False
 
     def wait_for_battery(self):
         url = f"http://{self.robo_ip}/reeman/battery"
