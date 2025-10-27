@@ -5,9 +5,9 @@ class RobotClass:
     def __init__(self):
         self.robo_ip = ""
 
-    def move_to_coordinate(self, theta=None):
+    def move_to_coordinate(self, coordinate=None):
         url = f"http://{self.robo_ip}/cmd/nav_name"
-        data = {"theta": theta}
+        data = {"coordinate": coordinate}
 
         print(f"[MOVE] Sending coordinates: {data}")
         response = requests.post(url, json=data)
@@ -18,9 +18,9 @@ class RobotClass:
             print("[MOVE] Failed ", response.text)
             return "fail"
 
-    def rotate_angle(self, x, y, theta):
+    def rotate_angle(self, x, y, angle):
         url = f"http://{self.robo_ip}/cmd/nav_angle"
-        data = {"x": x, "y": y, "theta": theta}
+        data = {"x": x, "y": y, "angle": angle}
 
         print(f"[ROTATE] Rotating: {data}")
         response = requests.post(url, json=data)
