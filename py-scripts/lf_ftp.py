@@ -118,6 +118,7 @@ from typing import List, Optional
 import asyncio
 import csv
 import traceback
+from lf_robo_base_class import RobotClass
 
 if sys.version_info[0] != 3:
     print("This script requires Python 3")
@@ -170,7 +171,12 @@ class FtpTest(LFCliBase):
                  get_live_view=False,
                  total_floors=0,
                  config=False,
-                 csv_name=None):
+                 csv_name=None,
+                 robot_test = False,
+                 robot_ip=None,
+                 robot_port=None,
+                 coordinate=None,
+                 rotation=None):
         super().__init__(lfclient_host, lfclient_port, _debug=_debug_on, _exit_on_fail=_exit_on_fail)
 
         if not device_list:
@@ -275,7 +281,14 @@ class FtpTest(LFCliBase):
         self.api_url = 'http://{}:{}'.format(self.host, self.port)
         self.get_live_view = get_live_view
         self.total_floors = total_floors
-
+        self.robot_test = robot_test
+        self.robot_ip = robot_ip
+        self.robot_port = robot_port
+        self.coordinate = coordinate
+        self.rotation = rotation
+        self.rotation_enabled = False
+        self.coordinate_list = coordinate.split(',')
+        self.rotation_list = rotation.split(',')
         logger.info("Test is Initialized")
 
     def query_realclients(self):
@@ -995,8 +1008,7 @@ class FtpTest(LFCliBase):
                 except Exception:
                     # Fail-safe: if any list index/key mismatch occurs while adding row_data,
                     # stop execution to avoid inconsistent results.
-                    tb_str = traceback.format_exc()  # capture traceback as string
-                    logger.error("An exception occurred:\n%s", tb_str)
+                    traceback.print_exc()
                     exit(1)
             # calculating average for rx_rate
             for j in range(len(rx_rate_val[0])):
@@ -1054,8 +1066,7 @@ class FtpTest(LFCliBase):
                 # Print the problematic data and error before exiting
                 logger.info("Failed to create DataFrame from self.data")
                 logger.info("self.data: %s", self.data)
-                tb_str = traceback.format_exc()  # capture traceback as string
-                logger.error("An exception occurred:\n%s", tb_str)
+                traceback.print_exc()
                 exit(1)
             if self.dowebgui:
                 df1.to_csv('{}/ftp_datavalues.csv'.format(self.result_dir), index=False)
@@ -2474,6 +2485,31 @@ class FtpTest(LFCliBase):
             logger.error('No cross connections created, aborting test')
             exit(1)
 
+    def perform_robo(self):
+
+        if(self.rotation_list[0]!=""):
+            self.rotation_enabled=True
+
+        robot_obj = RobotClass()
+        robot_obj.robo_ip = "127.0.0.1:5000"  
+
+        for coordinate in range(len(self.coordinate_list)):
+            robo_moved = robot_obj.move_to_coordinate(self.coordinate_list[coordinate])
+            if robo_moved:
+                # if no rotation mode
+                if not self.rotation_enabled:
+                    self.start(False, False)
+                    self.monitor_for_runtime_csv()
+                    self.stop()
+                    
+                # if rotation mode
+                else:
+                    for angle in range(len(self.rotation_list)):
+                        robo_rotated = robot_obj.rotate_angle(1,2,self.rotation_list[angle])
+                        if robo_rotated:
+                            self.start(False, False)
+                            self.monitor_for_runtime_csv()
+                            self.stop()
 
 def validate_args(args):
     """Validate CLI arguments."""
@@ -2745,11 +2781,10 @@ INCLUDE_IN_README: False
     optional.add_argument('--total_floors', help="Total floors from testhouse automation WebGui ", default="0")
 
     optional.add_argument("--robot_test", help='to trigger robot test', action='store_true')
-    optional.add_argument('--robot_ip', default='localhost', help='hostname for where Robot server is running')
-    optional.add_argument('--robot_port', default=5000, help='port Robot HTTP service is running on')
-    optional.add_argument('--coordinate',help="The coordinate contains list of coordinates to be ")
-    optional.add_argument('--rotation',help="The set of angles to rotate at a particular point")
-    
+    optional.add_argument('--robot_ip', type=str, default='localhost', help='hostname for where Robot server is running')
+    optional.add_argument('--robot_port', type=str,default=5000, help='port Robot HTTP service is running on')
+    optional.add_argument('--coordinate', type=str, default='', help="The coordinate contains list of coordinates to be ")
+    optional.add_argument('--rotation', type=str, default='', help="The set of angles to rotate at a particular point")
     # logging configuration
     optional.add_argument(
         "--lf_logger_config_json",
@@ -2880,7 +2915,12 @@ some amount of file data from the FTP server while measuring the time taken by c
                               wait_time=args.wait_time,
                               config=args.config,
                               get_live_view=args.get_live_view,
-                              total_floors=args.total_floors
+                              total_floors=args.total_floors,
+                              robot_test=args.robot_test,
+                              robot_ip=args.robot_ip,
+                              robot_port=args.robot_port,
+                              coordinate=args.coordinate,
+                              rotation=args.rotation
                               )
 
                 interation_num = interation_num + 1
@@ -2923,7 +2963,15 @@ some amount of file data from the FTP server while measuring the time taken by c
                 # First time stamp
                 time1 = datetime.now()
                 logger.info("Traffic started running at %s", time1)
-                obj.start(False, False)
+
+                # ROBO CODEEEEEEEEEEEEE
+
+                if args.robot_test:
+                    obj.perform_robo()
+                    exit(1)
+
+
+
                 # to fetch runtime values during the execution and fill the csv.
                 if args.dowebgui or args.clients_type == "Real":
                     obj.monitor_for_runtime_csv()
