@@ -5,9 +5,9 @@ class RobotClass:
     def __init__(self):
         self.robo_ip = ""
 
-    def move_to_coordinate(self, x, y, theta=None):
+    def move_to_coordinate(self, theta=None):
         url = f"http://{self.robo_ip}/cmd/nav_name"
-        data = {"x": x, "y": y, "theta": theta}
+        data = {"theta": theta}
 
         print(f"[MOVE] Sending coordinates: {data}")
         response = requests.post(url, json=data)
