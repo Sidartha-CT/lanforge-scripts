@@ -1,3 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.95 Win DESKTOP-DDPI3HE,e4:a4:71:93:70:e7,,0,AUTO 20 ,STOPPED,9,185,204,195.444,18000000,2410159.0,0,24/07 05:59:20 PM,24/07 06:00:20 PM,0
-1.13 android ssamung22,46:ca:12:8c:58:67,NETGEAR_2G_wpa2,6,802.11abgn 20 1x1,STOPPED,0,0,0,0.0,0,0.0,0,24/07 05:59:20 PM,24/07 06:00:20 PM,0

@@ -1,3 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.95 Win DESKTOP-DDPI3HE,e4:a4:71:93:70:e7,NETGEAR_2G_wpa2,11,802.11abgn 20 1x1,STOPPED,4,6136,10144,8241.25,20000000,3181297.25,0,24/09 01:18:34 PM,24/09 01:19:34 PM,0
-1.400 Mac macoss-MacBook-Air.local,30:35:ad:c5:e1:be,NETGEAR_2G_wpa2,11,802.11abgn-BE 20 2x2,STOPPED,0,0,0,0.0,4145624,0.0,0,24/09 01:18:34 PM,24/09 01:19:34 PM,0

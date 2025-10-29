@@ -1,4 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.11 android moto_C4_R3,0a:5b:89:56:a9:ae,OpenWifi_psk2,36,802.11abgn-AC 80 ,STOPPED,9,351,722,458.888,45000000,7391090.0,0,14/10 04:43:59 PM,14/10 04:44:59 PM,0
-1.15 android S5_R2_C1_Hnr,c4:9f:4c:fc:9b:f3,,0,AUTO 20 ,STOPPED,0,0,0,0.0,0,0.0,0,14/10 04:43:59 PM,14/10 04:44:59 PM,0
-1.117 Win DESKTOP-3KOIAJR,f4:8c:50:e2:01:67,OpenWifi_psk2,36,802.11abgn-AC 20 1x1,STOPPED,8,394,679,554.25,40000000,5908812.125,0,14/10 04:43:59 PM,14/10 04:44:59 PM,0

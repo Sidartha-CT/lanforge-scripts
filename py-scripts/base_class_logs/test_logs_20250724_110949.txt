@@ -1,1 +1,0 @@
-MULTICAST TEST [Parallel 4] exited with code 0

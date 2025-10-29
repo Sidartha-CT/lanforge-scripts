@@ -1,4 +1,0 @@
-Date	test-rig	test-tag	dut-hw-version	dut-sw-version	dut-model-num	dut-serial-num	test-priority	test-id	short-description	pass/fail	numeric-score	test details	Units	Graph-Group	Subtest-Pass	Subtest-Fail
-1758708577356								lf_webpage	Webpage download 5G Minimum		0.6		Mbps	Webpage Download 5G		
-1758708577356								lf_webpage	Webpage download 5G Maximum		0.7		Mbps	Webpage Download 5G		
-1758708577356								lf_webpage	Webpage download 5G Average		0.6		Mbps	Webpage Download 5G		

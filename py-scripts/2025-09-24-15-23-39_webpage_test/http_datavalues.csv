@@ -1,4 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.110 Win DESKTOP-IUQFRCV,24:ee:9a:39:2e:6,,0,AUTO 20 ,STOPPED,9,415,1182,801.333,45000000,5895851.25,0,24/09 03:22:38 PM,24/09 03:23:38 PM,0
-1.113 Win DESKTOP-F0HLI17,00:bb:60:0b:5a:fe,OpenWifi_psk2,36,802.11abgn-AC 20 1x1,STOPPED,8,208,969,621.25,40000000,5897454.125,0,24/09 03:22:38 PM,24/09 03:23:38 PM,0
-1.117 Win DESKTOP-3KOIAJR,f4:8c:50:e2:01:6,OpenWifi_psk2,36,802.11abgn-AC 20 1x1,STOPPED,0,0,0,0.0,0,0.0,0,24/09 03:22:38 PM,24/09 03:23:38 PM,0

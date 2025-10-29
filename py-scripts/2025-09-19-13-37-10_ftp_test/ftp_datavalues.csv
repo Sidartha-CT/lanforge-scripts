@@ -1,4 +1,0 @@
-url_data,client,MAC,Channel,SSID,Mode,UC-MIN,UC-AVG,UC-MAX,client_id,total_err,Rx Rate(1m),Bytes RD,status,start_time,end_time,remaining_time
-34,wlan0_ftp95_l4,e4:a4:71:93:70:e7,11,NETGEAR_2G_wpa2,802.11abgn 20 1x1,882,1338.97,1714,1.95,0,48.3333,341.7778,STOPPED,19/09 01:36:05 PM,19/09 01:37:05 PM,0
-0,sta0_ftp110_l4,5c:5f:67:21:14:86,11,NETGEAR_2G_wpa2,802.11bgn 20 2x2,0,0.0,0,1.110,0,0.0,0.0,STOPPED,19/09 01:36:05 PM,19/09 01:37:05 PM,0
-0,en0_ftp400_l4,30:35:ad:c5:e1:be,11,NETGEAR_2G_wpa2,802.11abgn-BE 20 2x2,0,0.0,0,1.400,0,0.0,0.0,STOPPED,19/09 01:36:05 PM,19/09 01:37:05 PM,0

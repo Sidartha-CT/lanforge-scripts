@@ -1,2 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.11 android samsung1,86:84:7a:c9:aa:ba,NETGEAR_2G_wpa2,11,802.11abgn 20 ,STOPPED,0,0,0,0.0,0,0,0,25/09 10:51:59 PM,25/09 10:52:59 PM,0

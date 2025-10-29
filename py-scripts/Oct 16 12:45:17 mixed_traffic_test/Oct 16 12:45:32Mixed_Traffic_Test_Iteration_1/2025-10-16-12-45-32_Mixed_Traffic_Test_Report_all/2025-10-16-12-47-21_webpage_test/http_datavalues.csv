@@ -1,2 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.11 android nokia54,4a:a4:d7:80:16:cd,NETGEAR_5G_wpa2,149,802.11abgn-AC 80 ,STOPPED,9,785,999,895.555,45322904,7017630.5714,0,16/10 12:46:19 PM,16/10 12:47:19 PM,0

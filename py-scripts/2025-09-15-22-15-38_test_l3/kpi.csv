@@ -1,7 +1,0 @@
-Date	test-rig	test-tag	dut-hw-version	dut-sw-version	dut-model-num	dut-serial-num	test-priority	test-id	short-description	pass/fail	numeric-score	test details	Units	Graph-Group	Subtest-Pass	Subtest-Fail
-1757954855178								test l3	DL 12000000 bps  pdu MTU  1 STA		11959420		bps	Per Stations Rate DL		
-1757954855178								test l3	UL 0 bps pdu MTU 1 STA		0		bps	Per Stations Rate UL		
-1757954855178								test l3	UL 0 bps pdu MTU + DL 12000000 bps pud MTU- 1 STA		11959420		bps	Per Stations Rate UL+DL		
-1757954855178								test l3	DL LL 12000000 bps  pdu MTU  1 STA		12399436		bps	Per Stations Rate DL		
-1757954855178								test l3	UL LL 0 bps pdu MTU 1 STA		0		bps	Per Stations Rate UL		
-1757954855178								test l3	UL LL 0 bps pdu MTU + DL LL 12000000 bps pud MTU- 1 STA		12399436		bps	Per Stations Rate UL+DL		

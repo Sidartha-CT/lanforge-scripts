@@ -1,5 +1,0 @@
-DeviceList,PingPacketLoss %,L3_TCP_UL Mbps,L3_TCP_DL Mbps,L3_TCP_BiDi Mbps,L3_UDP_UL Mbps,L3_UDP_DL Mbps,L3_UDP_BiDi Mbps,Videostreaming URLcount,RealBrowser URLcount,HTTP URLcount,FTP URLcount,PortReset No_of_connections,Roaming No_of_Successful Roams
-RZCTA09CTXF,,,,,,,,,,,,,
-DESKTOP-DDPI3HE,,,,,,,,,,,,,
-ubuntu24,,,,,,,,,,,,,
-macoss-MacBook-Air.local,,,,,,,,,,,,,

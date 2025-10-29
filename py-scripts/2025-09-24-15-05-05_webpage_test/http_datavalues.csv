@@ -1,4 +1,0 @@
-client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
-1.95 Win DESKTOP-DDPI3HE,e4:a4:71:93:70:e7,NETGEAR_2G_wpa2,11,802.11abgn 20 ,STOPPED,0,0,0,0.0,1527160,266047.75,0,24/09 03:04:04 PM,24/09 03:05:04 PM,0
-1.400 Mac macoss-MacBook-Air.local,30:35:ad:c5:e1:be,NETGEAR_2G_wpa2,11,802.11abgn 20 1x1,STOPPED,0,0,0,0.0,0,0.0,0,24/09 03:04:04 PM,24/09 03:05:04 PM,0
-1.11 android samsung1,86:84:7a:c9:aa:ba,NETGEAR_2G_wpa2,11,802.11abgn-BE 20 2x2,STOPPED,0,0,0,0.0,2631016,639979.5,0,24/09 03:04:04 PM,24/09 03:05:04 PM,0
