@@ -1,0 +1,2 @@
+client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
+1.95 Win DESKTOP-DDPI3HE,e4:a4:71:93:70:e7,NETGEAR_2G_wpa2,6,802.11abgn 20 1x1,STOPPED,29,36,2635,1399.9,58000000,2312251.1111,1,17/07 03:24:03 PM,17/07 03:25:03 PM,0

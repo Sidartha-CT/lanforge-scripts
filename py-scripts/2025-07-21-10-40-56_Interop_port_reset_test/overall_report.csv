@@ -1,0 +1,5 @@
+,Reset Count,Disconnected,Scanning,Association attempts,Association Rejection,Connected,Connection Time (us),Remarks
+0,1,1,1,1,0,1,0,NA
+1,2,1,0,0,0,0,NA,The Disconnections are seen but Client did not connected to user given SSID.
+2,3,1,2,2,1,1,0,NA
+3,4,1,1,1,0,1,0,NA

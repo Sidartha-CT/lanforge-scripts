@@ -1,0 +1,2 @@
+client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
+1.110 Lin ubuntu24,5c:5f:67:27:4a:86,NETGEAR_2G_wpa2,11,802.11bgn 20 2x2,STOPPED,0,0,0,0.0,0,0,0,17/09 05:40:58 PM,17/09 05:41:58 PM,0

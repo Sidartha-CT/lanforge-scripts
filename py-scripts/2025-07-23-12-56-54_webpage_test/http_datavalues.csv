@@ -1,0 +1,6 @@
+client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
+1.11 android Pixel_4a_C1_R1,3a:3b:b5:f3:1c:28,xiab_2G_WPA2,6,802.11abgn 20 ,STOPPED,0,0,0,0.0,0,0.0,0,23/07 12:53:49 PM,23/07 12:56:49 PM,0
+1.11 android Pixel_4a_C1_R1,02:00:00:00:00:00,xiab_2G_WPA2,6,802.11abgn 20 ,STOPPED,29,1296,3423,2077.103,145001448,6721614.4,0,23/07 12:53:49 PM,23/07 12:56:49 PM,0
+1.13 android S2_R2_C4_SM_GJ6,fe:80:53:eb:57:18,xiab_2G_WPA2,6,AUTO 20 ,STOPPED,1,3582,3582,3582.0,5000000,1452999.125,0,23/07 12:53:49 PM,23/07 12:56:49 PM,0
+1.136 Win DesktopLatitude5490,dc:8b:28:28:d7:64,xiab_2G_WPA2,6,802.11abgn 20 1x1,STOPPED,23,1261,5694,2163.565,115000000,5288756.76,0,23/07 12:53:49 PM,23/07 12:56:49 PM,0
+1.146 Lin test99-Latitude-5480,00:24:d6:1a:20:f,xiab_2G_WPA2,6,802.11bgn 40 2x2,STOPPED,0,0,0,0.0,0,0.0,0,23/07 12:53:49 PM,23/07 12:56:49 PM,0

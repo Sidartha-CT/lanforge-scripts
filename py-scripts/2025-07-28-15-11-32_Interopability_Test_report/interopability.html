@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Interoperability Test</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Interoperability Test</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-07-28-15-11-32</h4>
+                </div>
+            </div>
+        </div>
+                 
+            <!-- Test Objective -->
+            <h3 align='left'>Objective</h3>
+            <p align='left' width='900'>The Candela Interoperability test is designed to measure an Access Point’s client performance when handling different amounts of Real clients like android, Linux, windows, and IOS. The test allows the user to increase the number of clients in user-defined steps for each test iteration and measure the per-client throughput for each trial. Along with throughput other measurements made are client connection times, Station 4-Way Handshake time, DHCP times, and more. The expected behavior is for the AP to be able to handle several stations (within the limitations of the AP specs) and make sure all Clients get a fair amount of airtime both upstream and downstream. An AP that scales well will not show a significant overall throughput decrease as more Real clients are added.</p>
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Input Parameters</h3>
+            <p align='left' width='900'>The below tables provides the input parameters for the test</p>
+            
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Configuration</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Test name</td><td colspan='3'>None</td></tr><tr><td>Device List</td><td colspan='3'>S2_R2_C4_SM_GJ6(Android), samsung(Android), DesktopLatitude5490(Windows)</td></tr><tr><td>No of Devices</td><td colspan='3'>Total(3) Android(2) Windows(1)</td></tr><tr><td>Traffic Duration in minutes</td><td colspan='3'>3.0</td></tr><tr><td>Traffic Type</td><td colspan='3'>UDP</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>Upload Rate(Mbps)</td><td colspan='3'>0.0Mbps</td></tr><tr><td>Download Rate(Mbps)</td><td colspan='3'>1.0Mbps</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            <h2><u>1. Test On Device S2_R2_C4_SM_GJ6:</u></h2>
+            <!-- Test Objective -->
+            <h3 align='left'>Real Time Throughput: Achieved Throughput: Download: 0.0 Mbps</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='line_graph0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Per Client Avg-Throughput</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='image_name0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>RSSI Of The Clients Connected</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='signal_image_name0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Detailed Result Table </h3>
+            <p align='left' width='900'>The below tables provides detailed information for the throughput test on each device.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Device Type</th>
+      <th>Username</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Offered download rate</th>
+      <th>Observed Average download rate</th>
+      <th>Offered upload rate</th>
+      <th>Observed Average upload rate</th>
+      <th>RSSI</th>
+      <th>Average Rx Drop A%</th>
+      <th>Average Rx Drop B%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Android</td>
+      <td>S2_R2_C4_SM_GJ6</td>
+      <td>xiab_2G_WPA2</td>
+      <td>fe:80:53:eb:57:18</td>
+      <td>6</td>
+      <td>AUTO 20</td>
+      <td>1.0Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0Mbps</td>
+      <td>0 Mbps</td>
+      <td>-23 dbm</td>
+      <td>10.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table><hr><h2><u>2. Test On Device samsung:</u></h2>
+            <!-- Test Objective -->
+            <h3 align='left'>Real Time Throughput: Achieved Throughput: Download: 0.93 Mbps</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='line_graph1.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Per Client Avg-Throughput</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='image_name1.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>RSSI Of The Clients Connected</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='signal_image_name1.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Detailed Result Table </h3>
+            <p align='left' width='900'>The below tables provides detailed information for the throughput test on each device.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Device Type</th>
+      <th>Username</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Offered download rate</th>
+      <th>Observed Average download rate</th>
+      <th>Offered upload rate</th>
+      <th>Observed Average upload rate</th>
+      <th>RSSI</th>
+      <th>Average Rx Drop A%</th>
+      <th>Average Rx Drop B%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Android</td>
+      <td>samsung</td>
+      <td>xiab_2G_WPA2</td>
+      <td>aa:15:ae:17:df:b0</td>
+      <td>6</td>
+      <td>802.11abgn 20</td>
+      <td>1.0Mbps</td>
+      <td>0.93 Mbps</td>
+      <td>0.0Mbps</td>
+      <td>0 Mbps</td>
+      <td>-16 dbm</td>
+      <td>18.65</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table><hr><h2><u>3. Test On Device DesktopLatitude5490:</u></h2>
+            <!-- Test Objective -->
+            <h3 align='left'>Real Time Throughput: Achieved Throughput: Download: 1.0 Mbps</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='line_graph2.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Per Client Avg-Throughput</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='image_name2.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>RSSI Of The Clients Connected</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='signal_image_name2.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Detailed Result Table </h3>
+            <p align='left' width='900'>The below tables provides detailed information for the throughput test on each device.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Device Type</th>
+      <th>Username</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Offered download rate</th>
+      <th>Observed Average download rate</th>
+      <th>Offered upload rate</th>
+      <th>Observed Average upload rate</th>
+      <th>RSSI</th>
+      <th>Average Rx Drop A%</th>
+      <th>Average Rx Drop B%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Windows</td>
+      <td>DesktopLatitude5490</td>
+      <td>xiab_2G_WPA2</td>
+      <td>dc:8b:28:28:d7:64</td>
+      <td>6</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>1.0Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>0.0Mbps</td>
+      <td>0 Mbps</td>
+      <td>-17 dbm</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table><hr>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

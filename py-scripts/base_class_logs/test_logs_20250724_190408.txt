@@ -1,0 +1,20 @@
+FTP TEST [Series 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 5448, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 5574, in run_ftp_test
+    return candela_apis.run_ftp_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1744, in run_ftp_test
+    self.run_ftp_test1(args)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1850, in run_ftp_test1
+    obj.set_values()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_ftp.py", line 524, in set_values
+    self.file_size_bytes = int(self.convert_file_size_in_Bytes(self.file_size))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_ftp.py", line 898, in convert_file_size_in_Bytes
+    return float(upper[:-2]) * 10 ** 6
+           ^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: ''
+

@@ -1,0 +1,17 @@
+QoS TEST [Parallel 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5189, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5352, in run_qos_test
+    return candela_apis.run_qos_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 1841, in run_qos_test
+    throughput_qos.build()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 534, in build
+    self.create_cx()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 572, in create_cx
+    sleep_time=0, tos=self.tos[ip_tos], cx_name="%s-%i" % (cx_list[count], len(self.cx_profile.created_cx)))
+                                                           ~~~~~~~^^^^^^^
+IndexError: list index out of range
+

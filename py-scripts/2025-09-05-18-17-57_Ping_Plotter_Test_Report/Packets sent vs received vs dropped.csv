@@ -1,0 +1,11 @@
+Wireless Clients,Packets Loss,Packets Received,Packets Sent
+1.17.wlan0 Windows DESKTOP-MNRRV9Q,1,60,61
+1.32.wlan0 Windows DESKTOP-L5166RG,1,60,61
+1.59.wlan0 Windows test,0,61,61
+1.67.wlan0 Windows DESKTOP-VCHOOU1,1,60,61
+1.91.en0 Mac macbooks-MacBook-Air.local,0,13,13
+1.18.wlan0 Android itel_P55_5G,0,13,13
+1.14.wlan0 Android Oppo3x,0,12,12
+1.15.wlan0 Android Samsung_M14,0,12,12
+1.22.wlan0 Android smarttv,0,12,12
+1.16.wlan0 Android Oppo_A3X,0,12,12

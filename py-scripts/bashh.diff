@@ -1,0 +1,163 @@
+diff --git a/py-scripts/real_application_tests/real_browser/ctrb.bash b/py-scripts/real_application_tests/real_browser/ctrb.bash
+index 1d86b7ab..84a6c940 100644
+--- a/py-scripts/real_application_tests/real_browser/ctrb.bash
++++ b/py-scripts/real_application_tests/real_browser/ctrb.bash
+@@ -3,15 +3,27 @@
+ # Launch selenium YouTube viewer on a particular VRF.
+ # Usage: ./ctrb.bash <iface> <url> <host> <device_name> <duration> <res>
+ 
+-# Assign command line arguments to variables
++kill_chrome() {
++    if [[ "$(uname)" == "Linux" ]]; then
++        pkill -f chrome
++        pkill -f chromedriver
++    elif [[ "$(uname)" == "Darwin" ]]; then
++        pkill -f "Google Chrome"
++        pkill -f chromedriver
++    fi
++}
+ 
+-# Kill any Chrome process
+-if [[ "$(uname)" == "Linux" ]]; then
+-    # Linux: Terminate Chrome processes
+-    pkill -f chrome
+-    pkill -f chromedriver
+-    sleep 5
++# Parse pre/post cleanup args
++precleanup=false
++postcleanup=false
++for arg in "$@"; do
++    [[ "$arg" == "--precleanup" ]] && precleanup=true
++    [[ "$arg" == "--postcleanup" ]] && postcleanup=true
++done
++
++$precleanup && kill_chrome && sleep 5
+ 
++if [[ "$(uname)" == "Linux" ]]; then
+     IFACE=$1
+     URL=$2
+     HOST=$3
+@@ -26,19 +38,7 @@ if [[ "$(uname)" == "Linux" ]]; then
+     # Display is set to the VNC display.
+     DISPLAY=$DISPLAY ./vrf_exec.bash $IFACE "python3 real_browser.py --url $URL --server $HOST  --duration $DURATION  $YTENV" > real_browser_test.log 2>&1
+ 
+-    # Linux: Terminate Chrome processes
+-    pkill -f chrome
+-    pkill -f chromedriver
+-
+-
+-
+ elif [[ "$(uname)" == "Darwin" ]]; then
+-    # macOS: Terminate Chrome processes
+-    pkill -f "Google Chrome"
+-    pkill -f chromedriver
+-    sleep 5
+-
+-    # Initialize variables
+     echo "Batch started"
+     url=""
+     server=""
+@@ -106,12 +106,10 @@ elif [[ "$(uname)" == "Darwin" ]]; then
+     # Run the Python script
+     python3 real_browser.py $args > real_browser_test.log 2>&1
+ 
+-    # Mac: Terminate Chrome processes
+-    pkill -f "Google Chrome"
+-    pkill -f chromedriver
+-
+ else
+     # Unsupported OS
+     echo "Unsupported operating system."
+     exit 1
+ fi
++
++$postcleanup && kill_chrome
+\ No newline at end of file
+diff --git a/py-scripts/real_application_tests/real_browser/real_browser.bat b/py-scripts/real_application_tests/real_browser/real_browser.bat
+index 9e4b9f7e..74bbef7f 100644
+--- a/py-scripts/real_application_tests/real_browser/real_browser.bat
++++ b/py-scripts/real_application_tests/real_browser/real_browser.bat
+@@ -1,21 +1,13 @@
+-
++@echo off
+ :: Initialize variables
+ echo Batch started
+ set "url="
+ set "server="
+ set "duration="
+ set "args="
++set "precleanup=false"
++set "postcleanup=false"
+ 
+-
+-
+-
+-:: Cleanup browser processes before execution
+-echo Cleaning up browser processes...
+-taskkill /F /IM chrome.exe /T >nul 2>&1
+-taskkill /F /IM chromedriver.exe /T >nul 2>&1
+-echo Browser processes terminated.
+-
+-timeout /t 5 /nobreak >nul
+ :: Parse command line arguments
+ :parseArgs
+ if "%~1"=="" goto argsParsed
+@@ -39,28 +31,44 @@ if "%~1"=="--duration" (
+     shift
+     goto parseArgs
+ )
++if "%~1"=="--precleanup" (
++    set "precleanup=true"
++    shift
++    goto parseArgs
++)
++if "%~1"=="--postcleanup" (
++    set "postcleanup=true"
++    shift
++    goto parseArgs
++)
+ 
++shift
++goto parseArgs
+ 
+-
++:argsParsed
++:: Perform pre-cleanup if requested
++if "%precleanup%"=="true" (
++    echo Performing PRE cleanup of browser processes...
++    taskkill /F /IM chrome.exe /T >nul 2>&1
++    taskkill /F /IM chromedriver.exe /T >nul 2>&1
++    echo Browser processes terminated.
++    timeout /t 5 /nobreak >nul
++)
+ 
+ echo Batch started1
+-
+-
+-:argsParsed
++:: Build argument string for Python script
+ set "args="
+ if defined url set "args=%args% --url %url%"
+ if defined server set "args=%args% --server %server%"
+ if defined duration set "args=%args% --duration %duration%"
+ 
+-
+-
+-
+ echo Running with arguments: %args%
+ py real_browser.py %args%
+ 
+-
+-:: Cleanup browser processes before execution
+-echo Cleaning up browser processes...
+-taskkill /F /IM chrome.exe /T >nul 2>&1
+-taskkill /F /IM chromedriver.exe /T >nul 2>&1
+-echo Browser processes terminated.
++:: Perform post-cleanup if requested
++if "%postcleanup%"=="true" (
++    echo Performing POST cleanup of browser processes...
++    taskkill /F /IM chrome.exe /T >nul 2>&1
++    taskkill /F /IM chromedriver.exe /T >nul 2>&1
++    echo Browser processes terminated.
++)
+\ No newline at end of file

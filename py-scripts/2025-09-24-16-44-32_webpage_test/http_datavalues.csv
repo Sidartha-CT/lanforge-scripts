@@ -1,0 +1,6 @@
+client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
+1.110 Win DESKTOP-IUQFRCV,24:ee:9a:39:2e:6,OpenWifi_psk2,36,802.11abgn-AC 80 ,STOPPED,0,0,0,0.0,0,0,0,24/09 04:43:30 PM,24/09 04:44:30 PM,0
+1.113 Win DESKTOP-F0HLI17,00:bb:60:0b:5a:fe,OpenWifi_psk2,36,802.11abgn-AC 80 ,STOPPED,0,0,0,0.0,0,0,0,24/09 04:43:30 PM,24/09 04:44:30 PM,0
+1.117 Win DESKTOP-3KOIAJR,f4:8c:50:e2:01:6,,0,AUTO 20 ,STOPPED,0,0,0,0.0,0,0,0,24/09 04:43:30 PM,24/09 04:44:30 PM,0
+1.11 android Vivo_R2_C5,e:ea:80:de:35:38,OpenWifi_psk2,36,802.11abgn-AC 20 1x1,STOPPED,0,0,0,0.0,0,0,0,24/09 04:43:30 PM,24/09 04:44:30 PM,0
+1.17 android moto_C4_R3,ee:28:e8:db:54:9e,OpenWifi_psk2,36,802.11abgn-AC 20 1x1,STOPPED,0,0,0,0.0,0,0,0,24/09 04:43:30 PM,24/09 04:44:30 PM,0

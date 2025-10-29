@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Candela Base Class</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Candela Base Class</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-09-25 01:09:43.194053</h4>
+                </div>
+            </div>
+        </div>
+                 <h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Parallel Tests</h1>
+                    <!-- Table Title-->
+                    <h3 align='left'>Traffic Details</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>s/no</th>
+      <th>test_name</th>
+      <th>Duration</th>
+      <th>status</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>FTP Test </h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Setup Information</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>AP Name</td><td colspan='3'>None</td></tr><tr><td>SSID</td><td colspan='3'>None</td></tr><tr><td>Security</td><td colspan='3'>open</td></tr><tr><td>Device List</td><td colspan='3'>DESKTOP-IUQFRCV(Windows), DESKTOP-F0HLI17(Windows), DESKTOP-LFAH9C0(Windows), DESKTOP-3KOIAJR(Windows), DESKTOP-BLNNVU5(Windows), mackbooir02sAir.ctinb.candelate(Mac), hp80-HP-ProBook-445R-G6(Linux)</td></tr><tr><td>No of Devices</td><td colspan='3'>Total(7) Windows(5) Linux(1) Mac(1)</td></tr><tr><td>Failed CXs</td><td colspan='3'>NONE</td></tr><tr><td>File size</td><td colspan='3'>5MB</td></tr><tr><td>File location</td><td colspan='3'>/home/lanforge</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>Traffic Duration </td><td colspan='3'>1.0m</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>No of times file Download</h3>
+            <p align='left' width='900'>The below graph represents number of times a file Download for each client(WiFi) traffic.  X- axis shows “No of times file Download” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Total-url_ftp_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Average time taken to Download file </h3>
+            <p align='left' width='900'>The below graph represents average time taken to Download for each client  (WiFi) traffic.  X- axis shows “Average time taken to Download a file ” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ucg-avg_ftp_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>File Download Time (sec)</h3>
+            <p align='left' width='900'>The below table will provide information of minimum, maximum and the average time taken by clients to download a file in seconds</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Minimum</th>
+      <th>Maximum</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.0</td>
+      <td>0.5</td>
+      <td>0.1</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Clients</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>No of times File downloaded</th>
+      <th>Time Taken to Download file (ms)</th>
+      <th>Bytes-rd (Mega Bytes)</th>
+      <th>RX RATE (Mbps)</th>
+      <th>Failed Urls</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td>0</td>
+      <td></td>
+      <td>AUTO 20</td>
+      <td>52</td>
+      <td>251.365</td>
+      <td>260.0000</td>
+      <td>38.6554</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>1</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>54</td>
+      <td>331.833</td>
+      <td>270.0000</td>
+      <td>39.1874</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.115 Win DESKTOP-LFAH9C0</td>
+      <td>34:f3:9a:eb:46:b4</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>54</td>
+      <td>199.425</td>
+      <td>274.6851</td>
+      <td>38.6837</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>55</td>
+      <td>220.690</td>
+      <td>275.0161</td>
+      <td>38.3456</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.119 Win DESKTOP-BLNNVU5</td>
+      <td>34:41:5d:51:d1:96</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.154 Mac mackbooir02sAir.ctinb.candelate</td>
+      <td>8:bf:6b:d4:60:5a</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abg 80 -1x-1</td>
+      <td>0</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.209 Lin hp80-HP-ProBook-445R-G6</td>
+      <td>8:cd:c4:de:d3:bb</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11an-AC 80 2x2</td>
+      <td>0</td>
+      <td>0.000</td>
+      <td>0.0000</td>
+      <td>0.0000</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

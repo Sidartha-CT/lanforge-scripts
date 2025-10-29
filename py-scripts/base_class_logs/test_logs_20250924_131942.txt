@@ -1,0 +1,95 @@
+QoS TEST [Parallel 2] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9821, in run_qos_test
+    return candela_apis.run_qos_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 2323, in run_qos_test
+    direction = 'L3_' + traffic_type.split('_')[1].upper() + '_DL'
+                        ^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'split'
+
+MULTICAST TEST [Parallel 5] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9949, in run_mcast_test
+    return candela_apis.run_mc_test1(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Candela.run_mc_test1() got an unexpected keyword argument 'result_dir'
+
+THROUGHPUT TEST [Parallel 7] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9905, in run_thput_test
+    return candela_apis.run_throughput_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3183, in run_throughput_test
+    if (int(packet_size) < 16 or int(packet_size) > 65507) and int(packet_size) != -1:
+        ^^^^^^^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: 'AUTO'
+
+VIDEO STREAMING TEST [Parallel 6] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9862, in run_vs_test
+    return candela_apis.run_vs_test1(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3050, in run_vs_test1
+    return self.run_vs_test(args)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 2754, in run_vs_test
+    self.vs_obj_dict[ce][obj_name]["obj"].build()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_video_streaming.py", line 321, in build
+    upload_name = self.phone_data[-1].split('.')[-1]
+                  ~~~~~~~~~~~~~~~^^^^
+IndexError: list index out of range
+
+PING TEST [Parallel 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9706, in run_ping_test
+    return candela_apis.run_ping_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 717, in run_ping_test
+    end_time = start_time + datetime.timedelta(seconds=ping_duration * 60)
+                            ^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'timedelta'
+
+HTTP TEST [Parallel 4] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9650, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9743, in run_http_test
+    return candela_apis.run_http_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1447, in run_http_test
+    self.http_obj_dict[ce][obj_name]["obj"].generate_report(date, num_stations=num_stations,
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_webpage.py", line 1219, in generate_report
+    graph2 = self.graph_2(dataset2, lis=lis, bands=bands)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_webpage.py", line 1158, in graph_2
+    graph_png = graph_2.build_bar_graph_horizontal()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_graph.py", line 354, in build_bar_graph_horizontal
+    plt.yticks([i + self._yaxis_value_location for i in np.arange(0, len(self.data_set[0]), step=self.yaxis_step)],
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/matplotlib/pyplot.py", line 2332, in yticks
+    labels_out = ax.set_yticklabels(labels, minor=minor, **kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/matplotlib/axes/_base.py", line 74, in wrapper
+    return get_method(self)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/matplotlib/axis.py", line 2106, in set_ticklabels
+    raise ValueError(
+ValueError: The number of FixedLocator locations (6), usually from a call to set_ticks, does not match the number of labels (2).
+

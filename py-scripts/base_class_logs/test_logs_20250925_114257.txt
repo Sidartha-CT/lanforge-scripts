@@ -1,0 +1,18 @@
+MULTICAST TEST [Parallel 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9648, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9948, in run_mcast_test
+    return candela_apis.run_mc_test1(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 4202, in run_mc_test1
+    return self.run_mc_test(args)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 4023, in run_mc_test
+    self.mcast_obj_dict[ce][obj_name]["obj"].start(False)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/test_l3.py", line 2380, in start
+    with open(self.result_dir + "/../../Running_instances/{}_{}_running.json".format(self.ip,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/sidartha/myhome/lanforge-scripts/py-scripts/../../Running_instances/192.168.242.2_gdhnbg22312e_running.json'
+

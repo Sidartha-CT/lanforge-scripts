@@ -1,0 +1,5 @@
+,Reset Count,Disconnected,Scanning,Association attempts,Association Rejection,Connected,Connection Time (us),Remarks
+0,1,0,0,0,0,1,0,No Disconnections are seen but Client is UP and connected to user given SSID.
+1,2,0,0,0,0,0,NA,NA
+2,3,0,0,0,0,1,0,No Disconnections are seen but Client is UP and connected to user given SSID.
+3,4,0,0,0,0,1,0,No Disconnections are seen but Client is UP and connected to user given SSID.

@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Candela Base Class</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Candela Base Class</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-09-24 16:45:38.658708</h4>
+                </div>
+            </div>
+        </div>
+                 <h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Parallel Tests</h1>
+                    <!-- Table Title-->
+                    <h3 align='left'>Traffic Details</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>s/no</th>
+      <th>test_name</th>
+      <th>Duration</th>
+      <th>status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>THROUGHPUT TEST [Parallel 5]</td>
+      <td>1 mins</td>
+      <td>EXECUTED</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>FTP TEST [Parallel 3]</td>
+      <td>1 mins</td>
+      <td>EXECUTED</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>HTTP TEST [Parallel 4]</td>
+      <td>1 mins</td>
+      <td>EXECUTED</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>QoS TEST [Parallel 2]</td>
+      <td>1 mins</td>
+      <td>EXECUTED</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>PING Test </h3>
+            <p align='left' width='900'></p>
+            
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>SSID</td><td colspan='3'>None</td></tr><tr><td>Security</td><td colspan='3'>open</td></tr><tr><td>Website / IP</td><td colspan='3'>www.google.com</td></tr><tr><td>No of Devices</td><td colspan='3'>5 (V:0, A:2, W:3, L:0, M:0)</td></tr><tr><td>Duration (in minutes)</td><td colspan='3'>1.0</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Packets sent vs packets received vs packets dropped</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Packets sent vs received vs dropped .png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>Packets Sent</th>
+      <th>Packets Received</th>
+      <th>Packets Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DESKTOP-IUQFRCV Windows</td>
+      <td>24:ee:9a:39:2e:61</td>
+      <td>0</td>
+      <td></td>
+      <td>AUTO 20</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-F0HLI17 Windows</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-3KOIAJR Windows</td>
+      <td>f4:8c:50:e2:01:67</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>Vivo_R2_C5 Android</td>
+      <td>1e:ea:80:de:35:38</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>moto_C4_R3 Android</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Ping Latency Graph</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Ping Latency per client .png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>Min Latency (ms)</th>
+      <th>Average Latency (ms)</th>
+      <th>Max Latency (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DESKTOP-IUQFRCV Windows</td>
+      <td>24:ee:9a:39:2e:61</td>
+      <td>0</td>
+      <td></td>
+      <td>AUTO 20</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-F0HLI17 Windows</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-3KOIAJR Windows</td>
+      <td>f4:8c:50:e2:01:67</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Vivo_R2_C5 Android</td>
+      <td>1e:ea:80:de:35:38</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>moto_C4_R3 Android</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Notes</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>Port</th>
+      <th>Remarks</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DESKTOP-IUQFRCV</td>
+      <td>1.110.wlan0</td>
+      <td>No output for ping</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-F0HLI17</td>
+      <td>1.113.wlan0</td>
+      <td>No output for ping</td>
+    </tr>
+    <tr>
+      <td>DESKTOP-3KOIAJR</td>
+      <td>1.117.wlan0</td>
+      <td>No output for ping</td>
+    </tr>
+    <tr>
+      <td>Vivo_R2_C5</td>
+      <td>1.11.wlan0</td>
+      <td>No output for ping</td>
+    </tr>
+    <tr>
+      <td>moto_C4_R3</td>
+      <td>1.17.wlan0</td>
+      <td>No output for ping</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>QOS Test </h3>
+            <p align='left' width='900'></p>
+            
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Configuration</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Device List</td><td colspan='3'>DESKTOP-IUQFRCV(Windows), DESKTOP-F0HLI17(Windows), DESKTOP-3KOIAJR(Windows), Vivo_R2_C5(Android), moto_C4_R3(Android)</td></tr><tr><td>Number of Stations</td><td colspan='3'>Total(5) Android(2) Windows(3)</td></tr><tr><td>AP Model</td><td colspan='3'>Test-AP</td></tr><tr><td>SSID</td><td colspan='3'>None</td></tr><tr><td>Traffic Duration in hours</td><td colspan='3'>0.02</td></tr><tr><td>Security</td><td colspan='3'>open</td></tr><tr><td>Protocol</td><td colspan='3'>TCP</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>TOS</td><td colspan='3'>['VO', 'VI', 'BE', 'BK']</td></tr><tr><td>Per TOS Load in Mbps</td><td colspan='3'>10.0 Mbps</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Download Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>No of Stations</th>
+      <th>Throughput for Load 10.0 Mbps-download</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>5</td>
+      <td>BK : 0.0, BE : 0.0, VI: 0.0, VO: 0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Overall Download throughput for 5 clients with different TOS.</h3>
+            <p align='left' width='900'>The below graph represents overall Download throughput for all connected stations running BK, BE, VO, VI traffic with different intended loads10.0 Mbps per tos</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='tos_download_10.0 MbpsdownloadHz .png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Download throughput with intended load 10.0 Mbps/station for traffic BK(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 5 clients running BK (WiFi) traffic.  X- axis shows “Throughput in Mbps” and Y-axis shows “number of clients”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='bk_Download.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td></td>
+      <td>Background</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>OpenWifi_psk2</td>
+      <td>Background</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>OpenWifi_psk2</td>
+      <td>Background</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>OpenWifi_psk2</td>
+      <td>Background</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>OpenWifi_psk2</td>
+      <td>Background</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Download throughput with intended load 10.0 Mbps/station for traffic BE(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 5 clients running BE (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='be_Download.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td></td>
+      <td>Besteffort</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>OpenWifi_psk2</td>
+      <td>Besteffort</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>OpenWifi_psk2</td>
+      <td>Besteffort</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>OpenWifi_psk2</td>
+      <td>Besteffort</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>OpenWifi_psk2</td>
+      <td>Besteffort</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Download throughput with intended load 10.0 Mbps/station for traffic VI(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 5 clients running VI (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='video_Download.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td></td>
+      <td>Video</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>OpenWifi_psk2</td>
+      <td>Video</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>OpenWifi_psk2</td>
+      <td>Video</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>OpenWifi_psk2</td>
+      <td>Video</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>OpenWifi_psk2</td>
+      <td>Video</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Download throughput with intended load 10.0 Mbps/station for traffic VO(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 5 clients running VO (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='voice_Download.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td></td>
+      <td>Voice</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>OpenWifi_psk2</td>
+      <td>Voice</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>OpenWifi_psk2</td>
+      <td>Voice</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>OpenWifi_psk2</td>
+      <td>Voice</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>OpenWifi_psk2</td>
+      <td>Voice</td>
+      <td>0.0 Mbps</td>
+      <td>10.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>contact</td><td colspan='3'>support@candelatech.com</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>FTP Test </h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Setup Information</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>AP Name</td><td colspan='3'>None</td></tr><tr><td>SSID</td><td colspan='3'>None</td></tr><tr><td>Security</td><td colspan='3'>open</td></tr><tr><td>Device List</td><td colspan='3'>DESKTOP-IUQFRCV(Windows), DESKTOP-F0HLI17(Windows), DESKTOP-3KOIAJR(Windows), Vivo_R2_C5(Android), moto_C4_R3(Android)</td></tr><tr><td>No of Devices</td><td colspan='3'>Total(5) Android(2) Windows(3)</td></tr><tr><td>Failed CXs</td><td colspan='3'>NONE</td></tr><tr><td>File size</td><td colspan='3'>5MB</td></tr><tr><td>File location</td><td colspan='3'>/home/lanforge</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>Traffic Duration </td><td colspan='3'>1.0m</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>No of times file Download</h3>
+            <p align='left' width='900'>The below graph represents number of times a file Download for each client(WiFi) traffic.  X- axis shows “No of times file Download” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Total-url_ftp_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Average time taken to Download file </h3>
+            <p align='left' width='900'>The below graph represents average time taken to Download for each client  (WiFi) traffic.  X- axis shows “Average time taken to Download a file ” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ucg-avg_ftp_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>File Download Time (sec)</h3>
+            <p align='left' width='900'>The below table will provide information of minimum, maximum and the average time taken by clients to download a file in seconds</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Minimum</th>
+      <th>Maximum</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Clients</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>No of times File downloaded</th>
+      <th>Time Taken to Download file (ms)</th>
+      <th>Bytes-rd (Mega Bytes)</th>
+      <th>RX RATE (Mbps)</th>
+      <th>Failed Urls</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>0</td>
+      <td></td>
+      <td>AUTO 20</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>HTTP Test </h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Setup Information</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>AP Name</td><td colspan='3'>TestAP</td></tr><tr><td>SSID</td><td colspan='3'>None</td></tr><tr><td>Device List</td><td colspan='3'>DESKTOP-IUQFRCV(Windows), DESKTOP-F0HLI17(Windows), DESKTOP-3KOIAJR(Windows), Vivo_R2_C5(Android), moto_C4_R3(Android)</td></tr><tr><td>Security</td><td colspan='3'>open</td></tr><tr><td>No of Devices</td><td colspan='3'>Total(5) Android(2) Windows(3)</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>Traffic Duration </td><td colspan='3'>1.0m</td></tr><tr><td>File size</td><td colspan='3'>5MB</td></tr><tr><td>File location</td><td colspan='3'>/usr/local/lanforge/nginx/html</td></tr><tr><td>failed_cx's</td><td colspan='3'>NONE</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Total-url_http.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Average time taken to download file </h3>
+            <p align='left' width='900'>The below graph represents average time taken to download for each client  .  X- axis shows “Average time taken to download a file ” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ucg-avg_http.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Download Time Table Description</h3>
+            <p align='left' width='900'>This Table will provide you information of the minimum, maximum and the average time taken by clients to download a webpage in seconds</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Minimum</th>
+      <th>Maximum</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Clients</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>No of times File downloaded</th>
+      <th>Average time taken to Download file (ms)</th>
+      <th>Bytes-rd (Mega Bytes)</th>
+      <th>Rx Rate (Mbps)</th>
+      <th>Failed url's</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110 Win DESKTOP-IUQFRCV</td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.113 Win DESKTOP-F0HLI17</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.117 Win DESKTOP-3KOIAJR</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>0</td>
+      <td></td>
+      <td>AUTO 20</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.11 android Vivo_R2_C5</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>1.17 android moto_C4_R3</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>36</td>
+      <td>OpenWifi_psk2</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>THROUGHPUT Test </h3>
+            <p align='left' width='900'></p>
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Input Parameters</h3>
+            <p align='left' width='900'>The below tables provides the input parameters for the test</p>
+            
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Configuration</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Test name</td><td colspan='3'>fdgfd</td></tr><tr><td>Device List</td><td colspan='3'>DESKTOP-IUQFRCV(Windows), DESKTOP-F0HLI17(Windows), DESKTOP-3KOIAJR(Windows), Vivo_R2_C5(Android), moto_C4_R3(Android)</td></tr><tr><td>No of Devices</td><td colspan='3'>Total(5) Android(2) Windows(3)</td></tr><tr><td>Increment</td><td colspan='3'>None</td></tr><tr><td>Traffic Duration in minutes</td><td colspan='3'>1.0</td></tr><tr><td>Traffic Type</td><td colspan='3'>UDP</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Upload</td></tr><tr><td>Upload Rate(Mbps)</td><td colspan='3'>10.0Mbps</td></tr><tr><td>Download Rate(Mbps)</td><td colspan='3'>0.0Mbps</td></tr><tr><td>Load Type</td><td colspan='3'>Per Client Load</td></tr><tr><td>Packet Size</td><td colspan='3'>AUTO</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>Real Time Throughput: Achieved Throughput: Upload : 0.0 Mbps</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='line_graph0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Per Client Avg-Throughput</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='image_name0_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>RSSI Of The Clients Connected</h3>
+            <p align='left' width='900'> </p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='signal_image_name0_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Detailed Result Table </h3>
+            <p align='left' width='900'>The below tables provides detailed information for the throughput test on each device.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Device Type</th>
+      <th>Username</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Offered download rate (Mbps)</th>
+      <th>Observed Average download rate (Mbps)</th>
+      <th>Offered upload rate (Mbps)</th>
+      <th>Observed Average upload rate (Mbps)</th>
+      <th>RSSI (dBm)</th>
+      <th>Average RTT (ms)</th>
+      <th>Packet Size(Bytes)</th>
+      <th>Average Tx Drop %</th>
+      <th>Average Rx Drop %</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Windows</td>
+      <td>DESKTOP-IUQFRCV</td>
+      <td></td>
+      <td>24:ee:9a:39:2e:6</td>
+      <td>0</td>
+      <td>AUTO 20</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td></td>
+      <td>0</td>
+      <td>AUTO</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Windows</td>
+      <td>DESKTOP-F0HLI17</td>
+      <td>OpenWifi_psk2</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>-33</td>
+      <td>0</td>
+      <td>AUTO</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Windows</td>
+      <td>DESKTOP-3KOIAJR</td>
+      <td>OpenWifi_psk2</td>
+      <td>f4:8c:50:e2:01:6</td>
+      <td>36</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>-33</td>
+      <td>0</td>
+      <td>AUTO</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td>Vivo_R2_C5</td>
+      <td>OpenWifi_psk2</td>
+      <td>e:ea:80:de:35:38</td>
+      <td>36</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>-39</td>
+      <td>0</td>
+      <td>AUTO</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td>moto_C4_R3</td>
+      <td>OpenWifi_psk2</td>
+      <td>ee:28:e8:db:54:9e</td>
+      <td>36</td>
+      <td>802.11abgn-AC 80</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>10.0</td>
+      <td>0.0</td>
+      <td>-41</td>
+      <td>0</td>
+      <td>AUTO</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table><hr>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

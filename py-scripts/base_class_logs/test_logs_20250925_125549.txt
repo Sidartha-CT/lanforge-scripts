@@ -1,0 +1,31 @@
+VIDEO STREAMING TEST [Parallel 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/shutil.py", line 886, in move
+    os.rename(src, real_dst)
+FileNotFoundError: [Errno 2] No such file or directory: 'video_streaming_realtime_data.csv' -> '/home/sidartha/myhome/lanforge-scripts/py-scripts/2025-09-25-12-55-46_VideoStreaming_test/video_streaming_realtime_data.csv'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9648, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9861, in run_vs_test
+    return candela_apis.run_vs_test1(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3048, in run_vs_test1
+    return self.run_vs_test(args)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 2954, in run_vs_test
+    self.vs_obj_dict[ce][obj_name]["obj"].generate_report(date, list(set(iterations_before_test_stopped_by_user)), test_setup_info=test_setup_info, realtime_dataset=individual_df, cx_order_list=cx_order_list,report_path=self.result_path)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_video_streaming.py", line 1198, in generate_report
+    shutil.move('video_streaming_realtime_data.csv', report_path_date_time)
+  File "/usr/lib/python3.12/shutil.py", line 906, in move
+    copy_function(src, real_dst)
+  File "/usr/lib/python3.12/shutil.py", line 475, in copy2
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.12/shutil.py", line 260, in copyfile
+    with open(src, 'rb') as fsrc:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'video_streaming_realtime_data.csv'
+

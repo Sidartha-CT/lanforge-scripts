@@ -1,0 +1,4 @@
+url_data,client,MAC,Channel,SSID,Mode,UC-MIN,UC-AVG,UC-MAX,client_id,total_err,Rx Rate(1m),Bytes RD,status,start_time,end_time,remaining_time
+51,wlan0_ftp10_l4,8:7f:98:a4:68:fb,36,OpenWifi_psk2,802.11abgn-AC 80 ,211,332.705,490,1.10,0,40.4035,259.6195,STOPPED,25/09 12:21:31 AM,25/09 12:22:31 AM,0
+51,wlan0_ftp119_l4,34:41:5d:51:d1:96,36,OpenWifi_psk2,802.11abgn-AC 20 1x1,241,327.96,415,1.119,0,39.2442,255.0146,STOPPED,25/09 12:21:31 AM,25/09 12:22:31 AM,0
+0,en0_ftp154_l4,8:bf:6b:d4:60:5a,36,OpenWifi_psk2,802.11abgn 80 2x2,0,0.0,0,1.154,0,0.0,0.0,STOPPED,25/09 12:21:31 AM,25/09 12:22:31 AM,0

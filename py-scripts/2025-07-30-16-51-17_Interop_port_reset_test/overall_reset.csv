@@ -1,0 +1,3 @@
+Client,ConnectAttempt,Disconnected,Scanning,Association Rejection,Connected,Iterations,Status
+1.136.wlan0,2,2,2,1,1,1,running
+1.152.en0,0,0,0,0,1,1,running

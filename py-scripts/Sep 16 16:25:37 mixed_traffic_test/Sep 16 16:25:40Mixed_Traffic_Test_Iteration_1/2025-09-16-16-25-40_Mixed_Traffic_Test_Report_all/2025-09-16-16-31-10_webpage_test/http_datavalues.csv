@@ -1,0 +1,3 @@
+client,MAC,SSID,Channel,Mode,status,url_data,uc_min,uc_max,uc_avg,bytes_rd,rx rate (1m),total_err,start_time,end_time,remaining_time
+1.110 Lin ubuntu24,5c:5f:67:98:38:86,NETGEAR_2G_wpa2,11,802.11bgn 20 2x2,STOPPED,0,0,0,0.0,0,0.0,0,16/09 04:30:34 PM,16/09 04:31:04 PM,0
+1.400 android macoss-MacB,30:35:ad:c5:e1:be,NETGEAR_2G_wpa2,11,802.11abgn-BE 20 2x2,STOPPED,4,525,1453,824.0,20000000,5567476.5,0,16/09 04:30:34 PM,16/09 04:31:04 PM,0

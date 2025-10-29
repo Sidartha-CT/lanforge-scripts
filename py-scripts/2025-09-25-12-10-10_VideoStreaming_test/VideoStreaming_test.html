@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Video Streaming Test</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Video Streaming Test</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-09-25-12:10:08</h4>
+                </div>
+            </div>
+        </div>
+                 
+            <!-- Test Objective -->
+            <h3 align='left'>Objective</h3>
+            <p align='left' width='900'> The Candela Video streaming test is designed to measure the access point performance and stability by streaming the videos from the local browseror from over the Internet in real clients like android which are connected to the access point,this test allows the user to choose the options like video link, type of media source, media quality, number of playbacks.Along with the performance other measurements like No of Buffers, Wait-Time, per client Video Bitrate, Video Quality, and more. The expected behavior is for the DUT to be able to handle several stations (within the limitations of the AP specs)and make sure all capable clients can browse the video. </p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Input Parameters</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Testname</td><td colspan='3'>rthrt12</td></tr><tr><td>Device List</td><td colspan='3'>moto_C4_R3 ( Android ),CPH2375 ( Android )</td></tr><tr><td>No of Devices</td><td colspan='3'>Total( 2 ): Android(2)</td></tr><tr><td>Incremental Values</td><td colspan='3'>No Incremental Value provided</td></tr><tr><td>URL</td><td colspan='3'>https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8</td></tr><tr><td>Media Source</td><td colspan='3'>2</td></tr><tr><td>Media Quality</td><td colspan='3'>0</td></tr><tr><td>Total Duration (min)</td><td colspan='3'>1</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>Realtime Video Rate: Number of devices running: 2</h3>
+            <p align='left' width='900'></p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='vs_line_graph0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Total Urls Per Device</h3>
+            <p align='left' width='900'></p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='total_urls_image_name0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Max/Min Video Rate Per Device</h3>
+            <p align='left' width='900'></p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='max-min-video-rate_image_name0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Wait Time Per Device</h3>
+            <p align='left' width='900'></p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='wait_time_image_name0.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Overall - Detailed Result Table</h3>
+            <p align='left' width='900'>The below tables provides detailed information for the Video Streaming test.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>DEVICE TYPE</th>
+      <th>Username</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Buffers</th>
+      <th>Wait-Time(Sec)</th>
+      <th>Min Video Rate(Mbps)</th>
+      <th>Avg Video Rate(Mbps)</th>
+      <th>Max Video Rate(Mbps)</th>
+      <th>Total URLs</th>
+      <th>Total Errors</th>
+      <th>RSSI (dbm)</th>
+      <th>Link Speed</th>
+      <th>Bytes Read (bytes)</th>
+      <th>Average Rx Rate (Mbps)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Android</td>
+      <td>moto_C4_R3</td>
+      <td>OpenWifi_psk2</td>
+      <td>1e:4d:b5:ce:c5:ae</td>
+      <td>36</td>
+      <td>802.11abgn-AC 80</td>
+      <td>1</td>
+      <td>0.5</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>-0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>-40 dbm</td>
+      <td>433 Mbps</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td>CPH2375</td>
+      <td>OpenWifi_psk2</td>
+      <td>82:7b:98:03:f3:2c</td>
+      <td>36</td>
+      <td>802.11abgn-AC 80</td>
+      <td>1</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>-45 dbm</td>
+      <td>433 Mbps</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Detailed Total Errors Table</h3>
+            <p align='left' width='900'>The below tables provides detailed information of total errors for the web browsing test.</p>
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>DEVICE</th>
+      <th>TOTAL ERRORS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>moto_C4_R3</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>CPH2375</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

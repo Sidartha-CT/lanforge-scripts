@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Ping Plotter Test Report</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Ping Plotter Test Report</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-08-06-12-18-06</h4>
+                </div>
+            </div>
+        </div>
+                 
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>SSID</td><td colspan='3'>TEST CONFIGURED</td></tr><tr><td>Security</td><td colspan='3'>TEST CONFIGURED</td></tr><tr><td>Website / IP</td><td colspan='3'>www.google.com</td></tr><tr><td>No of Devices</td><td colspan='3'>3 (V:0, A:0, W:2, L:0, M:1)</td></tr><tr><td>Duration</td><td colspan='3'>00:00:60</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>Objective</h3>
+            <p align='left' width='900'>Candela Ping Plotter Test assesses the network connectivity for specified clients by measuring Round
+                            Trip data packet Travel time. It also detects issues like packet loss, delays, and
+                            response time variations, ensuring effective device communication and identifying
+                            connectivity problems.
+                            </p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Individual Ping Plotter Graph for 00:00:60 duration:</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='uptime_graph.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Individual client table report:</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>IP Address</th>
+      <th>MAC</th>
+      <th>BSSID</th>
+      <th>SSID</th>
+      <th>Channel</th>
+      <th>Packets Sent</th>
+      <th>Packets Received</th>
+      <th>Packet Loss %</th>
+      <th>AVG RTT (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.116.wlan0 Windows DESKTOP-52PGI2B</td>
+      <td>192.168.1.17</td>
+      <td>28:cd:c4:ca:b5:a3</td>
+      <td>7E:D2:94:48:2C:A9</td>
+      <td>xiab_2G_WPA2</td>
+      <td>6</td>
+      <td>60</td>
+      <td>59</td>
+      <td>1.666667</td>
+      <td>18.516129</td>
+    </tr>
+    <tr>
+      <td>1.136.wlan0 Windows DesktopLatitude5490</td>
+      <td>192.168.1.16</td>
+      <td>dc:8b:28:28:d7:64</td>
+      <td>7E:D2:94:48:2C:A9</td>
+      <td>xiab_2G_WPA2</td>
+      <td>6</td>
+      <td>40</td>
+      <td>0</td>
+      <td>100.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <td>1.152.en0 Mac mac-11.local</td>
+      <td>192.168.1.3</td>
+      <td>ac:bc:32:77:dc:99</td>
+      <td>7E:D2:94:48:2C:A9</td>
+      <td>xiab_2G_WPA2</td>
+      <td>6</td>
+      <td>12</td>
+      <td>12</td>
+      <td>0.000000</td>
+      <td>22.000667</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Packets sent vs packets received vs packets dropped</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Packets sent vs received vs dropped.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Packets Sent</th>
+      <th>Packets Received</th>
+      <th>Packets Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DESKTOP-52PGI2B</td>
+      <td>28:cd:c4:ca:b5:a3</td>
+      <td>6</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>60</td>
+      <td>59</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>DesktopLatitude5490</td>
+      <td>dc:8b:28:28:d7:64</td>
+      <td>6</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>40</td>
+      <td>0</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>mac-11.local</td>
+      <td>ac:bc:32:77:dc:99</td>
+      <td>6</td>
+      <td>802.11abgn-BE 20 1x1</td>
+      <td>12</td>
+      <td>12</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Ping RTT Graph</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Ping RTT per client.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Mode</th>
+      <th>Min RTT (ms)</th>
+      <th>Average RTT (ms)</th>
+      <th>Max RTT (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DESKTOP-52PGI2B</td>
+      <td>28:cd:c4:ca:b5:a3</td>
+      <td>6</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>0.000</td>
+      <td>18.516129</td>
+      <td>44.000</td>
+    </tr>
+    <tr>
+      <td>DesktopLatitude5490</td>
+      <td>dc:8b:28:28:d7:64</td>
+      <td>6</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>0.000</td>
+      <td>0.000000</td>
+      <td>0.000</td>
+    </tr>
+    <tr>
+      <td>mac-11.local</td>
+      <td>ac:bc:32:77:dc:99</td>
+      <td>6</td>
+      <td>802.11abgn-BE 20 1x1</td>
+      <td>14.268</td>
+      <td>22.000667</td>
+      <td>51.926</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Individual RTT vs Time Plots:</h3>
+                    
+                    <!-- Table Title-->
+                    <h3 align='left'>1.116.wlan0</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='1.116.wlan0.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>1.136.wlan0</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='1.136.wlan0.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>1.152.en0</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='1.152.en0.png' border='1' />
+            
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

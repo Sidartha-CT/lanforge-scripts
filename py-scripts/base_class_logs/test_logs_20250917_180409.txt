@@ -1,0 +1,2 @@
+THROUGHPUT TEST [Parallel 6] exited with code 1
+MULTICAST TEST [Parallel 4] exited with code 0

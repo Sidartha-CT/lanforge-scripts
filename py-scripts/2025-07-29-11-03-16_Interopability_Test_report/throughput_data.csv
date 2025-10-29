@@ -1,0 +1,12 @@
+Download1.13 android S2_R2_C4_SM_GJ6,Upload1.13 android S2_R2_C4_SM_GJ6,Rx % Drop A 1.13 android S2_R2_C4_SM_GJ6,Rx % Drop B1.13 android S2_R2_C4_SM_GJ6,RSSI 1.13 android S2_R2_C4_SM_GJ6 ,Tx-Rate 1.13 android S2_R2_C4_SM_GJ6 ,Rx-Rate 1.13 android S2_R2_C4_SM_GJ6 ,Overall Download,Overall Upload,Overall Rx % Drop A,Overall Rx % Drop B,Iteration,TIMESTAMP,Start_time,End_time,Remaining_Time,Incremental_list,status
+0.0,0.0,0.0,0.0,-26,57 Mbps,57 Mbps,0.0,0.0,0.0,0.0,1,29/07 11:02:23 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,1.89,0.0,-28,65 Mbps,65 Mbps,1.0,0.0,1.89,1.89,1,29/07 11:02:29 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-29,65 Mbps,65 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:02:34 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,1.24,0.0,-28,72 Mbps,72 Mbps,1.0,0.0,1.24,1.24,1,29/07 11:02:40 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-28,72 Mbps,72 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:02:46 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-28,72 Mbps,72 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:02:51 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-28,72 Mbps,72 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:02:57 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-28,72 Mbps,72 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:03:02 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.02,0.0,0.0,0.0,-27,72 Mbps,72 Mbps,1.02,0.0,0.0,0.0,1,29/07 11:03:08 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.01,0.25,0.0,-27,72 Mbps,72 Mbps,1.0,0.01,0.25,0.25,1,29/07 11:03:14 AM,29/07 11:02:16 AM,29/07 11:03:16 AM,<1 min,1,Running
+1.0,0.0,0.0,0.0,-28,52 Mbps,52 Mbps,1.0,0.0,0.0,0.0,1,29/07 11:03:15 AM,29/07 11:02:16 AM,29/07 11:03:15 AM,0,1,Stopped

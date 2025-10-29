@@ -1,0 +1,99 @@
+"Country
+Code","Regulatory
+Domain","Controller
+Test Rig:
+HFCl
+Location
+default location","Controller
+Channel","HFCL
+Client Reported
+Channel","Client
+NSS","Controller
+BW","Station
+Reported
+BW","Tx
+Power
+Setting","AP Tx
+Power
+Setting","Controller Reported
+Total
+Tx Power dBm
+From AP Summary","AP Reported
+Total
+Tx Power dBm
+","Allowed dBm
+Per Spatial Stream
+ cc_dbm","Cabling
+Pathloss","Antenna
+Gain","Client
+ Reported
+ Noise","rssi_adj:
+noise bare
+ - noise floor","Client Reported
+Rx Rate","Client Reported
+Beacon Signal dBm
+RSSI","Client Reported
+Combined Signal dBm
+RSSI
+(Signal ave)","Client Reported
+Antenna
+Signal
+dBm
+ SS 1","Client Reported
+Antenna
+Signal
+dBm
+ SS 2","Client Reported
+Antenna
+Signal
+dBm
+ SS 3","Client Reported
+Antenna
+Signal
+dBm
+ SS 4","Calculated Antenna 1 =
+ Antenna Sig dBm
+ + pathloss
+ + rssi_adj
+ + ant gain","Calculated Antenna 2 =
+ Antenna Sig dBm
+ + pathloss
+ + rssi_adj
+ + ant gain","Calculated Antenna 3 =
+ Antenna Sig dBm
+ + pathloss
+ + rssi_adj
+ + ant gain","Calculated Antenna 4 =
+ Antenna Sig dBm
+ + pathloss
+ + rssi_adj
+ + ant gain","Offset 1 = 
+Calculated Antenna 1
+ - cc_dbm(per SS)","Offset 2 = 
+Calculated Antenna 2
+ - cc_dbm(per SS)","Offset 3 = 
+Calculated Antenna 3
+ - cc_dbm(per SS)","Offset 4 = 
+Calculated Antenna 4
+ - cc_dbm(per SS)","Controller
+Reported
+dBm","Client Calc Beacon dBm
+ beacon + pathloss
+ + rssi_adj - antenna gain","Difference Between
+ Controller dBm
+ & Client Calc Beacon dBm 
+ (+/- 7 dBm)","Client Calc
+ Combined Signal dBm
+ total signal dBm + pathloss
+ + rssi_adj - antenna gain","Difference Between
+ Controller dBm
+& Client Calc Combined
+ Signal dBm","PASS /
+FAIL
+( += 10 dBm)","Time Stamp
+","Run Time Single Test
+","Total Run Time
+","Information, Warnings, Errors"
+US,US,HFCL,36,36,2,80 MHz,80,20,20 of 1,20,20,17,40,6,-92dBm,0,1200900Kbps,-29,-30,-46,-30, , ,0,16,0,0,-17,-1,,,20,17,-3,16,-4,FAIL,2025-09-24 07:39:08.946,0d 0h 1m 31s 18340 ms,0d 0h 1m 31s 18340 ms,ERROR:  Controller Power : 20 != AP Power: 20 of 1.  
+US,US,HFCL,36,36,2,80 MHz,80,22,22 of 1,22,22,19,40,6,-92dBm,0,292500Kbps,-27,-28,-44,-28, , ,2,18,0,0,-17,-1,,,22,19,-3,18,-4,FAIL,2025-09-24 07:40:44.163,0d 0h 1m 35s 217110 ms,0d 0h 3m 6s 235450 ms,ERROR:  Controller Power : 22 != AP Power: 22 of 1.  
+US,US,HFCL,36,36,2,80 MHz,80,24,24 of 1,24,24,21,40,6,-92dBm,0,292500Kbps,-26,-27,-42,-27, , ,4,19,0,0,-17,-2,,,24,20,-4,19,-5,FAIL,2025-09-24 07:42:16.804,0d 0h 1m 32s 641026 ms,0d 0h 4m 38s 876476 ms,ERROR:  Controller Power : 24 != AP Power: 24 of 1.  

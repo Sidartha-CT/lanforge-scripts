@@ -1,0 +1,5 @@
+Wireless Clients,Min Latency (ms),Average Latency (ms),Max Latency (ms)
+1.11.wlan0 Android Pixel_4a_C1_R1,8.87,337.69,1588.00
+1.13.wlan0 Android S2_R2_C4_SM_GJ6,9.07,635.16,2916.00
+1.136.wlan0 Windows DesktopLatitude5490,0.00,61.88,315.00
+1.146.wlan0 Linux test99-Latitude-5480,7.46,36.62,134.00

@@ -1,0 +1,15 @@
+THROUGHPUT TEST [Parallel 5] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9904, in run_thput_test
+    return candela_apis.run_throughput_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3345, in run_throughput_test
+    self.thput_obj_dict[ce][obj_name]["obj"].generate_report(list(set(iterations_before_test_stopped_by_user)), incremental_capacity_list, data=all_dataframes, data1=to_run_cxs_len, report_path=self.result_path if not self.thput_obj_dict[ce][obj_name]["obj"].dowebgui else self.thput_obj_dict[ce][obj_name]["obj"].result_dir)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_throughput.py", line 1850, in generate_report
+    _obj_title=f"{real_time_data}",
+                  ^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'real_time_data' where it is not associated with a value
+

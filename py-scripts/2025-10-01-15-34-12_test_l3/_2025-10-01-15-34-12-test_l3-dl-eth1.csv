@@ -1,0 +1,1 @@
+Time epoch,Time,Total-Station-Count,UL-Min-Requested,UL-Max-Requested,DL-Min-Requested,DL-Max-Requested,UL-Min-PDU,UL-Max-PDU,DL-Min-PDU,DL-Max-PDU,Attenuation,Name,Rx-Bps,Tx-Bps,Rx-Link-Rate,Tx-Link-Rate,RSSI,AP,Mode,MAC,Channel,Rx-Latency,Rx-Jitter,Ul-Rx-Goodput-bps,Ul-Rx-Rate-ll,Ul-Rx-Pkts-ll,Ul-Rx-Drop_Percent,Dl-Rx-Goodput-bps,Dl-Rx-Rate-ll,Dl-Rx-Pkts-ll,DL-Rx-Drop-Percent

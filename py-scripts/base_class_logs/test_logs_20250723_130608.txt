@@ -1,0 +1,41 @@
+THROUGHPUT TEST [Parallel 7] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5188, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5428, in run_thput_test
+    return candela_apis.run_throughput_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 2668, in run_throughput_test
+    all_dataframes, test_stopped_by_user = throughput.monitor(i, individual_df, device_names, incremental_capacity_list, overall_start_time, overall_end_time, is_device_configured)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_throughput.py", line 1176, in monitor
+    individual_df.loc[len(individual_df)] = individual_df_data
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/indexing.py", line 911, in __setitem__
+    iloc._setitem_with_indexer(indexer, value, self.name)
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/indexing.py", line 1932, in _setitem_with_indexer
+    self._setitem_with_indexer_missing(indexer, value)
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/indexing.py", line 2306, in _setitem_with_indexer_missing
+    raise ValueError("cannot set a row with mismatched columns")
+ValueError: cannot set a row with mismatched columns
+
+ZOOM TEST [Parallel 1] exited with code 1
+QoS TEST [Parallel 4] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5188, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 5350, in run_qos_test
+    return candela_apis.run_qos_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/candela_base_class.py", line 1841, in run_qos_test
+    throughput_qos.build()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 534, in build
+    self.create_cx()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 572, in create_cx
+    sleep_time=0, tos=self.tos[ip_tos], cx_name="%s-%i" % (cx_list[count], len(self.cx_profile.created_cx)))
+                                                           ~~~~~~~^^^^^^^
+IndexError: list index out of range
+
+MULTICAST TEST [Parallel 5] exited with code 0

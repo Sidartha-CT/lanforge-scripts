@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Web Browser Test</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Web Browser Test</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-07-23-12-57-11</h4>
+                </div>
+            </div>
+        </div>
+                 
+                    <!-- Table Title-->
+                    <h3 align='left'>Objective:</h3>
+                    
+            <p align='left' width='900'>The Candela Web browser test is designed to measure the Access Point performance and stability by browsing multiple websites in real clients like android, Linux, windowsand IOS which are connected to the access point. This test allows the user to choose the options like website link,the number of times the page has to browse, and the Time taken to browse the page.The expected behavior is for the AP to be able to handle several stations(within the limitations of the AP specs) and make sure all clients can browse the page.</p>
+        
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Parameters:</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Parameters</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Configured Devies</td><td colspan='3'>['Pixel_4a_C1_R1 (Android)', 'S2_R2_C4_SM_GJ6 (Android)', 'DesktopLatitude5490 (windows)', 'test99-Latitude-5480 (Linux)']</td></tr><tr><td>No of Clients</td><td colspan='3'>W(1),L(1),M(0), A(2)</td></tr><tr><td>Required URL Count</td><td colspan='3'>1</td></tr><tr><td>URL</td><td colspan='3'>www.google.com</td></tr><tr><td>Test Duration (min)</td><td colspan='3'>3</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <div class='HeaderStyle'>
+                <h2 class='TitleFontPrint' style='color:darkgreen;'>Successful URL's per Device</h2>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='iteration_0_final_data.csv_urls_per_device.png' border='1' />
+            
+            <div class='HeaderStyle'>
+                <h2 class='TitleFontPrint' style='color:darkgreen;'>Time Taken Vs Device For Completing 1 RealTime URLs</h2>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='iteration_0_final_data.csv_time_taken_for_urls.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Final Test Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Device Type</th>
+      <th>Hostname</th>
+      <th>SSID</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>UC-MIN (ms)</th>
+      <th>UC-MAX (ms)</th>
+      <th>UC-AVG (ms)</th>
+      <th>Total Successful URLs</th>
+      <th>Total Erros</th>
+      <th>RSSI</th>
+      <th>Link Speed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Android</td>
+      <td>Pixel_4a_C1_R1</td>
+      <td>xiab_2G_WPA2</td>
+      <td>02:00:00:00:00:00</td>
+      <td>6</td>
+      <td>1.185</td>
+      <td>8.762</td>
+      <td>4.439538</td>
+      <td>26</td>
+      <td>0</td>
+      <td>-26</td>
+      <td>43 Mbps</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td>S2_R2_C4_SM_GJ6</td>
+      <td>xiab_2G_WPA2</td>
+      <td>fe:80:53:eb:57:18</td>
+      <td>6</td>
+      <td>2.234</td>
+      <td>16.519</td>
+      <td>8.784526</td>
+      <td>20</td>
+      <td>0</td>
+      <td>-26</td>
+      <td>52 Mbps</td>
+    </tr>
+  </tbody>
+</table>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

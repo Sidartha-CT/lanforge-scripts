@@ -1,0 +1,2 @@
+Time epoch,Time,Station-Count,UL-Min-Requested,UL-Max-Requested,DL-Min-Requested,DL-Max-Requested,UL-Min-PDU,UL-Max-PDU,DL-Min-PDU,DL-Max-PDU,Attenuation,Total-Download-Bps,Total-Upload-Bps,Total-UL/DL-Bps,Total-Download-LL-Bps,Total-Upload-LL-Bps,Total-UL/DL-LL-Bps
+1757954854,09_15_2025_22_17_34,1,0,0,12000000,12000000,MTU,MTU,MTU,MTU,-1,11959420,0,11959420,12399436,0,12399436

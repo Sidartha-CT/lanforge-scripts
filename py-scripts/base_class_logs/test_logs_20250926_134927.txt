@@ -1,0 +1,14 @@
+MULTICAST TEST [Series 5] exited with code 0
+THROUGHPUT TEST [Series 6] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9569, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9825, in run_thput_test
+    return candela_apis.run_throughput_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3243, in run_throughput_test
+    self.webbgui_test_done("thput")
+    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Candela' object has no attribute 'webbgui_test_done'. Did you mean: 'webgui_test_done'?
+

@@ -1,0 +1,125 @@
+THROUGHPUT TEST [Parallel 5] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9904, in run_thput_test
+    return candela_apis.run_throughput_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 3256, in run_throughput_test
+    check_condition, clients_to_run = self.thput_obj_dict[ce][obj_name]["obj"].phantom_check()
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_throughput.py", line 701, in phantom_check
+    self.updating_webui_runningjson(obj)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_throughput.py", line 714, in updating_webui_runningjson
+    with open(self.result_dir + "/../../Running_instances/{}_{}_running.json".format(self.host, self.test_name),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/sidartha/myhome/local/interop-webGUI/results/sdafgsd/../../Running_instances/192.168.242.2_sdafgsd_running.json'
+
+PING TEST [Parallel 1] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9705, in run_ping_test
+    return candela_apis.run_ping_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 754, in run_ping_test
+    df1.to_csv('{}/ping_datavalues.csv'.format(self.result_dir), index=False)
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/generic.py", line 3986, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/format.py", line 1014, in to_csv
+    csv_formatter.save()
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/csvs.py", line 251, in save
+    with get_handle(
+         ^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: '/home/sidartha/myhome/local/interop-webGUI/results/sdafgsd'
+
+FTP TEST [Parallel 3] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9781, in run_ftp_test
+    return candela_apis.run_ftp_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1745, in run_ftp_test
+    return self.run_ftp_test1(args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1875, in run_ftp_test1
+    self.ftp_obj_dict[ce][obj_name]["obj"].monitor_for_runtime_csv()
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_ftp.py", line 1039, in monitor_for_runtime_csv
+    df1.to_csv('{}/ftp_datavalues.csv'.format(self.result_dir), index=False)
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/generic.py", line 3986, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/format.py", line 1014, in to_csv
+    csv_formatter.save()
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/csvs.py", line 251, in save
+    with get_handle(
+         ^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: '/home/sidartha/myhome/local/interop-webGUI/results/sdafgsd'
+
+HTTP TEST [Parallel 4] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9742, in run_http_test
+    return candela_apis.run_http_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 1190, in run_http_test
+    self.http_obj_dict[ce][obj_name]["obj"].monitor_for_runtime_csv(duration)
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_webpage.py", line 805, in monitor_for_runtime_csv
+    df1.to_csv('{}/http_datavalues.csv'.format(self.result_dir), index=False)
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/core/generic.py", line 3986, in to_csv
+    return DataFrameRenderer(formatter).to_csv(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/format.py", line 1014, in to_csv
+    csv_formatter.save()
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/formats/csvs.py", line 251, in save
+    with get_handle(
+         ^^^^^^^^^^^
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 749, in get_handle
+    check_parent_directory(str(handle))
+  File "/home/sidartha/myhome/webgui/lib/python3.12/site-packages/pandas/io/common.py", line 616, in check_parent_directory
+    raise OSError(rf"Cannot save file into a non-existent directory: '{parent}'")
+OSError: Cannot save file into a non-existent directory: '/home/sidartha/myhome/local/interop-webGUI/results/sdafgsd'
+
+QoS TEST [Parallel 2] crashed unexpectedly
+Traceback (most recent call last):
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9649, in wrapper
+    result = test_func(args, candela_apis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 9820, in run_qos_test
+    return candela_apis.run_qos_test(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/basebase.py", line 2432, in run_qos_test
+    connections_download, connections_upload, drop_a_per, drop_b_per, connections_download_avg, connections_upload_avg, avg_drop_a, avg_drop_b = self.qos_obj_dict[ce][obj_name]["obj"].monitor()
+                                                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 802, in monitor
+    real_time_qos = self.evaluate_qos(connections_download_realtime, connections_upload_realtime,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sidartha/myhome/lanforge-scripts/py-scripts/lf_interop_qos.py", line 1007, in evaluate_qos
+    if (list(endp.keys())[0].endswith('-A')):
+             ^^^^^^^^^
+AttributeError: 'str' object has no attribute 'keys'
+

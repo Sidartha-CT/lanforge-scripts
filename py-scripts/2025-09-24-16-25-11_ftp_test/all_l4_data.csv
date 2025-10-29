@@ -1,0 +1,6 @@
+name,eid,type,status,total-urls,urls/s,bytes-rd,bytes-wr,total-buffers,total-rebuffers,total-wait-time,video-format-bitrate,audio-format-bitrate,frame-rate,video-quality,tx rate,tx-rate-1m,rx rate,rx rate (1m),fb-min,fb-avg,fb-max,uc-min,uc-avg,uc-max,dns-min,dns-avg,dns-max,total-err,bad-proto,bad-url,rslv-p,rslv-h,!conn,timeout,nf (4xx),http-r,http-p,http-t,acc. denied,ftp-host,ftp-stor,ftp-port,write,read,redir,login-denied,other-err,elapsed,rpt timer,time-stamp
+wlan0_ftp110_l4,1.110.1.576.11,L4/Gen,Stopped,0,0.0,0.0,0,0,0,0,0,0,0,0X0,0,0,0,0,0,0.0,0,0,0.0,0,0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5000,1758711305456
+wlan0_ftp113_l4,1.113.1.579.11,L4/Gen,Stopped,0,0.0,0.0,0,0,0,0,0,0,0,0X0,0,0,0,0,0,0.0,0,0,0.0,0,0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5000,1758711306409
+wlan0_ftp117_l4,1.117.1.580.11,L4/Gen,Stopped,0,0.0,0.0,0,0,0,0,0,0,0,0X0,0,0,0,0,0,0.0,0,0,0.0,0,0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5000,1758711307012
+wlan0_ftp11_l4,1.11.0.581.11,L4/Gen,Stopped,0,0.0,0.0,0,0,0,0,0,0,0,0X0,0,0,0,0,0,0.0,0,0,0.0,0,0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5000,1758711307525
+wlan0_ftp17_l4,1.17.0.582.11,L4/Gen,Stopped,0,0.0,0.0,0,0,0,0,0,0,0,0X0,0,0,0,0,0,0.0,0,0,0.0,0,0,0.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5000,1758711303119

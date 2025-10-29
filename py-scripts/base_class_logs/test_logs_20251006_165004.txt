@@ -1,0 +1,1 @@
+MULTICAST TEST [Series 1] exited with code 0

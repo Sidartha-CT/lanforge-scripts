@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Mixed Traffic Test (Parallel)</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Mixed Traffic Test (Parallel)</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-10-16-12-45-32</h4>
+                </div>
+            </div>
+        </div>
+                 
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Setup Information</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Overall Setup Info For all Tests</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>DUT Model</td><td colspan='3'>Test_DUT</td></tr><tr><td>DUT Firmware</td><td colspan='3'>NA</td></tr><tr><td>SSID</td><td colspan='3'>Test Configured</td></tr><tr><td>Security</td><td colspan='3'>Test Configured</td></tr><tr><td>No of Devices</td><td colspan='3'>1 (Virtual Clients: 0, Windows: 0, Linux: 0, Mac: 0, Android: 1 ,iOS: 0)</td></tr><tr><td>Test Duration (HH:MM:SS)</td><td colspan='3'>00:01:00</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>Objective</h3>
+            <p align='left' width='900'>The  Candela  mixed  traffic  test  is  designed  to  measure  the  access  point  performance  andstability  by  running  multiple  traffic  on  real  clients  like  Android,  Linux,  Windows,  and  IOSconnected  to  the  access  point.  This  test  allows  the  user  to  choose  multiple  types  of  traffic  likeclient   capacity   test,   web   browser   test,   video   streaming   test   ping   test.   Along   with   theperformance measurements are client connection times, Station 4-Way Handshake time, DHCPtimes, and more. The expected behavior is for the AP to be able to handle all types of traffic onthe several stations (within the limitations of the AP specs) and Make sure all clients can run alltypes of traffic.</p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Traffic Details</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Sno</th>
+      <th>Test Cases</th>
+      <th>Test Duration</th>
+      <th>Test Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Ping Test</td>
+      <td>1.0 minute</td>
+      <td>Executed</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Quality Of Service(QOS) Test ['VO', 'VI', 'BE', 'BK']</td>
+      <td>1.0 minute</td>
+      <td>Executed</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>FTP Test</td>
+      <td>1.0 minute</td>
+      <td>Executed</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>HTTP Test</td>
+      <td>1.0 minute</td>
+      <td>Executed</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Multicast Test</td>
+      <td>1.0 minute</td>
+      <td>Executed</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>1. Ping Test</h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>IP / Website</td><td colspan='3'>google.com</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Packets sent vs packets received vs packets dropped</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Packets sent vs received vs dropped.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>Packets Sent</th>
+      <th>Packets Received</th>
+      <th>Packets Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>nokia54 Android</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>149</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>58</td>
+      <td>58</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Ping Latency Graph</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Ping Latency per client.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Wireless Client</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>Min Latency (ms)</th>
+      <th>Average Latency (ms)</th>
+      <th>Max Latency (ms)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>nokia54 Android</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>149</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>16.4</td>
+      <td>20.377</td>
+      <td>42.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>2. Quality Of Service(QOS) Test</h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Protocol</td><td colspan='3'>TCP</td></tr><tr><td>Traffic Direction</td><td colspan='3'>Bi-direction</td></tr><tr><td>Security</td><td colspan='3'>Test Configured</td></tr><tr><td>TOS</td><td colspan='3'>['VO', 'VI', 'BE', 'BK']</td></tr><tr><td>Per TOS Load</td><td colspan='3'>Upload:1.0 Mbps,Download:1.0 Mbps</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Bi-direction Throughput for all TOS i.e BK | BE | Video (VI) | Voice (VO)</h3>
+                    
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='tos_.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Bi-direction throughput with intended load Upload:1.0 Mbps,Download:1.0 Mbps/station for traffic BK(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running BK (WiFi) traffic.  X- axis shows “Throughput in Mbps” and Y-axis shows “number of clients”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='bk_Bi-direction.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>Background</td>
+      <td>1.0 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>0.94 Mbps</td>
+      <td>0.95 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Bi-direction throughput with intended load Upload:1.0 Mbps,Download:1.0 Mbps/station for traffic BE(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running BE (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='be_Bi-direction.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>Besteffort</td>
+      <td>1.0 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>0.97 Mbps</td>
+      <td>0.97 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Bi-direction throughput with intended load Upload:1.0 Mbps,Download:1.0 Mbps/station for traffic VI(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running VI (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='video_Bi-direction.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>Video</td>
+      <td>1.0 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>1.01 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual Bi-direction throughput with intended load Upload:1.0 Mbps,Download:1.0 Mbps/station for traffic VO(WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running VO (WiFi) traffic.  X- axis shows “number of clients” and Y-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='voice_Bi-direction.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>MAC</th>
+      <th>SSID</th>
+      <th>Type of traffic</th>
+      <th>Offered upload rate</th>
+      <th>Offered download rate</th>
+      <th>Observed average upload rate</th>
+      <th>Observed average download rate</th>
+      <th>Observed Upload Drop (%)</th>
+      <th>Observed Download Drop (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>Voice</td>
+      <td>1.0 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>1.0 Mbps</td>
+      <td>1.01 Mbps</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>3. File Transfer Protocol (FTP) Test</h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>File Size</td><td colspan='3'>10MB</td></tr><tr><td>File Location</td><td colspan='3'>/home/lanforge</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>No.of times file Download</h3>
+            <p align='left' width='900'>The below graph represents number of times a file Download for each client (WiFi) traffic.  X-axis shows “No of times file Download” and Y-axis shows “Client names“.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ftp_total-url.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Average time taken to Download file </h3>
+            <p align='left' width='900'>The below graph represents average time taken to Download for each client  (WiFi) traffic.  X-axis shows “Average time taken to Download a file ” and Y-axis shows “Client names“.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ftp_ucg-avg.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Clients</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>No of times File downloaded</th>
+      <th>Time Taken to Download file (ms)</th>
+      <th>Bytes-rd (Mega Bytes)</th>
+      <th>RX RATE (Mbps)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>149</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>50</td>
+      <td>1068.32</td>
+      <td>507.9696</td>
+      <td>73.2888</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>4. Hyper Text Transfer Protocol (HTTP) Test</h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Traffic Direction</td><td colspan='3'>Download</td></tr><tr><td>File Size</td><td colspan='3'>5MB</td></tr><tr><td>File location</td><td colspan='3'>/usr/local/lanforge/nginx/html</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>No of times file Downloads</h3>
+            <p align='left' width='900'>The below graph represents number of times a file downloads for each client. X- axis shows “No of times file downloads and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='Total-url_http.png' border='1' />
+            
+            <!-- Test Objective -->
+            <h3 align='left'>Average time taken to download file </h3>
+            <p align='left' width='900'>The below graph represents average time taken to download for each client  .  X- axis shows “Average time taken to download a file ” and Y-axis shows Client names.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='ucg-avg_http.png' border='1' />
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Overall Results</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Clients</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>SSID</th>
+      <th>Mode</th>
+      <th>No of times File downloaded</th>
+      <th>Average time taken to Download file (ms)</th>
+      <th>Bytes-rd (Mega Bytes)</th>
+      <th>Rx Rate (Mbps)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11 android nokia54</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>149</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>802.11abgn-AC 80</td>
+      <td>9</td>
+      <td>895.555</td>
+      <td>45.3229</td>
+      <td>7.0176</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>5. Multicast Test</h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Setup Information</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>Protocol</td><td colspan='3'>UDP</td></tr><tr><td>Type of Service (TOS)</td><td colspan='3'>VI</td></tr><tr><td>Upstream Port</td><td colspan='3'>1.1.eth1</td></tr><tr><td>Offered Load (Mbps)</td><td colspan='3'>3.0</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+            <!-- Test Objective -->
+            <h3 align='left'>Individual throughput with intended load 3.0 Mbps station for traffic VI (WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running VI (WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='VI_A.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Name</th>
+      <th>Endp Name</th>
+      <th>HW Version</th>
+      <th>Port Name</th>
+      <th>Mode</th>
+      <th>Mac</th>
+      <th>SSID</th>
+      <th>Channel</th>
+      <th>Type of traffic</th>
+      <th>Traffic Protocol</th>
+      <th>Offered Download Rate Per Client (Mbps)</th>
+      <th>Download Rate Per Client (Mbps)</th>
+      <th>Download Drop Percentage (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.11_Cocoon_192-168-133-173_19163_do_Android</td>
+      <td>MLT-mrx-VI-wlan0-1</td>
+      <td>HMD Global Nokia 7.2 r11 sdk: 3</td>
+      <td>1.11.wlan0</td>
+      <td>802.11abgn-AC 80</td>
+      <td>4a:a4:d7:80:16:cd</td>
+      <td>NETGEAR_5G_wpa2</td>
+      <td>149</td>
+      <td>VI</td>
+      <td>Mcast</td>
+      <td>3.0</td>
+      <td>0.145333</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Overall Info</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>contact</td><td colspan='3'>support@candelatech.com</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        

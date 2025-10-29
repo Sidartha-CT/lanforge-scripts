@@ -1,0 +1,7 @@
+Date	test-rig	test-tag	dut-hw-version	dut-sw-version	dut-model-num	dut-serial-num	test-priority	test-id	short-description	pass/fail	numeric-score	test details	Units	Graph-Group	Subtest-Pass	Subtest-Fail
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	DL 3000000 bps  pdu MTU  1 STA		4125872		bps	Per Stations Rate DL		
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	UL 0 bps pdu MTU 1 STA		3994819		bps	Per Stations Rate UL		
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	UL 0 bps pdu MTU + DL 3000000 bps pud MTU- 1 STA		8120691		bps	Per Stations Rate UL+DL		
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	DL LL 3000000 bps  pdu MTU  1 STA		4304799		bps	Per Stations Rate DL		
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	UL LL 0 bps pdu MTU 1 STA		4124487		bps	Per Stations Rate UL		
+1760599028251	CT-ID-004	test_l3	AXE11000	3.0.0.4.386_44266	1.0	123456		test l3	UL LL 0 bps pdu MTU + DL LL 3000000 bps pud MTU- 1 STA		8429286		bps	Per Stations Rate UL+DL		

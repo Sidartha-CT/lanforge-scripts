@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <style>
+        body { margin: 0; padding: 0; }
+        </style>
+        <link rel='stylesheet' href='report.css' />
+        <link rel='stylesheet' href='custom.css' />
+        <title>Candela Base Class</title>
+    </head>
+    <body>
+        <div id='BannerBack'>
+            <div id='Banner'>
+                <img id='BannerLogo' align='right' src="CandelaLogo2-90dpi-200x90-trans.png" border='0'/>
+                <div class='HeaderStyle'>
+                    <h1 class='TitleFontPrint' style='color:darkgreen;'>Candela Base Class</h1>
+                    <h4 class='TitleFontPrintSub' style='color:darkgreen;'>2025-09-25 11:58:13.122559</h4>
+                </div>
+            </div>
+        </div>
+                 <h1 style="color:darkgreen; border-bottom: 2px solid darkgreen; padding-bottom: 5px; font-weight: bold; font-size: 40px;">Parallel Tests</h1>
+                    <!-- Table Title-->
+                    <h3 align='left'>Traffic Details</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>s/no</th>
+      <th>test_name</th>
+      <th>Duration</th>
+      <th>status</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>MULTICAST Test </h3>
+            <p align='left' width='900'></p>
+            
+                    <!-- Table Title-->
+                    <h3 align='left'>Device Under Test Information</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Device Under Test</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>DUT Name</td><td colspan='3'></td></tr><tr><td>DUT Hardware Version</td><td colspan='3'></td></tr><tr><td>DUT Software Version</td><td colspan='3'></td></tr><tr><td>DUT Serial Number</td><td colspan='3'></td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Test Configuration</h3>
+                    
+                            <!-- Test Setup Information -->
+                            <table width='700px' border='1' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                              border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                              border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+
+                                <tr>
+                                  <td>Test Configuration</td>
+                                  <td>
+                                    <table width='100%' border='0' cellpadding='2' cellspacing='0' style='border-top-color: gray; border-top-style: solid; border-top-width: 1px;                                      border-right-color: gray; border-right-style: solid; border-right-width: 1px; border-bottom-color: gray; border-bottom-style: solid;                                      border-bottom-width: 1px; border-left-color: gray; border-left-style: solid; border-left-width: 1px'>
+                                      <tr><td>LANforge ip</td><td colspan='3'>192.168.242.2</td></tr><tr><td>LANforge port</td><td colspan='3'>8080</td></tr><tr><td>Upstream</td><td colspan='3'>eth2</td></tr><tr><td>Test Duration</td><td colspan='3'>1m</td></tr><tr><td>Polling Interval</td><td colspan='3'>5s</td></tr><tr><td>Total No. of Devices</td><td colspan='3'>7</td></tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                            </table>
+
+                            <br>
+                            
+                    <!-- Table Title-->
+                    <h3 align='left'>Radio Configuration</h3>
+                    
+            <!-- Test Objective -->
+            <h3 align='left'>Individual throughput mcast download bps: 10000000 traffic VO (WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 7 clients running VO (WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='VO_A.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Alias</th>
+      <th>Host eid</th>
+      <th>Host Name</th>
+      <th>Device Type / Hw Ver</th>
+      <th>Endp Name</th>
+      <th>Port Name</th>
+      <th>Mode</th>
+      <th>Mac</th>
+      <th>SSID</th>
+      <th>Channel</th>
+      <th>Type of traffic</th>
+      <th>Traffic Protocol</th>
+      <th>Offered Upload Rate Per Client</th>
+      <th>Offered Download Rate Per Client</th>
+      <th>Upload Rate Per Client</th>
+      <th>Download Rate Per Client</th>
+      <th>Drop Percentage (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.110_DESKTOP-IUQFRCV_Win</td>
+      <td>1.110</td>
+      <td>DESKTOP-IUQFRCV</td>
+      <td>Win/x86 6.2</td>
+      <td>MLT-mrx-VO-wlan0-1</td>
+      <td>1.110.wlan0</td>
+      <td>AUTO 20</td>
+      <td>24:ee:9a:39:2e:61</td>
+      <td></td>
+      <td>0</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9998582</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.113_DESKTOP-F0HLI17_Win</td>
+      <td>1.113</td>
+      <td>DESKTOP-F0HLI17</td>
+      <td>Win/x86 6.2</td>
+      <td>MLT-mrx-VO-wlan0-2</td>
+      <td>1.113.wlan0</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>OpenWifi_psk2</td>
+      <td>36</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9998556</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.115_DESKTOP-LFAH9C0_Win</td>
+      <td>1.115</td>
+      <td>DESKTOP-LFAH9C0</td>
+      <td>Win/x86 6.2</td>
+      <td>MLT-mrx-VO-wlan0-3</td>
+      <td>1.115.wlan0</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>34:f3:9a:eb:46:b4</td>
+      <td>OpenWifi_psk2</td>
+      <td>36</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.117_DESKTOP-3KOIAJR_Win</td>
+      <td>1.117</td>
+      <td>DESKTOP-3KOIAJR</td>
+      <td>Win/x86 6.2</td>
+      <td>MLT-mrx-VO-wlan0-4</td>
+      <td>1.117.wlan0</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>f4:8c:50:e2:01:67</td>
+      <td>OpenWifi_psk2</td>
+      <td>1</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9998690</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.119_DESKTOP-BLNNVU5_Win</td>
+      <td>1.119</td>
+      <td>DESKTOP-BLNNVU5</td>
+      <td>Win/x86 6.2</td>
+      <td>MLT-mrx-VO-wlan0-5</td>
+      <td>1.119.wlan0</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>34:41:5d:51:d1:96</td>
+      <td>OpenWifi_psk2</td>
+      <td>36</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9997959</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.154_mackbooir02sAir.ctinb.candelate_Apple</td>
+      <td>1.154</td>
+      <td>mackbooir02sAir.ctinb.candelate</td>
+      <td>Apple/x86-64</td>
+      <td>MLT-mrx-VO-en0-6</td>
+      <td>1.154.en0</td>
+      <td>802.11abg 80 2x2</td>
+      <td>48:bf:6b:d4:60:5a</td>
+      <td>OpenWifi_psk2</td>
+      <td>36</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9789978</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>1.209_hp80-HP-ProBook-445R-G6_Linux</td>
+      <td>1.209</td>
+      <td>hp80-HP-ProBook-445R-G6</td>
+      <td>Linux/x86-64</td>
+      <td>MLT-mrx-VO-wlan0-7</td>
+      <td>1.209.wlan0</td>
+      <td>802.11an-AC 80 2x2</td>
+      <td>28:cd:c4:de:d3:bb</td>
+      <td>OpenWifi_psk2</td>
+      <td>36</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9980118</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+            <!-- Test Objective -->
+            <h3 align='left'>Individual throughput upstream endp,  offered upload bps: 0 offered download bps: 10000000 /station for traffic VO (WiFi).</h3>
+            <p align='left' width='900'>The below graph represents individual throughput for 1 clients running VO (WiFi) traffic.  Y- axis shows “Client names“ and X-axis shows “Throughput in Mbps”.</p>
+            
+              <img align='center' style='padding:15px;margin:5px 5px 2em 5px;width:1000px;' src='VO_B.png' border='1' />
+            <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Client Alias</th>
+      <th>Host eid</th>
+      <th>Host Name</th>
+      <th>Device Type / HW Ver</th>
+      <th>Endp Name</th>
+      <th>Port Name</th>
+      <th>Mode</th>
+      <th>Mac</th>
+      <th>SSID</th>
+      <th>Channel</th>
+      <th>Type of traffic</th>
+      <th>Traffic Protocol</th>
+      <th>Offered Upload Rate Per Client</th>
+      <th>Offered Download Rate Per Client</th>
+      <th>Upload Rate Per Client</th>
+      <th>Download Rate Per Client</th>
+      <th>Drop Percentage (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1.1_ct523c-ccaa_Linux</td>
+      <td>1.1</td>
+      <td>ct523c-ccaa</td>
+      <td>Linux/x86-64</td>
+      <td>MLT-mtx-VO-eth2-0</td>
+      <td>1.1.eth2</td>
+      <td></td>
+      <td>9c:69:b4:63:72:ce</td>
+      <td></td>
+      <td>[channel: 2]</td>
+      <td>VO</td>
+      <td>Mcast</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>0</td>
+      <td>9999312</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval eth2</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>eth2</td>
+      <td>144657</td>
+      <td>9170142</td>
+      <td>2.5 Gbps</td>
+      <td>2.5 Gbps</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>9c:69:b4:63:72:ce</td>
+      <td>[channel: 2]</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.110.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.110.wlan0</td>
+      <td>279474412</td>
+      <td>275586161</td>
+      <td>0 bps</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>AUTO 20</td>
+      <td>24:ee:9a:39:2e:61</td>
+      <td>0</td>
+      <td>-8</td>
+      <td>1</td>
+      <td>9998812</td>
+      <td>10285229</td>
+      <td>53297</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.113.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.113.wlan0</td>
+      <td>314280977</td>
+      <td>308935501</td>
+      <td>650 Mbps</td>
+      <td>650 Mbps</td>
+      <td>-33 dBm</td>
+      <td>92:3C:B3:6C:43:41</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>00:bb:60:0b:5a:fe</td>
+      <td>36</td>
+      <td>-961</td>
+      <td>1</td>
+      <td>9998529</td>
+      <td>10285280</td>
+      <td>53287</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.115.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.115.wlan0</td>
+      <td>435359490</td>
+      <td>427992418</td>
+      <td>433.3 Mbps</td>
+      <td>433 Mbps</td>
+      <td>-43 dBm</td>
+      <td>92:3C:B3:6C:43:41</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>34:f3:9a:eb:46:b4</td>
+      <td>36</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.117.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.117.wlan0</td>
+      <td>479273043</td>
+      <td>471231249</td>
+      <td>300 Mbps</td>
+      <td>300 Mbps</td>
+      <td>-21 dBm</td>
+      <td>92:3C:B3:6C:43:40</td>
+      <td>802.11abgn 20 1x1</td>
+      <td>f4:8c:50:e2:01:67</td>
+      <td>1</td>
+      <td>-7258</td>
+      <td>0</td>
+      <td>9998536</td>
+      <td>10284164</td>
+      <td>53411</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.119.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.119.wlan0</td>
+      <td>9310651</td>
+      <td>4594</td>
+      <td>780 Mbps</td>
+      <td>780 Mbps</td>
+      <td>-36 dBm</td>
+      <td>92:3C:B3:6C:43:41</td>
+      <td>802.11abgn-AC 20 1x1</td>
+      <td>34:41:5d:51:d1:96</td>
+      <td>36</td>
+      <td>-3322</td>
+      <td>1</td>
+      <td>9997935</td>
+      <td>10284829</td>
+      <td>53311</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.154.en0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.154.en0</td>
+      <td>3715549</td>
+      <td>1407</td>
+      <td>304.2 Mbps</td>
+      <td>527 Mbps</td>
+      <td>-41 dBm</td>
+      <td>92:3C:B3:6C:43:41</td>
+      <td>802.11abg 80 2x2</td>
+      <td>48:bf:6b:d4:60:5a</td>
+      <td>36</td>
+      <td>-78</td>
+      <td>1</td>
+      <td>9769772</td>
+      <td>10051377</td>
+      <td>40146</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+                    <!-- Table Title-->
+                    <h3 align='left'>Layer 3 Cx Traffic Last Reporting Interval 1.209.wlan0</h3>
+                    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: center;">
+      <th>Time epoch</th>
+      <th>Time</th>
+      <th>Total-Station-Count</th>
+      <th>UL-Min-Requested</th>
+      <th>UL-Max-Requested</th>
+      <th>DL-Min-Requested</th>
+      <th>DL-Max-Requested</th>
+      <th>UL-Min-PDU</th>
+      <th>UL-Max-PDU</th>
+      <th>DL-Min-PDU</th>
+      <th>DL-Max-PDU</th>
+      <th>Attenuation</th>
+      <th>Name</th>
+      <th>Rx-Bps</th>
+      <th>Tx-Bps</th>
+      <th>Rx-Link-Rate</th>
+      <th>Tx-Link-Rate</th>
+      <th>RSSI</th>
+      <th>AP</th>
+      <th>Mode</th>
+      <th>MAC</th>
+      <th>Channel</th>
+      <th>Rx-Latency</th>
+      <th>Rx-Jitter</th>
+      <th>Ul-Rx-Goodput-bps</th>
+      <th>Ul-Rx-Rate-ll</th>
+      <th>Ul-Rx-Pkts-ll</th>
+      <th>Ul-Rx-Drop_Percent</th>
+      <th>Dl-Rx-Goodput-bps</th>
+      <th>Dl-Rx-Rate-ll</th>
+      <th>Dl-Rx-Pkts-ll</th>
+      <th>DL-Rx-Drop-Percent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1758781676</td>
+      <td>09_25_2025_11_57_56</td>
+      <td>14</td>
+      <td>0</td>
+      <td>0</td>
+      <td>10000000</td>
+      <td>10000000</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>MTU</td>
+      <td>-1</td>
+      <td>1.209.wlan0</td>
+      <td>6830103</td>
+      <td>18</td>
+      <td>86.7 Mbps</td>
+      <td>650 Mbps</td>
+      <td>-13 dBm</td>
+      <td>92:3C:B3:6C:43:41</td>
+      <td>802.11an-AC 80 2x2</td>
+      <td>28:cd:c4:de:d3:bb</td>
+      <td>36</td>
+      <td>0</td>
+      <td>1</td>
+      <td>9996461</td>
+      <td>10283953</td>
+      <td>53450</td>
+      <td>0.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+    <footer class='FooterStyle'>
+        <a href="https://www.candelatech.com/"><img
+            id='BannerLogoFooter' align='right' src="candela_swirl_small-72h.png" border='0'/></a>
+        <p>Generated by Candela Technologies LANforge network testing tool</p>
+        <p><a href="https://www.candelatech.com">www.candelatech.com</a><p>
+    </footer>
+        
