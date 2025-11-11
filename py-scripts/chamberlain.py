@@ -8,20 +8,30 @@ import time
 import traceback
 import re
 from pprint import pformat, PrettyPrinter
+import datetime
+import math
+import wps
+import subprocess
+import pandas as pd
+import datetime
+import ipaddress
+# import time
+import re
 debug_printer = PrettyPrinter(indent=2)
-
+import threading
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(handlers=[logging.StreamHandler(stream=sys.stdout)], level=logging.INFO,
                     format='%(created)f %(levelname)-8s %(message)s %(filename)s %(lineno)s')
 logging.propagate = False
 
-
+PING_TIME = 120
 MODE_2G = 15
 UPLOAD_RATE = "2"
 DOWNLOAD_RATE = "2"
 TRAFFIC_TYPE = "lf_tcp"
 DEBUG = False
+TIME_GAP = 10
 logger = logging.getLogger(__name__)
 
 
@@ -55,6 +65,29 @@ class JSON:
     #         else:
     #             encoded += "%" + format(ord(ch), "02X")
     #     return encoded
+    def port_down_request(self,resource_id, port_name, debug_on=False):
+        """
+        Does not change the use_dhcp flag
+        See http://localhost:8080/help/set_port
+        :param debug_on:
+        :param resource_id:
+        :param port_name:
+        :return:
+        """
+        REPORT_TIMER_MS_FAST = 1500
+        data = {
+            "shelf": 1,
+            "resource": resource_id,
+            "port": port_name,
+            "current_flags": 1,  # vs 0x0 = interface up
+            "interest": 8388610,  # = current_flags + ifdown
+            "report_timer": REPORT_TIMER_MS_FAST,
+        }
+        print("data",data)
+        if debug_on:
+            logger.debug("Port down request")
+            logger.debug(debug_printer.pformat(data))
+        return data
 
     def encode_url(self, required_url):
         """
@@ -173,7 +206,7 @@ class JSON:
             print("url", self.encode_url(req_url))
             print("data", data)
             traceback.print_exc()
-            exit(0)
+            # exit(0)
             return None
 
     def json_get(self, url):
@@ -505,7 +538,10 @@ class JSON:
 class ChamberLain(JSON):
     def __init__(self, mgr, port=8080, side_a_min_rate=0, side_a_max_rate=0,
                  side_b_min_rate=56, side_b_max_rate=0,
-                 side_a_min_pdu=-1, side_b_min_pdu=-1, side_a_max_pdu=0, side_b_max_pdu=0):
+                 side_a_min_pdu=-1, side_b_min_pdu=-1, side_a_max_pdu=0, side_b_max_pdu=0,
+                 upstream_port="eth1",ssid="",passwd="",security_type="",wifi_pdu=False,
+                 wps_username="admin",wps_passwd="1234",wps_ip="192.168.212.152",https=False,transient=False,
+                 num_stations=10,radio="wiphy0"):
         super().__init__(lanforge_ip=mgr, port=port)
         self.station_list = None
         self.mgr = mgr
@@ -521,6 +557,19 @@ class ChamberLain(JSON):
         self.side_b_min_pdu = side_b_min_pdu
         self.side_a_max_pdu = side_a_max_pdu
         self.side_b_max_pdu = side_b_max_pdu
+        self.upstream_port = upstream_port
+        self.ssid = ssid
+        self.passwd = passwd
+        self.security_type = security_type
+        self.wifi = wifi_pdu
+        self.wps_username = wps_username
+        self.wps_passwd = wps_passwd
+        self.wps_ip = wps_ip
+        self.ping_data = {}
+        self.https = https
+        self.transient = transient
+        self.num_stations = num_stations
+        self.radio = radio
         self.add_sta_flags = {
             "wpa_enable": 0x10,         # Enable WPA
             "custom_conf": 0x20,         # Use Custom wpa_supplicant config file.
@@ -563,6 +612,7 @@ class ChamberLain(JSON):
             "disable-mlo": 0x8000000000000,   # Disable OFDMA
             "ignore-edca": 0x20000000000000,  # Request station to ignore EDCA settings
         }
+        
         self.add_sta_modes = {
             "AUTO": 0,  # 802.11g
             "802.11a": 1,  # 802.11a
@@ -761,6 +811,9 @@ class ChamberLain(JSON):
         return name_list
 
     def wait_for_ip(self, station_list=None, ipv4=True, ipv6=False, timeout_sec=360, debug=False):
+        print(station_list)
+        logger.info(f"Waiting for IP assignment on stations: {station_list}")
+        # exit(0)
         """
         Wait until IP assigned for created stations.
 
@@ -814,7 +867,7 @@ class ChamberLain(JSON):
                     logger.info("station_list: incomplete response for eid: %s:  wait longer" % sta_eid)
                     logger.info(pformat(response))
                     print(eid)
-                    exit(0)
+                    # exit(0)
                     wait_more = True
                     break
 
@@ -865,7 +918,7 @@ class ChamberLain(JSON):
                 logger.debug("Found IPs for all requested ports.")
             return True
 
-    def create_station(self, num_stations, ssid, passwd, security_type, radio, mode=MODE_2G):
+    def create_station(self, num_stations, ssid="temp", passwd="temp", security_type="wpa2", radio="wiphy0", mode=MODE_2G,skip_wait_for_ip=False,prefix="sta"):
         """
         Used to virutal WiFi stations and acquire IPs.
 
@@ -882,7 +935,9 @@ class ChamberLain(JSON):
         """
         # mode 2g
         mode = 15
-        prefix = "sta"
+        logger.info(f"Starting station creation: count={num_stations}, ssid={ssid}, radio={radio}")
+
+        # prefix = "sta"
         start_id = 0
         end_id = num_stations  # total-1
         # self.station_list = self.port_name_series(prefix=prefix,start_id=start_id,end_id=end_id-1,radio=radio)
@@ -957,11 +1012,12 @@ class ChamberLain(JSON):
         # sta_names= None,radio=None,up_=False,add_sta_flags=None,add_sta_data=None,add_mask_flags=None,set_port_data=None,sleep_time=0.02,timeout=300
         if not self.create(radio=radio, sta_names=self.station_list, up_=True, add_sta_flags=add_sta_flags, add_sta_data=add_sta_data, add_mask_flags=add_mask_flags, set_port_data=set_port_data):
             print("Station creation FAILED")
-        if not self.wait_for_ip(self.station_list, timeout_sec=60):
-            print("Stations failed to get IP")
-            exit(1)
-        else:
-            print("all stations got IP")
+        if not skip_wait_for_ip:
+            if not self.wait_for_ip(self.station_list, timeout_sec=60):
+                print("Stations failed to get IP")
+                exit(1)
+            else:
+                print("all stations got IP")
 
     def create(self, sta_names=None, radio=None, up_=False, add_sta_flags=None, add_sta_data=None, add_mask_flags=None, set_port_data=None, sleep_time=0.02, timeout=300):
         """
@@ -1026,10 +1082,15 @@ class ChamberLain(JSON):
             set_port_data["suppress_preexec_method"] = 1
         num = 0
         finished_sta = []
+        skip_create_sta = False
         for eidn in my_sta_eids:
             if eidn in self.station_names:
                 logger.info("Station {eidn} already created, skipping.".format(eidn=eidn))
-                continue
+                self.reset_port(eidn)
+                time.sleep(20)
+                # skip_create_sta = True
+                print("waiting for reset ",eidn)
+                # continue
             # if self.debug:
             #     logger.debug(" EIDN " + eidn)
             if eidn in finished_sta:
@@ -1066,10 +1127,28 @@ class ChamberLain(JSON):
             #     logger.debug('Timestamp: {time_}'.format(time_=(time.time() * 1000)))
             #     logger.debug("- 3264 - ## {eidn} ##  add_sta_r.jsonPost - - - - - - - - - - - - - - - - - - ".format(eidn=eidn))
             # add_sta_r.jsonPost(debug=self.debug)
-            self.json_post(url=add_sta_r_url, data=add_sta_data)
+            if not skip_create_sta:
+                logger.info(f"Sending add_sta for {eidn}")
+                self.json_post(url=add_sta_r_url, data=add_sta_data)
+                logger.info(f"set_port applied for station {name}")
             finished_sta.append(eidn)
             # if debug:
             #     logger.debug("- ~3264 - {eidn} - add_sta_r.jsonPost - - - - - - - - - - - - - - - - - - ".format(eidn=eidn))
+            time.sleep(0.01)
+            total_retries = 30
+            current_retries = 1
+            created = False
+            query = '.'.join([str(radio_shelf),str(radio_resource),str(name)])
+            while current_retries <= total_retries:
+                print(f'retrying for {query}')
+                logger.info(f"Waiting for station {query} to appear in port list...")
+                # ports_all_data = self.json_get('/ports')
+                ports_data = self.json_get("/port/{}/{}/{}?fields=phantom".format(radio_shelf,radio_resource,name))
+                print(ports_data)
+                if ports_data is not None and ports_data['interface']['phantom'] == False:
+                    created = True
+                    break
+                time.sleep(1) 
             time.sleep(0.01)
             self.json_post(url=set_port_r_url, data=set_port_data)
             # set_port_r.addPostData(self.set_port_data)
@@ -1150,7 +1229,9 @@ class ChamberLain(JSON):
         Args:
             cx_list (list): CX names to start.
         """
-        print(cx_list)
+        # print(cx_list)
+        logger.info("Starting specific CX connections...")
+
         """
         Starts specific connections from the given list and sets a report timer for them.
 
@@ -1165,8 +1246,9 @@ class ChamberLain(JSON):
                     "milliseconds": 1000
                 }
                 self.json_post(req_url, data)
-        logger.info("Starting CXs...")
+        # logger.info("Starting CXs...")
         for cx_name in cx_list:
+            logger.info(f"Setting CX {cx_name} state to RUNNING")
             # if self.debug:
             #     logger.debug("cx-name: {cx_name}".format(cx_name=cx_name))
             self.json_post("/cli-json/set_cx_state", {
@@ -1190,6 +1272,7 @@ class ChamberLain(JSON):
         Returns:
             tuple: (list of CX names, list of endpoint names)
         """
+        logger.info(f"Generating L3 traffic: type={endp_type}, upload={upload_rate}Mbps, download={download_rate}Mbps")
         cx_post_data = []
         timer_post_data = []
         these_endp = []
@@ -1248,6 +1331,7 @@ class ChamberLain(JSON):
             }
 
             url = "/cli-json/add_endp"
+            logger.info(f"Creating L3 endpoints for station {port_tuple}")
             self.json_post(url=url,
                            data=endp_side_a,
                            )
@@ -1310,6 +1394,312 @@ class ChamberLain(JSON):
 
         return these_cx, these_endp
 
+    def get_wifi_details(self,target_ssid=""):
+        self.create_station(num_stations=1,prefix="dummy",skip_wait_for_ip=True)
+        # for port in self.sta_list:
+        #     port = self.name_to_eid(port)
+        #     data = {
+        #         "shelf": port[0],
+        #         "resource": port[1],
+        #         "port": port[2]
+        #     }
+        #     self.json_post("/cli-json/scan_wifi", data)
+        #     print("scanning")
+        #     time.sleep(15)
+        dummy_station = self.station_list[0]
+        logger.info(f"Initiating WiFi scan using dummy station {dummy_station}")
+        port = self.name_to_eid(dummy_station)
+        data = {
+                "shelf": port[0],
+                "resource": port[1],
+                "port": port[2]
+        }
+        self.json_post("/cli-json/scan_wifi", data)
+        time.sleep(15)
+        # scan_results = 
+        bssid_channel_dict = {}
+        scan_results = self.json_get("scanresults/%s/%s/%s" % (port[0], port[1], port[2]))
+        print(scan_results["scan-results"])
+        # target_ssid = "NETGEAR_2G_wpa2"
+        for item in scan_results["scan-results"]:
+            for _, details in item.items():
+                print(details)
+                if details.get("ssid") == target_ssid:
+                    # return details
+                    # bssid_channel_dict.append(details)
+                    bssid_channel_dict[details['bss']] = details['channel']
+        
+        return bssid_channel_dict
+
+    def get_interface_cidrs(self) -> list[ipaddress.IPv4Network]:
+        """Extract IPv4 networks from: ip -4 addr show dev eth1"""
+        interface = self.upstream_port
+        cmd = ["ip", "-4", "addr", "show", "dev", interface]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        cidrs = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("inet "):
+                # Example: "inet 192.168.4.20/22 brd 192.168.7.255 ..."
+                ip_cidr = line.split()[1]  # 192.168.4.20/22
+                net = ipaddress.ip_network(ip_cidr, strict=False)
+                cidrs.append(net)
+        return cidrs
+
+    def get_real_client_ip(self):
+        interface_networks = self.get_interface_cidrs()
+        if not interface_networks:
+            print("No IPv4 networks found on interface.", file=sys.stderr)
+            exit(1)
+        networks_24 = []
+        for net in interface_networks:
+            networks_24.extend(self.split_into_24s(net))
+
+        # Step 3: run arp-scan on each /24
+        for net in networks_24:
+            cidr = str(net)
+            ip = self.get_ip_by_mac(self.upstream_port, cidr, "0c:95:05:96:96:23")
+            if ip:
+                logger.info(f"Found client IP: {ip}")
+                return ip
+        return ""
+                # sys.exit(0)
+        
+    def reset_port(self,port):
+        eid = self.name_to_eid(port)
+        print("port here",port)
+        shelf = eid[0]
+        resource_id = eid[1]
+        port_name = eid[2]
+        port_down_data = self.port_down_request(resource_id,port_name)
+        logger.info(f"Resetting port {port_name} on resource {resource_id}")
+        self.json_post(url="cli-json/set_port",data=port_down_data)
+        print("waiting for port down.....")
+        time.sleep(30)
+        logger.info(f"Bringing port {port_name} back up...")
+        port_up_data = self.port_up_request(resource_id=resource_id,port_name=port_name)
+        self.json_post(url="cli-json/set_port",data=port_up_data)
+
+
+        # reset_port_data = {
+        #     "shelf":shelf,
+        #     "resource":resource_id,
+        #     "port":port_name
+        # }
+        # self.json_post(url="/cli-json/reset_port",data=reset_port_data)
+        # total_retries = 30
+        # current_retries = 1
+        # created = False
+        # query = '.'.join([str(shelf),str(resource_id),str(port_name)])
+        # while current_retries <= total_retries:
+        #     print(f'retrying for {query}')
+        #     # ports_all_data = self.json_get('/ports')
+        #     ports_data = self.json_get("/port/{}/{}/{}?fields=phantom".format(shelf,resource_id,port_name))
+        #     print(ports_data)
+        #     if ports_data is not None and ports_data['interface']['phantom'] == False:
+        #         created = True
+        #         break
+        #     time.sleep(1) YES
+
+
+    def start(self):
+        #for now
+        if self.wifi:
+            # controller = 
+            controller = wps.WifiPDU(self.wps_ip, use_https=self.https)
+            persistent = True  # transient not supported
+        else:
+            controller = wps.WebPowerSwitch(self.wps_ip, self.wps_username, self.wps_passwd, use_https=self.https)
+            persistent = not self.transient
+        
+        wps_switches = [1,2,3,4,5]
+        # all on
+        # controller.set_all(True, persistent=persistent) if not self.wifi else controller.set_all(True)
+        # time.sleep(120)
+        # bssid_channel_dict = self.get_wifi_details(target_ssid=self.ssid)
+        # print(bssid_channel_dict)
+        # print(len(bssid_channel_dict))
+        # exit(0)
+        # intial all_off()
+        controller.set_all(False, persistent=persistent) if not self.wifi else controller.set_all(False)
+
+        for switch in wps_switches:
+            #on specific switch
+            logger.info(f"Turning ON outlet {switch}")
+            time.sleep(5)
+            if self.wifi:
+                controller.set_outlet(switch-1,True)
+            else:
+                controller.set_outlet(switch-1,True,persistent=True)
+
+            user_response = "no"
+            self.reset_port(self.upstream_port)
+            print("resetting the port")
+            time.sleep(20)
+            self.wait_for_ip(station_list=[self.upstream_port])
+            logger.info(f"Port {self.upstream_port} reset complete")
+            while user_response.lower() != "yes" and user_response.lower() != "y":
+                print("Type yes if the myQ client connection is done:")
+                user_response = input().strip().lower()
+
+                if user_response != "yes" and user_response != "y":
+                    print("Give correct input")
+            #get ap's channel optional. (create dummy station and get)
+            # ap_data = self.get_wifi_details()
+            # if ap_data is None:
+            #     logger.error("ap details not found")
+            #ap_data =  {'age': '1083', 'auth': 'WPA2', 'beacon': '100', 'bss': '94:a6:7e:74:26:22', 'channel': '11', 'country': 'US', 'entity id': '1.1.wiphy0', 'frequency': '2462', 'info': '2x2 MCS 0-9 AC', 'signal': '-58.0', 'ssid': 'NETGEAR_2G_wpa2'}
+            #get device ip
+            # cidr = self.get_cidr(interface=self.upstream_port)
+            # print("cidr",cidr)
+            # real_client_ip = self.get_ip_by_mac(interface=self.upstream_port,cidr=cidr,mac="0c:95:05:96:96:23")
+            # print("real_client_ip",real_client_ip)
+            # exit(0)
+            real_client_ip = self.get_real_client_ip()
+            t1 = threading.Thread(target=self.ping_for_duration, args=(real_client_ip, PING_TIME), daemon=True)
+            t2 = threading.Thread(target=self.create_station_and_run_traffic, daemon=True)
+            t1.start()
+            time.sleep(TIME_GAP)
+            t2.start()
+            t1.join()
+            t2.join()
+            #storing data here
+            print(self.ping_data)
+            if self.wifi:
+                controller.set_outlet(switch-1, False)
+            else:
+                controller.set_outlet(switch-1, False, persistent=persistent)
+            logger.info(f"Turning OFF outlet {switch}")
+            
+            #virtual_clients and traffic t2.start
+            #join,join
+
+    def create_station_and_run_traffic(self):
+        self.create_station(num_stations=self.num_stations,ssid=self.ssid,passwd=self.passwd,security_type=self.security_type,radio=self.radio)
+        # self.generate_l3_traffic()
+        port_lists = []
+        eid_list = []
+        print(self.station_list)
+        for i in self.station_list:
+            # print(self.name_to_eid(i))
+            eid = self.name_to_eid(i)
+            eid_list.append(eid)
+            port_lists.append('.'.join(str(x) for x in eid if x))
+        print(port_lists)
+        print(eid_list)
+        count = 0
+        traffic_type = TRAFFIC_TYPE
+        # logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
+        for station in range(len(port_lists)):
+            logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
+                traffic_type, count))
+            self.generate_l3_traffic(endp_type=traffic_type, side_a=[port_lists[station]],
+                                side_b="eth1", cx_name="%s" % (self.station_list[count]), upload_rate=UPLOAD_RATE, download_rate=DOWNLOAD_RATE)
+            count += 1
+
+        self.start_specific(self.created_cx)
+    def extract_icmp_line(self,output):
+        """Return only the ICMP response line."""
+        for line in output.split("\n"):
+            if "time=" in line.lower() or "ttl=" in line.lower():
+                return line.strip()
+            if "timeout" in line.lower():
+                return line.strip()
+        return output.strip()  # fallback
+
+
+    def parse_ping_line(self,line):
+        """Parse a cleaned ICMP line."""
+        result = {
+            "status": "timeout",
+            "latency_ms": None,
+            "packet_loss": 1,
+            "raw": line.strip()
+        }
+
+        if "time=" in line.lower():  # Success
+            result["status"] = "success"
+            result["packet_loss"] = 0
+
+            match = re.search(r'time[=<]\s*([\d\.]+)\s*ms', line)
+            if match:
+                result["latency_ms"] = float(match.group(1))
+
+        return result
+    def get_cidr(self,interface):
+        try:
+            result = subprocess.run(
+                ["ip", "-o", "-f", "inet", "addr", "show", interface],
+                capture_output=True, text=True
+            )
+            for line in result.stdout.splitlines():
+                parts = line.split()
+                for part in parts:
+                    if "/" in part:
+                        return part  # example: 192.168.4.10/24
+        except Exception as e:
+            print("Error:", e)
+        return None
+
+    def split_into_24s(self,network: ipaddress.IPv4Network) -> list[ipaddress.IPv4Network]:
+        """Break any CIDR (e.g., /22) into /24 blocks."""
+        if network.prefixlen <= 24:
+            return list(network.subnets(new_prefix=24))
+        else:
+            # If someone uses a /25 or smaller range
+            return [network]
+
+
+    def get_ip_by_mac(self,interface: str, cidr: str, mac: str, timeout: int = 20) -> str | None:
+        target_mac = mac.lower()
+        cmd = ["sudo", "arp-scan", "-I", interface, cidr]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return None
+
+        for line in result.stdout.splitlines():
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                ip, found_mac = parts[0], parts[1].lower()
+                if found_mac == target_mac:
+                    return ip
+
+        return None
+    def ping_for_duration(self,ip, duration):
+        # is_windows = platform.system().lower() == "windows"
+        # ping_cmd = ["ping", "-n", "1", ip] if is_windows else ["ping", "-c", "1", ip]
+        # ping_cmd = ["ping", "-c", "1", "-W", "1", ip]  # 1-second timeout
+        ping_cmd = ["ping", "-I", self.upstream_port, "-c", "1", "-W", "1", ip]
+
+        data = []
+        seq = 1
+        end = time.time() + duration
+        print("estimated end time",end)
+        while time.time() < end:
+            # print("pinging")
+            # print(f"icmp_seq={seq} time={parsed.get('latency_ms', 'timeout')} ms")
+            timestamp = datetime.datetime.now()
+
+            proc = subprocess.run(ping_cmd, capture_output=True, text=True)
+            icmp_line = self.extract_icmp_line(proc.stdout + proc.stderr)
+            parsed = self.parse_ping_line(icmp_line)
+
+            parsed["timestamp"] = timestamp
+            parsed["seq"] = seq
+            parsed["ip"] = ip
+            print(f"icmp_seq={seq} time={parsed.get('latency_ms', 'timeout')} ms")
+            data.append(parsed)
+
+            seq += 1
+            time.sleep(1)
+
+        self.ping_data = pd.DataFrame(data)
+
+
 
 def main():
     import argparse
@@ -1317,74 +1707,79 @@ def main():
     parser = argparse.ArgumentParser(
         description="Create Wi-Fi Stations using LANforge"
     )
+    parser.add_argument("--mgr", required=True, help="LANforge Manager IP")
+    parser.add_argument("--port", type=int, default=8080, help="LANforge HTTP port (default: 8080)")
 
-    parser.add_argument("--mgr",
-                        required=True,
-                        help="LANforge Manager IP")
+    parser.add_argument("--ssid", required=True, help="SSID of the WiFi network")
+    parser.add_argument("--passwd", required=True, help="WiFi password")
+    parser.add_argument(
+        "--security", choices=["open", "wep", "wpa", "wpa2", "wpa3", "owe"],
+        default="wpa2", help="Wi-Fi security mode"
+    )
+    parser.add_argument("--num_stations", type=int, default=10, help="Number of stations to create (default: 10)")
+    parser.add_argument("--radio", default="wiphy0", help="Radio interface, e.g. wiphy0, wiphy1 (default: wiphy0)")
+    parser.add_argument(
+        "--upstream_port", "-u", default="eth1",
+        help="Non-station port that generates traffic: <resource>.<port>, e.g: 1.eth1 (default: eth1)"
+    )
 
-    parser.add_argument("--port",
-                        type=int,
-                        default=8080,
-                        help="LANforge HTTP port (default: 8080)")
+    # Back-compat shorthands (kept): map to min-rate if explicit rates not provided
+    parser.add_argument("--upload", help="Legacy: upload rate Mbps (maps to side-a-min-rate)", default="2")
+    parser.add_argument("--download", help="Legacy: download rate Mbps (maps to side-b-min-rate)", default="2")
 
-    parser.add_argument("--ssid",
-                        required=True,
-                        help="SSID of the WiFi network")
+    # Fine-grained traffic parameters (defaults match __init__)
+    # parser.add_argument("--side-a-min-rate", type=int, default=0, help="Mbps (default: 0)")
+    parser.add_argument("--side_a_max_rate", type=int, default=0, help="Mbps (default: 0)")
+    # parser.add_argument("--side-b-min-rate", type=int, default=56, help="Mbps (default: 56)")
+    parser.add_argument("--side_b_max_rate", type=int, default=0, help="Mbps (default: 0)")
 
-    parser.add_argument("--passwd",
-                        required=True,
-                        help="WiFi password")
+    parser.add_argument("--side_a_min_pdu", type=int, default=-1, help="(default: -1)")
+    parser.add_argument("--side_a_max_pdu", type=int, default=0, help="(default: 0)")
+    parser.add_argument("--side_b_min_pdu", type=int, default=-1, help="(default: -1)")
+    parser.add_argument("--side_b_max_pdu", type=int, default=0, help="(default: 0)")
 
-    parser.add_argument("--security",
-                        choices=["open", "wep", "wpa", "wpa2", "wpa3", "owe"],
-                        default="wpa2",
-                        help="Wi-Fi security mode")
-
-    parser.add_argument("--num_stations",
-                        type=int,
-                        required=True,
-                        help="Number of stations to create")
-
-    parser.add_argument("--radio",
-                        required=True,
-                        help="Radio interface, e.g. wiphy0, wiphy1")
+    # Power control / WPS controller (defaults match __init__)
+    parser.add_argument("--wifi_pdu", action="store_true", help="Use WifiPDU (default: False -> WebPowerSwitch)")
+    parser.add_argument("--wps_username", default="admin", help="WPS username (default: admin)")
+    parser.add_argument("--wps_passwd", default="1234", help="WPS password (default: 1234)")
+    parser.add_argument("--wps_ip", default="192.168.212.152", help="WPS/WifiPDU IP (default: 192.168.212.152)")
+    parser.add_argument("--https", action="store_true", help="Use HTTPS to talk to WPS/WifiPDU (default: False)")
+    parser.add_argument("--transient", action="store_true", help="Use transient power state (default: False)")
+    parser.add_argument('--wps_outlets', type=str, default='', help='Outlets to turn ON (e.g. "1,2,3" or "1 2 3")')
 
     args = parser.parse_args()
 
     print(f"Connecting to LANforge {args.mgr}:{args.port}")
-
-    lf = ChamberLain(args.mgr, port=args.port)
-
-    # override default radio in class call
-    lf.create_station(
-        num_stations=args.num_stations,
+    # lf.start()
+    lf = ChamberLain(
+        mgr=args.mgr,
+        port=args.port,
+        # Rates / PDUs
+        side_a_min_rate=args.upload,
+        side_a_max_rate=args.side_a_max_rate,
+        side_b_min_rate=args.download,
+        side_b_max_rate=args.side_b_max_rate,
+        side_a_min_pdu=args.side_a_min_pdu,
+        side_b_min_pdu=args.side_b_min_pdu,
+        side_a_max_pdu=args.side_a_max_pdu,
+        side_b_max_pdu=args.side_b_max_pdu,
+        # Topology
+        upstream_port=args.upstream_port,
         ssid=args.ssid,
         passwd=args.passwd,
         security_type=args.security,
-        radio=args.radio
+        num_stations=args.num_stations,
+        radio=args.radio,
+        # Power control
+        wifi_pdu=args.wifi_pdu,
+        wps_username=args.wps_username,
+        wps_passwd=args.wps_passwd,
+        wps_ip=args.wps_ip,
+        https=args.https,
+        transient=args.transient,
     )
-    # lf.generate_l3_traffic()
-    port_lists = []
-    eid_list = []
-    print(lf.station_list)
-    for i in lf.station_list:
-        # print(lf.name_to_eid(i))
-        eid = lf.name_to_eid(i)
-        eid_list.append(eid)
-        port_lists.append('.'.join(str(x) for x in eid if x))
-    print(port_lists)
-    print(eid_list)
-    count = 0
-    traffic_type = TRAFFIC_TYPE
-    # logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
-    for station in range(len(port_lists)):
-        logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
-            traffic_type, count))
-        lf.generate_l3_traffic(endp_type=traffic_type, side_a=[port_lists[station]],
-                               side_b="eth1", cx_name="%s" % (lf.station_list[count]), upload_rate=UPLOAD_RATE, download_rate=DOWNLOAD_RATE)
-        count += 1
 
-    lf.start_specific(lf.created_cx)
+    lf.start()
 
 
 if __name__ == "__main__":
