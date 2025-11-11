@@ -1,6 +1,5 @@
 import requests
 from urllib import request
-import logging
 import sys
 import json
 import urllib
@@ -19,20 +18,21 @@ import ipaddress
 import re
 debug_printer = PrettyPrinter(indent=2)
 import threading
+import logging
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 logging.basicConfig(handlers=[logging.StreamHandler(stream=sys.stdout)], level=logging.INFO,
                     format='%(created)f %(levelname)-8s %(message)s %(filename)s %(lineno)s')
 logging.propagate = False
+logger = logging.getLogger(__name__)
 
-PING_TIME = 120
+PING_TIME = 60
 MODE_2G = 15
 UPLOAD_RATE = "2"
 DOWNLOAD_RATE = "2"
 TRAFFIC_TYPE = "lf_tcp"
 DEBUG = False
-TIME_GAP = 10
-logger = logging.getLogger(__name__)
+TIME_GAP = 5
 
 
 class JSON:
@@ -541,9 +541,9 @@ class ChamberLain(JSON):
                  side_a_min_pdu=-1, side_b_min_pdu=-1, side_a_max_pdu=0, side_b_max_pdu=0,
                  upstream_port="eth1",ssid="",passwd="",security_type="",wifi_pdu=False,
                  wps_username="admin",wps_passwd="1234",wps_ip="192.168.212.152",https=False,transient=False,
-                 num_stations=10,radio="wiphy0"):
+                 num_stations=10,radio="wiphy0",client_mac="",wps_outlets=""):
         super().__init__(lanforge_ip=mgr, port=port)
-        self.station_list = None
+        self.station_list = []
         self.mgr = mgr
         self.lfclient_url = "http://{}:{}".format(mgr, port)
         self.station_names = []
@@ -566,10 +566,13 @@ class ChamberLain(JSON):
         self.wps_passwd = wps_passwd
         self.wps_ip = wps_ip
         self.ping_data = {}
+        self.all_ping_data = {}
         self.https = https
         self.transient = transient
         self.num_stations = num_stations
         self.radio = radio
+        self.wps_outlets = wps_outlets
+        self.client_mac = client_mac
         self.add_sta_flags = {
             "wpa_enable": 0x10,         # Enable WPA
             "custom_conf": 0x20,         # Use Custom wpa_supplicant config file.
@@ -1448,10 +1451,13 @@ class ChamberLain(JSON):
         return cidrs
 
     def get_real_client_ip(self):
+        logger.info("fetching client ip....")
+        # time.sleep(10)
         interface_networks = self.get_interface_cidrs()
         if not interface_networks:
             print("No IPv4 networks found on interface.", file=sys.stderr)
-            exit(1)
+            return ""
+            # exit(1)
         networks_24 = []
         for net in interface_networks:
             networks_24.extend(self.split_into_24s(net))
@@ -1459,7 +1465,7 @@ class ChamberLain(JSON):
         # Step 3: run arp-scan on each /24
         for net in networks_24:
             cidr = str(net)
-            ip = self.get_ip_by_mac(self.upstream_port, cidr, "0c:95:05:96:96:23")
+            ip = self.get_ip_by_mac(self.upstream_port, cidr, self.client_mac)
             if ip:
                 logger.info(f"Found client IP: {ip}")
                 return ip
@@ -1532,13 +1538,27 @@ class ChamberLain(JSON):
                 controller.set_outlet(switch-1,True)
             else:
                 controller.set_outlet(switch-1,True,persistent=True)
+            if self.created_cx != {}:
+                self.stop_l3_traffic()
+            if self.station_list != []:
+                for station in self.station_list:
+                    eid = self.name_to_eid(station)
+                    shelf = eid[0]
+                    resource_id = eid[1]
+                    port_name = eid[2]
+                    port_down_data = self.port_down_request(resource_id=resource_id,port_name=port_name)
+                    # self.json_post()
+                    self.json_post(url="cli-json/set_port",data=port_down_data)
 
             user_response = "no"
             self.reset_port(self.upstream_port)
             print("resetting the port")
             time.sleep(20)
-            self.wait_for_ip(station_list=[self.upstream_port])
-            logger.info(f"Port {self.upstream_port} reset complete")
+            ip_check = self.wait_for_ip(station_list=[self.upstream_port])
+            if ip_check:
+                logger.info(f"Port {self.upstream_port} reset complete")
+            else:
+                logger.error("failed to get ip for the port {}".format(self.upstream_port))
             while user_response.lower() != "yes" and user_response.lower() != "y":
                 print("Type yes if the myQ client connection is done:")
                 user_response = input().strip().lower()
@@ -1556,7 +1576,16 @@ class ChamberLain(JSON):
             # real_client_ip = self.get_ip_by_mac(interface=self.upstream_port,cidr=cidr,mac="0c:95:05:96:96:23")
             # print("real_client_ip",real_client_ip)
             # exit(0)
-            real_client_ip = self.get_real_client_ip()
+            real_client_ip = ""
+            retries = 0
+            total_retries = 5
+            while retries <= total_retries:
+                logger.info(f"trying to fetch cleint ip retry no : {retries}")
+                real_client_ip = self.get_real_client_ip()
+                if real_client_ip != "":
+                    break
+                time.sleep(5)
+                retries += 1
             t1 = threading.Thread(target=self.ping_for_duration, args=(real_client_ip, PING_TIME), daemon=True)
             t2 = threading.Thread(target=self.create_station_and_run_traffic, daemon=True)
             t1.start()
@@ -1566,6 +1595,8 @@ class ChamberLain(JSON):
             t2.join()
             #storing data here
             print(self.ping_data)
+            self.all_ping_data[switch] = self.ping_data.copy()
+            self.ping_data = {}
             if self.wifi:
                 controller.set_outlet(switch-1, False)
             else:
@@ -1574,9 +1605,37 @@ class ChamberLain(JSON):
             
             #virtual_clients and traffic t2.start
             #join,join
+    def stop_l3_cx(self,cx_name):
+        self.json_post("/cli-json/set_cx_state", {
+            "test_mgr": "ALL",
+            "cx_name": cx_name,
+            "cx_state": "STOPPED"
+        })
+
+    def stop_l3_traffic(self):
+        logger.info("Stopping cx's")
+        for cx_name in self.created_cx.keys():
+            self.stop_l3_cx(cx_name)
 
     def create_station_and_run_traffic(self):
-        self.create_station(num_stations=self.num_stations,ssid=self.ssid,passwd=self.passwd,security_type=self.security_type,radio=self.radio)
+        if self.station_list == []:
+            self.create_station(num_stations=self.num_stations,ssid=self.ssid,passwd=self.passwd,security_type=self.security_type,radio=self.radio)
+        else:
+            for station in self.station_list:
+                eid = self.name_to_eid(station)
+                shelf = eid[0]
+                resource_id = eid[1]
+                port_name = eid[2]
+                # port_up_data = 
+                logger.info(f"Bringing port {port_name} back up...")
+                port_up_data = self.port_up_request(resource_id=resource_id,port_name=port_name)
+                self.json_post(url="cli-json/set_port",data=port_up_data)
+            if not self.wait_for_ip(self.station_list, timeout_sec=60):
+                print("Stations failed to get IP")
+                exit(1)
+            else:
+                print("all stations got IP")
+
         # self.generate_l3_traffic()
         port_lists = []
         eid_list = []
@@ -1590,15 +1649,17 @@ class ChamberLain(JSON):
         print(eid_list)
         count = 0
         traffic_type = TRAFFIC_TYPE
-        # logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
-        for station in range(len(port_lists)):
-            logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
-                traffic_type, count))
-            self.generate_l3_traffic(endp_type=traffic_type, side_a=[port_lists[station]],
-                                side_b="eth1", cx_name="%s" % (self.station_list[count]), upload_rate=UPLOAD_RATE, download_rate=DOWNLOAD_RATE)
-            count += 1
+        # logger.info("Creatstop_l3_trafficing connections for endpoint type: %s cx-count: %s" % (
+        if self.created_cx == {}:
+            for station in range(len(port_lists)):
+                logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
+                    traffic_type, count))
+                self.generate_l3_traffic(endp_type=traffic_type, side_a=[port_lists[station]],
+                                    side_b="eth1", cx_name="%s" % (self.station_list[count]), upload_rate=UPLOAD_RATE, download_rate=DOWNLOAD_RATE)
+                count += 1
 
         self.start_specific(self.created_cx)
+
     def extract_icmp_line(self,output):
         """Return only the ICMP response line."""
         for line in output.split("\n"):
@@ -1669,6 +1730,7 @@ class ChamberLain(JSON):
                     return ip
 
         return None
+
     def ping_for_duration(self,ip, duration):
         # is_windows = platform.system().lower() == "windows"
         # ping_cmd = ["ping", "-n", "1", ip] if is_windows else ["ping", "-c", "1", ip]
@@ -1724,8 +1786,8 @@ def main():
     )
 
     # Back-compat shorthands (kept): map to min-rate if explicit rates not provided
-    parser.add_argument("--upload", help="Legacy: upload rate Mbps (maps to side-a-min-rate)", default="2")
-    parser.add_argument("--download", help="Legacy: download rate Mbps (maps to side-b-min-rate)", default="2")
+    parser.add_argument("--upload", help="Legacy: upload rate Mbps (maps to side-a-min-rate)", default=UPLOAD_RATE)
+    parser.add_argument("--download", help="Legacy: download rate Mbps (maps to side-b-min-rate)", default=DOWNLOAD_RATE)
 
     # Fine-grained traffic parameters (defaults match __init__)
     # parser.add_argument("--side-a-min-rate", type=int, default=0, help="Mbps (default: 0)")
@@ -1746,6 +1808,7 @@ def main():
     parser.add_argument("--https", action="store_true", help="Use HTTPS to talk to WPS/WifiPDU (default: False)")
     parser.add_argument("--transient", action="store_true", help="Use transient power state (default: False)")
     parser.add_argument('--wps_outlets', type=str, default='', help='Outlets to turn ON (e.g. "1,2,3" or "1 2 3")')
+    parser.add_argument("--client_mac", required=True, help="Client MAC address")
 
     args = parser.parse_args()
 
@@ -1777,6 +1840,8 @@ def main():
         wps_ip=args.wps_ip,
         https=args.https,
         transient=args.transient,
+        client_mac=args.client_mac,
+        wps_outlets=args.wps_outlets,
     )
 
     lf.start()
