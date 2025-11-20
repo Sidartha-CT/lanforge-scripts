@@ -43,7 +43,7 @@ import subprocess
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 
 logger = logging.getLogger(__name__)
-lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
+# lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 os_name = platform.system()
 # Replace 'path_to_wkhtmltopdf' with the actual path to the wkhtmltopdf executable on your system
 
@@ -998,6 +998,134 @@ function copyTextToClipboard(ele) {
             date=self.date,
         )
         self.html += self.banner_html
+
+    # def add_router_ping_loss_table(self, table_data):
+    #     """
+    #     Generates a custom formatted table for Router Ping Loss report.
+    #     Args:
+    #         table_data (list of dict): Each dict contains one row's data like:
+    #             {
+    #                 'Sno.': 1,
+    #                 'Router Model Name': 'ROUTER1',
+    #                 'Without additional STAs (Without Load)': {
+    #                     'Client connectivity throughout the test': 'Connected',
+    #                     'Avg. ping loss (%)': 0.6,
+    #                     'PASS/FAIL (Avg. ping loss <1.5%)': 'PASS'
+    #                 },
+    #                 'With additional STAs (With Load)': {
+    #                     'Client connectivity throughout the test': 'Connected',
+    #                     'Avg. ping loss (%)': 1.8,
+    #                     'PASS/FAIL (Avg. ping loss <5%)': 'PASS'
+    #                 },
+    #                 'Remarks': ''
+    #             }
+    #     """
+    #     html_table = """
+    #     <h3 align='left'>Client Ping Loss Table</h3>
+    #     <table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; width: 100%; text-align: center;'>
+    #         <thead style='background-color: #f2f2f2;'>
+    #             <tr>
+    #                 <th rowspan='2'>Sno.</th>
+    #                 <th rowspan='2'>Router Model Name</th>
+    #                 <th colspan='3'>Without additional STAs (Without Load)</th>
+    #                 <th colspan='3'>With additional STAs (With Load)</th>
+    #                 <th rowspan='2'>Remarks</th>
+    #             </tr>
+    #             <tr>
+    #                 <th>Client connectivity<br>throughout the test</th>
+    #                 <th>Avg. ping loss (%)</th>
+    #                 <th>PASS/FAIL<br>(Avg. ping loss &lt;1.5%)</th>
+    #                 <th>Client connectivity<br>throughout the test</th>
+    #                 <th>Avg. ping loss (%)</th>
+    #                 <th>PASS/FAIL<br>(Avg. ping loss &lt;5%)</th>
+    #             </tr>
+    #         </thead>
+    #         <tbody>
+    #     """
+
+    #     for row in table_data:
+    #         html_table += f"""
+    #             <tr>
+    #                 <td>{row.get('Sno.', '')}</td>
+    #                 <td>{row.get('Router Model Name', '')}</td>
+    #                 <td>{row['Without additional STAs (Without Load)'].get('Client connectivity throughout the test', '')}</td>
+    #                 <td>{row['Without additional STAs (Without Load)'].get('Avg. ping loss (%)', '')}</td>
+    #                 <td>{row['Without additional STAs (Without Load)'].get('PASS/FAIL (Avg. ping loss <1.5%)', '')}</td>
+    #                 <td>{row['With additional STAs (With Load)'].get('Client connectivity throughout the test', '')}</td>
+    #                 <td>{row['With additional STAs (With Load)'].get('Avg. ping loss (%)', '')}</td>
+    #                 <td>{row['With additional STAs (With Load)'].get('PASS/FAIL (Avg. ping loss <5%)', '')}</td>
+    #                 <td>{row.get('Remarks', '')}</td>
+    #             </tr>
+    #         """
+
+    #     html_table += "</tbody></table><br>"
+    #     self.html += html_table
+
+    def generate_html_table(self, header_rows, column_keys, rows, table_title=None, table_style=None):
+        """
+        Generic HTML table generator.
+
+        Args:
+            header_rows: list of header-rows; each header-row is a list of dicts:
+                [{'label': 'Sno.', 'colspan': 1, 'rowspan': 2}, {'label': 'Router Model Name', 'colspan':1, 'rowspan':2}, ...]
+                colspan/rowspan are optional (default 1).
+                This allows multi-line headers and merged header cells.
+            column_keys: list of keys (strings) that define final column order for body rows.
+                Each body row can be a dict mapping key->value or a list/tuple matching column_keys order.
+            rows: list of rows (each row is dict or list)
+            table_title: optional title string shown above the table
+            table_style: optional inline style string for <table> (default used if None)
+        Returns:
+            html string for the table (not added to self.html automatically).
+        """
+        if table_style is None:
+            table_style = "border-collapse:collapse; width:100%; text-align:center;"
+
+        html = []
+        if table_title:
+            html.append(f"<h3 align='left'>{table_title}</h3>")
+
+        html.append(f"<table border='1' cellpadding='6' cellspacing='0' style='{table_style}'>")
+
+        # Build header rows
+        html.append("<thead style='background-color:#f2f2f2;'>")
+        for hr in header_rows:
+            html.append("<tr>")
+            for cell in hr:
+                label = cell.get('label', '')
+                colspan = int(cell.get('colspan', 1))
+                rowspan = int(cell.get('rowspan', 1))
+                attrs = ""
+                if colspan > 1:
+                    attrs += f" colspan='{colspan}'"
+                if rowspan > 1:
+                    attrs += f" rowspan='{rowspan}'"
+                html.append(f"<th{attrs}>{label}</th>")
+            html.append("</tr>")
+        html.append("</thead>")
+
+        # Build body rows
+        html.append("<tbody>")
+        for r in rows:
+            html.append("<tr>")
+            if isinstance(r, dict):
+                for key in column_keys:
+                    val = r.get(key, "")
+                    html.append(f"<td>{val}</td>")
+            else:
+                # treat as list/tuple in column_keys order
+                for i, key in enumerate(column_keys):
+                    try:
+                        val = r[i]
+                    except Exception:
+                        val = ""
+                    html.append(f"<td>{val}</td>")
+            html.append("</tr>")
+        html.append("</tbody>")
+        html.append("</table><br>")
+        return "\n".join(html)
+
+
 
 
 # Unit Test
