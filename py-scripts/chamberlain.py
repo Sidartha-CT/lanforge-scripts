@@ -17,12 +17,10 @@ from test_setup import (
     EXPECTED_PING_LOSS_WITH_LOAD,
     EXPECTED_PING_LATENCY_WITH_LOAD,
     WPS_AP_NAMES,
-    LED_WPS_NUMBER,
+    ROTATOR_WPS_NUMBER,
+    ROTATOR_WPS_IP,
     IP_FETCH_INTERVAL,
     IP_FETCH_RETRIES,
-    LED_ON_OFF_INTERVAL,
-    MAKE_SIMULATION,
-    LED_WPS_IP,
     SSID,
     SECURITY,
     PASSWORD,
@@ -802,7 +800,7 @@ class ChamberLain(JSON):
                  side_a_min_pdu=-1, side_b_min_pdu=-1, side_a_max_pdu=0, side_b_max_pdu=0,
                  upstream_port="eth1", ssid="", passwd="", security_type="", wifi_pdu=False,
                  wps_username="admin", wps_passwd="1234", wps_ip="192.168.212.152", https=False, transient=False,
-                 num_stations=10, radio="wiphy0", client_mac="", wps_outlets="", traffic_type="lf_udp"):
+                 num_stations=10, radio="wiphy0", client_mac="", wps_outlets="", traffic_type="lf_udp",enable_motion_detection=False):
         super().__init__(lanforge_ip=mgr, port=port)
         self.station_list = []
         self.mgr = mgr
@@ -854,7 +852,7 @@ class ChamberLain(JSON):
         self.stop_test = False
         self.real_client_ip = ""
         self.failed_ap = []
-        self.make_simulation = True if MAKE_SIMULATION.lower() == "yes" else False
+        self.enable_motion_detection = enable_motion_detection
         self.graph_data = {}
     def station_cleanup():
         pass
@@ -1543,7 +1541,6 @@ class ChamberLain(JSON):
             if ip:
                 return ip
         return ""
-        # sys.exit(0)
 
     def reset_port(self, port):
         eid = self.name_to_eid(port)
@@ -1635,20 +1632,38 @@ class ChamberLain(JSON):
         while True:
             if self.wifi:
                 # controller =
-                controller = wps.WifiPDU(LED_WPS_IP, use_https=self.https)
+                controller = wps.WifiPDU(ROTATOR_WPS_IP, use_https=self.https)
                 persistent = True  # transient not supported
             else:
-                controller = wps.WebPowerSwitch(LED_WPS_IP, self.wps_username, self.wps_passwd, use_https=self.https)
+                controller = wps.WebPowerSwitch(ROTATOR_WPS_IP, self.wps_username, self.wps_passwd, use_https=self.https)
                 persistent = not self.transient
-            logger.debug(f"Turning ON outlet {LED_WPS_NUMBER}")
-            controller.set_outlet(int(LED_WPS_NUMBER) - 1, True)
-            time.sleep(LED_ON_OFF_INTERVAL)
-            logger.debug(f"Turning OFF outlet {LED_WPS_NUMBER}")
-            controller.set_outlet(int(LED_WPS_NUMBER) - 1, False)
-            time.sleep(LED_ON_OFF_INTERVAL)
+            logger.debug(f"Turning ON outlet {ROTATOR_WPS_NUMBER}")
+            controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, True)
+            time.sleep(5)
+            logger.debug(f"Turning OFF outlet {ROTATOR_WPS_NUMBER}")
+            controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, False)
+            time.sleep(5)
 
             if self.stop_test:
                 return
+
+    def specific_on_off(self,on=False,off=False):
+        if self.wifi:
+            # controller =
+            controller = wps.WifiPDU(ROTATOR_WPS_IP, use_https=self.https)
+            persistent = True  # transient not supported
+        else:
+            controller = wps.WebPowerSwitch(ROTATOR_WPS_IP, self.wps_username, self.wps_passwd, use_https=self.https)
+            persistent = not self.transient
+        if on:
+            logger.debug(f"Turning ON outlet {ROTATOR_WPS_NUMBER}")
+            controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, True)
+        if off:
+            logger.debug(f"Turning OFF outlet {ROTATOR_WPS_NUMBER}")
+            controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, False)
+
+
+
 
     def fetch_real_client_ip(self):
         real_client_ip = ""
@@ -1657,25 +1672,26 @@ class ChamberLain(JSON):
         off = True
         while retries <= total_retries:
             logger.info(f"trying to fetch client ip retry no : {retries}")
-            # logger.debug(f"At retry {retries}: Turning ON outlet {LED_WPS_NUMBER}")
-            # self.controller.set_outlet(int(LED_WPS_NUMBER) - 1, True)
+            # logger.debug(f"At retry {retries}: Turning ON outlet {ROTATOR_WPS_NUMBER}")
+            # self.controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, True)
             real_client_ip = self.get_real_client_ip()
             if real_client_ip != "":
                 break
             time.sleep(IP_FETCH_INTERVAL)
-            # logger.debug(f"At Retry {retries}: Turning OFF outlet {LED_WPS_NUMBER}")
-            # self.controller.set_outlet(int(LED_WPS_NUMBER) - 1, False)
+            # logger.debug(f"At Retry {retries}: Turning OFF outlet {ROTATOR_WPS_NUMBER}")
+            # self.controller.set_outlet(int(ROTATOR_WPS_NUMBER) - 1, False)
             retries += 1
         self.real_client_ip = real_client_ip
         self.stop_test = True
+    
     # def simulation_led(self,controller):
 
-    #         print(f"Cycle {cycle}: Turning ON outlet {LED_WPS_NUMBER}")
+    #         print(f"Cycle {cycle}: Turning ON outlet {ROTATOR_WPS_NUMBER}")
     #         controller.set_outlet(OUTLET_INDEX, True)
 
     #         time.sleep(ON_OFF_INTERVAL)
 
-    #         print(f"Cycle {cycle}: Turning OFF outlet {LED_WPS_NUMBER}")
+    #         print(f"Cycle {cycle}: Turning OFF outlet {ROTATOR_WPS_NUMBER}")
     #         controller.set_outlet(OUTLET_INDEX, False)
 
     #         time.sleep(ON_OFF_INTERVAL)
@@ -1851,38 +1867,40 @@ class ChamberLain(JSON):
                 # real_client_ip = self.get_ip_by_mac(interface=self.upstream_port,cidr=cidr,mac="0c:95:05:96:96:23")
                 # print("real_client_ip",real_client_ip)
                 # exit(0)
-                if self.make_simulation:
-                    start_time = time.perf_counter()
-                    logger.info("Waiting for the MyQ client to connect...")
-                    self.stop_test = False
-                    # self.simulate_steps(True)
-                    # self.fetch_real_client_ip()
-                    # self.simulate_steps(False)
-                    # real_client_ip =self.fetch_real_client_ip()
-                    t1 = threading.Thread(target=self.fetch_real_client_ip)
-                    t2 = threading.Thread(target=self.simulate_steps)
-                    t1.start()
-                    t2.start()
+                # if self.make_simulation:
+                #     start_time = time.perf_counter()
+                #     logger.info("Waiting for the MyQ client to connect...")
+                #     self.stop_test = False
+                #     # self.simulate_steps(True)
+                #     # self.fetch_real_client_ip()
+                #     # self.simulate_steps(False)
+                #     # real_client_ip =self.fetch_real_client_ip()
+                #     t1 = threading.Thread(target=self.fetch_real_client_ip)
+                #     t2 = threading.Thread(target=self.simulate_steps)
+                #     t1.start()
+                #     t2.start()
                     
 
-                    t1.join()
-                    self.stop_test = True
-                    t2.join()
+                #     t1.join()
+                #     self.stop_test = True
+                #     t2.join()
 
-                    real_client_ip = self.real_client_ip
-                    end_time = time.perf_counter()
-                    elapsed_seconds = end_time - start_time
-                    elapsed_minutes = elapsed_seconds // 60
-                    elapsed_seconds_only = int(elapsed_seconds % 60)
-                else:
-                    start_time = time.perf_counter()
-                    logger.info("Waiting for the MyQ client to connect...")
-                    self.fetch_real_client_ip()
-                    real_client_ip = self.real_client_ip
-                    end_time = time.perf_counter()
-                    elapsed_seconds = end_time - start_time
-                    elapsed_minutes = elapsed_seconds // 60
-                    elapsed_seconds_only = int(elapsed_seconds % 60)
+                #     real_client_ip = self.real_client_ip
+                #     end_time = time.perf_counter()
+                #     elapsed_seconds = end_time - start_time
+                #     elapsed_minutes = elapsed_seconds // 60
+                #     elapsed_seconds_only = int(elapsed_seconds % 60)
+                # else:
+                if self.enable_motion_detection:
+                    self.specific_on_off(on=True)
+                start_time = time.perf_counter()
+                logger.info("Waiting for the MyQ client to connect...")
+                self.fetch_real_client_ip()
+                real_client_ip = self.real_client_ip
+                end_time = time.perf_counter()
+                elapsed_seconds = end_time - start_time
+                elapsed_minutes = elapsed_seconds // 60
+                elapsed_seconds_only = int(elapsed_seconds % 60)
 
 
                 if real_client_ip == "":
@@ -1892,12 +1910,15 @@ class ChamberLain(JSON):
                     self.rows.append(temp_data)
 
                     i += 1
+                    if self.enable_motion_detection:
+                        self.specific_on_off(off=True)
                     self.failed_ap.append(WPS_CONNECTED_AP_NAMES[int(switch)])
                     if self.wifi:
                         self.controller.set_outlet(int(switch) - 1, False)
                     else:
                         self.controller.set_outlet(int(switch) - 1, False, persistent=persistent)
                     continue
+                
                 # logger.info(f"MyQ Client took {elapsed_minutes} minutes to connect after bringing up {self.upstream_port}.")
                 minutes_text = f"{elapsed_minutes} minutes and " if elapsed_minutes else ""
                 logger.info(f"MyQ client took {minutes_text} {elapsed_seconds_only} seconds to connect after bringing up {self.upstream_port}.")
@@ -1935,6 +1956,9 @@ class ChamberLain(JSON):
                     self.controller.set_outlet(int(switch) - 1, False, persistent=persistent)
                 logger.info(f"In WPS{idx+1} Turning OFF AP {switch} : {WPS_CONNECTED_AP_NAMES[int(switch)]}")
                 i += 1
+                if self.enable_motion_detection:
+                    self.specific_on_off(off=True)
+
 
     def stop_l3_cx(self, cx_name):
         self.json_post("/cli-json/set_cx_state", {
@@ -2380,88 +2404,141 @@ class ChamberLain(JSON):
 def validate_config():
     errors = []
 
-    # LANFORGE DETAILS
+    # 1. DUT_NAME
+    if not isinstance(DUT_NAME, str) or not DUT_NAME.strip():
+        errors.append("DUT_NAME must be a non-empty string.")
+
+    # 2. MGR
     if not isinstance(MGR, str) or not MGR.strip():
         errors.append("MGR must be a non-empty string.")
 
-    # if not PORT.isdigit():
-    #     errors.append("PORT must contain digits only.")
-
+    # 3. PORT
     if isinstance(PORT, int):
         if PORT <= 0:
-            raise ValueError("PORT must be a positive integer.")
+            errors.append("PORT must be a positive integer.")
     elif isinstance(PORT, str):
         if not PORT.isdigit() or int(PORT) <= 0:
-            raise ValueError("PORT must be a positive numeric string.")
+            errors.append("PORT must be a positive numeric string.")
     else:
-        raise ValueError("PORT must be either an int or a numeric string.")
+        errors.append("PORT must be either int or a numeric string.")
 
-    # Stations
+    # 4. SSID / PASSWORD / SECURITY
+    if not isinstance(SSID, str) or not SSID.strip():
+        errors.append("SSID must be a non-empty string.")
+
+    if not isinstance(PASSWORD, str):
+        errors.append("PASSWORD must be a string.")
+
+    if SECURITY not in ["wpa2", "wpa3", "open"]:
+        errors.append("SECURITY must be one of: 'wpa2', 'wpa3', 'open'.")
+
+    # 5. NO_OF_STATIONS
     if not isinstance(NO_OF_STATIONS, int) or NO_OF_STATIONS <= 0:
         errors.append("NO_OF_STATIONS must be a positive integer.")
 
-    if not isinstance(WIPHY_RADIO, str):
-        errors.append("WIPHY_RADIO must be a string.")
+    # 6. WIPHY_RADIO
+    if not isinstance(WIPHY_RADIO, str) or not WIPHY_RADIO.strip():
+        errors.append("WIPHY_RADIO must be a non-empty string.")
 
-    if not isinstance(UPSTREAM_PORT, str):
-        errors.append("UPSTREAM_PORT must be a string.")
+    # 7. UPSTREAM_PORT
+    if not isinstance(UPSTREAM_PORT, str) or not UPSTREAM_PORT.strip():
+        errors.append("UPSTREAM_PORT must be a non-empty string.")
 
+    # 8. TRAFFIC_TYPE
     if TRAFFIC_TYPE not in ["tcp", "udp"]:
         errors.append("TRAFFIC_TYPE must be either 'tcp' or 'udp'.")
 
-    # Traffic rates
-    # if not UPLOAD_RATE.isdigit() or int(UPLOAD_RATE) <= 0:
-    #     errors.append("UPLOAD_RATE must be a positive number (string).")
+    # 9. UPLOAD_RATE / DOWNLOAD_RATE
+    for var_name, var_value in [("UPLOAD_RATE", UPLOAD_RATE), ("DOWNLOAD_RATE", DOWNLOAD_RATE)]:
+        if isinstance(var_value, int):
+            if var_value <= 0:
+                errors.append(f"{var_name} must be > 0.")
+        elif isinstance(var_value, str):
+            if not var_value.isdigit() or int(var_value) <= 0:
+                errors.append(f"{var_name} must be a positive number (int or numeric string).")
+        else:
+            errors.append(f"{var_name} must be int or numeric string.")
 
-    # if not DOWNLOAD_RATE.isdigit() or int(DOWNLOAD_RATE) <= 0:
-    #     errors.append("DOWNLOAD_RATE must be a positive number (string).")
-
-    if isinstance(UPLOAD_RATE, int):
-        if UPLOAD_RATE <= 0:
-            errors.append(f"UPLOAD_RATE must be greater than 0.")
-    elif isinstance(UPLOAD_RATE, str):
-        if not UPLOAD_RATE.isdigit() or int(UPLOAD_RATE) <= 0:
-            errors.append(f"UPLOAD_RATE must be a positive number (string or int).")
+    # 10. WPS_IP
+    if not isinstance(WPS_IP, list) or not WPS_IP:
+        errors.append("WPS_IP must be a non-empty list of IP strings.")
     else:
-        errors.append(f"UPLOAD_RATE must be either int or string containing digits.")
+        for ip in WPS_IP:
+            if not isinstance(ip, str) or not ip.strip():
+                errors.append("Each item in WPS_IP must be a non-empty IP string.")
+                break
 
-    if isinstance(DOWNLOAD_RATE, int):
-        if DOWNLOAD_RATE <= 0:
-            errors.append(f"DOWNLOAD_RATE must be greater than 0.")
-    elif isinstance(DOWNLOAD_RATE, str):
-        if not DOWNLOAD_RATE.isdigit() or int(DOWNLOAD_RATE) <= 0:
-            errors.append(f"DOWNLOAD_RATE must be a positive number (string or int).")
-    else:
-        errors.append(f"DOWNLOAD_RATE must be either int or string containing digits.")
-
-    # WPS details
-    # if not isinstance(WPS_IP, str) or not WPS_IP.strip():
-    #     errors.append("WPS_IP must be a valid IP string.")
-
+    # 11. WPS_USERNAME / WPS_PASSWORD
     if not isinstance(WPS_USERNAME, str) or not WPS_USERNAME.strip():
-        errors.append("WPS_USERNAME must be a non-empty string.")
-
+        errors.append("WPS_USERNAME must be non-empty.")
     if not isinstance(WPS_PASSWORD, str) or not WPS_PASSWORD.strip():
-        errors.append("WPS_PASSWORD must be a non-empty string.")
+        errors.append("WPS_PASSWORD must be non-empty.")
 
-    # Ping details
+    # 12. WPS_OUTLETS
+    if not isinstance(WPS_OUTLETS, list) or not WPS_OUTLETS:
+        errors.append("WPS_OUTLETS must be a non-empty list of lists.")
+    else:
+        for lst in WPS_OUTLETS:
+            if not isinstance(lst, list):
+                errors.append("WPS_OUTLETS must be a list of lists.")
+                break
+            for outlet in lst:
+                if not isinstance(outlet, str) or not outlet.isdigit() or int(outlet) <= 0:
+                    errors.append("All outlet numbers in WPS_OUTLETS must be positive digit strings.")
+                    break
+
+    # 13. WPS_AP_NAMES
+    if not isinstance(WPS_AP_NAMES, dict) or not WPS_AP_NAMES:
+        errors.append("WPS_AP_NAMES must be a non-empty dictionary.")
+    else:
+        for wps_key, ap_dict in WPS_AP_NAMES.items():
+            if not isinstance(wps_key, str):
+                errors.append("Keys in WPS_AP_NAMES must be strings.")
+                break
+            if not isinstance(ap_dict, dict):
+                errors.append(f"{wps_key} in WPS_AP_NAMES must map to a dictionary.")
+                break
+            for outlet_no, ap_name in ap_dict.items():
+                if not isinstance(outlet_no, int) or outlet_no <= 0:
+                    errors.append(f"Outlet index {outlet_no} in {wps_key} must be positive integer.")
+                if not isinstance(ap_name, str) or not ap_name.strip():
+                    errors.append(f"AP name for outlet {outlet_no} in {wps_key} must be a non-empty string.")
+
+    # 14. PING_TIME
     if not isinstance(PING_TIME, int) or PING_TIME <= 0:
-        errors.append("PING_TIME must be a positive integer (seconds).")
+        errors.append("PING_TIME must be a positive integer.")
 
-    # if not isinstance(WPS_OUTLETS, str) or not WPS_OUTLETS.strip():
-    #     errors.append("WPS_OUTLETS must be a non-empty string of comma-separated numbers.")
-    # else:
-    #     outlet_list = WPS_OUTLETS.split(",")
-    #     for outlet in outlet_list:
-    #         outlet = outlet.strip()
-    #         if not outlet.isdigit() or int(outlet) <= 0:
-    #             errors.append("Each value in WPS_OUTLETS must be a positive integer. Example: '1,2,3'.")
-    #             break
+    # 15. EXPECTED LOSS
+    if not isinstance(EXPECTED_PING_LOSS_WITHOUT_LOAD, (int, float)):
+        errors.append("EXPECTED_PING_LOSS_WITHOUT_LOAD must be numeric.")
+    if not isinstance(EXPECTED_PING_LOSS_WITH_LOAD, (int, float)):
+        errors.append("EXPECTED_PING_LOSS_WITH_LOAD must be numeric.")
 
+    # 16. Ping latency
+    if not isinstance(EXPECTED_PING_LATENCY_WITHOUT_LOAD, int):
+        errors.append("EXPECTED_PING_LATENCY_WITHOUT_LOAD must be integer.")
+    if not isinstance(EXPECTED_PING_LATENCY_WITH_LOAD, int):
+        errors.append("EXPECTED_PING_LATENCY_WITH_LOAD must be integer.")
+
+    # 17 & 18. IP fetch params
+    if not isinstance(IP_FETCH_INTERVAL, int) or IP_FETCH_INTERVAL <= 0:
+        errors.append("IP_FETCH_INTERVAL must be a positive integer.")
+
+    if not isinstance(IP_FETCH_RETRIES, int) or IP_FETCH_RETRIES <= 0:
+        errors.append("IP_FETCH_RETRIES must be a positive integer.")
+
+    # 19. ROTATOR_WPS_NUMBER
+    if not isinstance(ROTATOR_WPS_NUMBER, int) or ROTATOR_WPS_NUMBER <= 0:
+        errors.append("ROTATOR_WPS_NUMBER must be a positive integer.")
+
+    # 20. ROTATOR_WPS_IP
+    if not isinstance(ROTATOR_WPS_IP, str) or not ROTATOR_WPS_IP.strip():
+        errors.append("ROTATOR_WPS_IP must be a non-empty string.")
+
+    # Final check
     if errors:
         print("\n".join(errors))
-        exit(0)
-
+        exit(1)
 
 def main():
     import argparse
@@ -2510,6 +2587,7 @@ def main():
         parser.add_argument("--wps_ip", default=WPS_IP, help="WPS/WifiPDU IP (default: 192.168.212.152)")
     parser.add_argument("--https", action="store_true", help="Use HTTPS to talk to WPS/WifiPDU (default: False)")
     parser.add_argument("--transient", action="store_true", help="Use transient power state (default: False)")
+    parser.add_argument('--enable_motion_detection', help="If true will rotate the client", action='store_true')
     if type(WPS_IP) != list:
         parser.add_argument('--wps_outlets', type=str, default=WPS_OUTLETS, help='Outlets to turn ON (e.g. "1,2,3" or "1 2 3")')
     parser.add_argument("--client_mac", help="Client MAC address")
@@ -2547,7 +2625,8 @@ def main():
         transient=args.transient,
         client_mac=args.client_mac,
         wps_outlets=args.wps_outlets,
-        traffic_type=args.traffic_type
+        traffic_type=args.traffic_type,
+        enable_motion_detection=args.enable_motion_detection
     )
     logger.info("Clearing existing stations and L3 CXs")
     lf.pre_cleanup()

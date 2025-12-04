@@ -577,13 +577,17 @@ class FtpTest(LFCliBase):
                 self.station_profile.mode = 14
 
                 self.cx_profile.cleanup()
-
+                sta_prefix = "sta"
+                sta_start_id = 0
+                rad = "wiphy1"
+                # end = total#-1
                 # create station list with sta_id 20
                 self.station_list1 = LFUtils.portNameSeries(prefix_=self.sta_prefix, start_id_=self.sta_start_id,
                                                             end_id_=self.num_sta - 1, padding_number_=10000,
                                                             radio=rad)
 
                 # cleanup station list which started sta_id 20
+                
                 self.station_profile.cleanup(self.station_list1, debug_=self.debug)
                 LFUtils.wait_until_ports_disappear(base_url=self.lfclient_url,
                                                    port_list=self.station_list,

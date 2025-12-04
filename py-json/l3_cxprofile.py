@@ -599,6 +599,7 @@ class L3CXProfile(LFCliBase):
                     "ip_port": ip_port_a,
                     "multi_conn": self.mconn_A,
                 }
+                print("side a",endp_side_a)
                 endp_side_b = {
                     "alias": endp_b_name,
                     "shelf": side_b_shelf,
@@ -612,7 +613,8 @@ class L3CXProfile(LFCliBase):
                     "ip_port": ip_port_b,
                     "multi_conn": self.mconn_B,
                 }
-
+                print("side a",endp_side_b)
+                # exit(0)
                 url = "/cli-json/add_endp"
                 self.local_realm.json_post(_req_url=url,
                                            _data=endp_side_a,

@@ -40,6 +40,8 @@ class StationProfile:
         self.bssid = bssid
         self.ssid_pass = ssid_pass
         self.mode = mode
+        print(self.mode)
+        # exit(0)
         self.up = up
         self.resource = resource
         self.shelf = shelf
@@ -292,8 +294,10 @@ class StationProfile:
         # but caller may pass a non-upper case security type
         # so long as it matches one of supported types
         security_type = security_type.lower()
-
-        self.add_sta_data["ssid"] = ssid
+        print("before")
+        print("add_sta_flags",self.desired_add_sta_flags)
+        print("add mask",self.desired_add_sta_flags_mask)
+        self.add_sta_data["ssid"] = ssid#red
         if security_type in SECURITY_TYPES.keys():
             if (ssid is None) or (ssid == ""):
                 raise ValueError("use_security: %s requires ssid" % security_type)
@@ -309,6 +313,10 @@ class StationProfile:
                 self.desired_add_sta_flags_mask.append(SECURITY_TYPES[security_type])
             else:
                 passwd = "[BLANK]"
+            print("after")
+            print("add_sta_flags",self.desired_add_sta_flags)
+            print("add mask",self.desired_add_sta_flags_mask)
+            # exit(0)
             self.set_command_param("add_sta", "ssid", ssid)
             self.set_command_param("add_sta", "key", passwd)
             # unset any other security flag before setting our present flags
@@ -498,15 +506,15 @@ class StationProfile:
         radio_resource = radio_eid[1]
         radio_port = radio_eid[2]
 
-        if self.use_ht160:
+        if self.use_ht160:#waste
             self.desired_add_sta_flags.append("ht160_enable")
             self.desired_add_sta_flags_mask.append("ht160_enable")
         if self.mode is not None:
             self.add_sta_data["mode"] = self.mode
-        if use_radius:
+        if use_radius:#waste
             self.desired_add_sta_flags.append("8021x_radius")
             self.desired_add_sta_flags_mask.append("8021x_radius")
-        if hs20_enable:
+        if hs20_enable:#waste
             self.desired_add_sta_flags.append("hs20_enable")
             self.desired_add_sta_flags_mask.append("hs20_enable")
         if up_ is not None:
@@ -527,6 +535,9 @@ class StationProfile:
         self.add_sta_data["flags_mask"] = self.add_named_flags(self.desired_add_sta_flags_mask, add_sta.add_sta_flags)
         self.add_sta_data["radio"] = radio_port
         self.add_sta_data["ap"] = self.bssid
+        # print("hii")
+        # print(self.bssid)
+        # exit(0)
 
         self.add_sta_data["resource"] = radio_resource
         self.add_sta_data["shelf"] = radio_shelf
@@ -548,6 +559,8 @@ class StationProfile:
         # these are unactivated LFRequest objects that we can modify and
         # re-use inside a loop, reducing the number of object creations
         add_sta_r = LFRequest.LFRequest(self.lfclient_url + "/cli-json/add_sta", debug_=debug)
+        print(self.lfclient_url)
+        exit(0)
         set_port_r = LFRequest.LFRequest(self.lfclient_url + "/cli-json/set_port", debug_=debug)
         wifi_extra_r = LFRequest.LFRequest(self.lfclient_url + "/cli-json/set_wifi_extra", debug_=debug)
         wifi_extra2_r = LFRequest.LFRequest(self.lfclient_url + "/cli-json/set_wifi_extra2", debug_=debug)

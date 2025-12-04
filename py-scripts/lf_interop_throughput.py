@@ -827,11 +827,16 @@ class Throughput(Realm):
                 direction = 'UL'
         traffic_type = (self.traffic_type.strip("lf_")).upper()
         traffic_direction_list, cx_list, traffic_type_list = [], [], []
+        print("real_Client_list ",self.real_client_list)
+        print("real_Client_list1 ",self.real_client_list1)
         for _ in range(len(self.real_client_list)):
             traffic_direction_list.append(direction)
             traffic_type_list.append(traffic_type)
-
+        print("traffic_direction_list",traffic_direction_list)
+        print("traffic_type_list",traffic_type_list)
         # Construct connection names
+        print('self.tos',self.tos)
+        print('input devices list',self.input_devices_list)
         for _ in self.tos:
             for i in self.real_client_list1:
                 for j in traffic_direction_list:
@@ -839,15 +844,18 @@ class Throughput(Realm):
                         cxs = "%s_%s_%s" % (i, k, j)
                         cx_names = cxs.replace(" ", "")
                 cx_list.append(cx_names)
+        cx_list = ['sta0000', 'sta0001', 'sta0002', 'sta0003', 'sta0004', 'sta0005', 'sta0006', 'sta0007', 'sta0008', 'sta0009']
         logger.info('cx_list{}'.format(cx_list))
         count = 0
-
+        print("cx_names",cx_list)
         # creating duplicate created_cx's for precleanup of CX's if there are already existed
         if self.precleanup is True:
             self.cx_profile.created_cx = {k: [k + '-A', k + '-B'] for k in cx_list}
             self.pre_cleanup()
 
         # for ip_tos in range(len(self.tos)):
+        # self.input_devices_list
+        self.input_devices_list = ['1.1.sta0000', '1.1.sta0001', '1.1.sta0002', '1.1.sta0003', '1.1.sta0004', '1.1.sta0005', '1.1.sta0006', '1.1.sta0007', '1.1.sta0008', '1.1.sta0009']
         for device in range(len(self.input_devices_list)):
             logger.info("Creating connections for endpoint type: %s cx-count: %s" % (
                 self.traffic_type, self.cx_profile.get_cx_count()))
@@ -855,21 +863,26 @@ class Throughput(Realm):
                                    side_b=self.upstream, sleep_time=0, cx_name="%s" % (cx_list[count]))
             count += 1
         logger.info("cross connections with created")
+        # self.start()
+        # exit(0)
+        # exit(0)
 
-    # def start(self,print_pass=False, print_fail=False):
-    #     if(len(self.cx_profile.created_cx))>0:
-    #         # print(type(self.cx_profile.created_cx),self.cx_profile.created_cx.keys())
-    #         for cx in self.cx_profile.created_cx.keys():
-    #             req_url = "cli-json/set_cx_report_timer"
-    #             data = {
-    #                 "test_mgr": "all",
-    #                 "cx_name": cx,
-    #                 "milliseconds": 1000
-    #             }
-    #             self.json_post(req_url, data)
-    #     self.cx_profile.start_cx()
+    def start(self,print_pass=False, print_fail=False):
+        if(len(self.cx_profile.created_cx))>0:
+            # print(type(self.cx_profile.created_cx),self.cx_profile.created_cx.keys())
+            for cx in self.cx_profile.created_cx.keys():
+                req_url = "cli-json/set_cx_report_timer"
+                data = {
+                    "test_mgr": "all",
+                    "cx_name": cx,
+                    "milliseconds": 1000
+                }
+                self.json_post(req_url, data)
+        # self.cx_profile.start_cx()
 
     def start_specific(self, cx_list):
+        print(cx_list)
+        exit(0)
         """
         Starts specific connections from the given list and sets a report timer for them.
 

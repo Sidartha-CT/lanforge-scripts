@@ -545,7 +545,7 @@ def port_name_series(prefix="sta", start_id=0, end_id=1, padding_number=10000, r
     :param padding_number: used for width of resulting station number
     :return: list of stations
     """
-
+    
     eid = None
     if radio is not None:
         eid = name_to_eid(radio)
