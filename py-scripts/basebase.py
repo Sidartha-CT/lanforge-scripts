@@ -195,6 +195,7 @@ class Candela(Realm):
             return False
         if endp[0] != '/':
             endp = '/' + endp
+            enp += 1
         response = requests.post(url=self.api_url + endp, json=payload)
         return response
     def webgui_stop_check(self,test_name):
