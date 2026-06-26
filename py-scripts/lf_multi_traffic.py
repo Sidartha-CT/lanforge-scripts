@@ -32,12 +32,10 @@
         mcast_test
         vs_test
         thput_test
-
-    Real Application Tests (Only Series Supported):
-        yt_test        (YouTube)
-        rb_test        (Real Browser)
-        teams_test     (Microsoft Teams)
-        zoom_test      (Zoom Call)
+        yt_test        (YouTube)       -- only when device list is distinct from all other parallel real-app tests
+        rb_test        (Real Browser)  -- only when device list is distinct from all other parallel real-app tests
+        teams_test     (Microsoft Teams) -- only when device list is distinct from all other parallel real-app tests
+        zoom_test      (Zoom Call)     -- only when device list (including --zoom_host) is distinct from all other parallel real-app tests
 
 
     EXECUTION RULES:
@@ -50,7 +48,9 @@
     2. PARALLEL TESTS:
     - Runs tests simultaneously
     - Duplicate tests are NOT allowed
-    - Real application tests are NOT supported
+    - Real application tests (rb_test, yt_test, teams_test, zoom_test) are supported in parallel
+      ONLY when each test targets a completely distinct set of devices (no device shared across tests).
+      For zoom_test, --zoom_host is also treated as part of its device set for this check.
 
     3. HYBRID MODE:
     - Both --series_tests and --parallel_tests can be used
@@ -138,11 +138,13 @@
 
     EXAMPLE-2:
     Command Line Interface to run all parallel tests with full arguments
+    (Real-app tests are allowed in parallel only when each has a distinct, non-overlapping device list.
+    For zoom_test, --zoom_host is included in its device set and must also be unique.)
 
     python3 lf_multi_traffic.py \
     --mgr 192.168.207.78 \
     --upstream_port eth1 \
-    --parallel_tests ping_test,qos_test,ftp_test,http_test,mcast_test,vs_test,thput_test \
+    --parallel_tests ping_test,qos_test,ftp_test,http_test,mcast_test,vs_test,thput_test,rb_test,yt_test,zoom_test,teams_test \
     \
     --ping_target www.google.com \
     --ping_interval 5 \
@@ -180,7 +182,31 @@
     --thput_test_duration 1m \
     --thput_traffic_type lf_udp \
     --thput_device_list 1.10,1.11,1.20 \
-    --thput_upload 10000000
+    --thput_upload 10000000 \
+    \
+    --rb_duration 1m \
+    --rb_device_list 1.21,1.22 \
+    --rb_webgui_incremental no_increment \
+    --rb_count 10 \
+    \
+    --yt_url "https://youtu.be/BHACKCNDMW8?si=psTEUzrc77p38aU1" \
+    --yt_duration 1m \
+    --yt_res 144p \
+    --yt_device_list 1.23,1.24 \
+    \
+    --zoom_signin_email candelatech2@gmail.com \
+    --zoom_signin_passwd 'CANDELAtech1@530048' \
+    --zoom_duration 2 \
+    --zoom_host 1.25 \
+    --zoom_participants 2 \
+    --zoom_device_list 1.25,1.26 \
+    --zoom_audio \
+    --zoom_video \
+    \
+    --teams_duration 2m \
+    --teams_device_list 1.27,1.28 \
+    --teams_audio \
+    --teams_video
 
     EXAMPLE-3:
     Command Line Interface to run all series tests and parallel with full arguments
@@ -279,11 +305,16 @@
 
     base_class_obj.start_scenario()
 
+    EXAMPLE-6: Command Line Interface to configure devices by specifying device list, ssid , passwd, security.
+
+    python3 lf_multi_traffic.py --config --device_list 1.10,1.11 --ssid MyNetwork --security wpa2 --passwd MyPassword
 
     NOTES:
     1. Duration format: s (seconds), m (minutes), h (hours)
-    2. Parallel execution improves performance but is limited to network tests
-    3. Real application tests must always be executed in series
+    2. Parallel execution improves performance for all supported tests
+    3. Real application tests (rb_test, yt_test, teams_test, zoom_test) can run in parallel
+       only when each uses a completely distinct device list. Sharing any device across
+       parallel real-app tests is an error. For zoom_test, --zoom_host counts as a device.
     4. Avoid duplicates in parallel_tests
     5. Use --order_priority to control execution flow
 
@@ -328,6 +359,7 @@ import threading  # noqa: E402
 import time      # noqa: E402
 import traceback  # noqa: E402
 import copy     # noqa: E402
+import shutil   # noqa: E402
 from multiprocessing import Event, Lock, Manager, Value  # noqa: E402
 from types import SimpleNamespace  # noqa: E402
 
@@ -5762,7 +5794,6 @@ class MultiTraffic(Realm):
                 self.zoom_test_obj.stop_signal = True
                 logger.info("Waiting for Browser Cleanup in Laptops")
                 time.sleep(10)
-                self.zoom_test_obj.app = None
                 if self.dowebgui:
                     self.zoom_test_obj.stop_webui()
 
@@ -5770,6 +5801,8 @@ class MultiTraffic(Realm):
                     self.zoom_test_obj.generate_report_from_data()
                 elif api_stats_collection:
                     self.zoom_test_obj.generate_report_from_api()
+                self.zoom_test_obj.app = None
+                time.sleep(5)
                 # self.zoom_test_obj.redis_client = None
                 if self.dowebgui:
                     self.webgui_test_done("zoom")
@@ -11337,358 +11370,86 @@ class MultiTraffic(Realm):
                                             file_path, mode="r", encoding="utf-8", errors="ignore"
                                         ) as file:
                                             csv_reader = csv.DictReader(file)
+                                            fieldnames = csv_reader.fieldnames or []
+                                            is_api_format = "audio_input_jitter_avg" in fieldnames
                                             for row in csv_reader:
+                                                if is_api_format:
+                                                    ai_jit = float(row["audio_input_jitter_avg"] or 0)
+                                                    ao_jit = float(row["audio_output_jitter_avg"] or 0)
+                                                    ai_lat = float(row["audio_input_latency_avg"] or 0)
+                                                    ao_lat = float(row["audio_output_latency_avg"] or 0)
+                                                    ai_loss = float(row["audio_input_avg_loss_avg"] or 0)
+                                                    ao_loss = float(row["audio_output_avg_loss_avg"] or 0)
+                                                    vi_jit = float(row["video_input_jitter_avg"] or 0)
+                                                    vo_jit = float(row["video_output_jitter_avg"] or 0)
+                                                    vi_lat = float(row["video_input_latency_avg"] or 0)
+                                                    vo_lat = float(row["video_output_latency_avg"] or 0)
+                                                    vi_loss = float(row["video_input_avg_loss_avg"] or 0)
+                                                    vo_loss = float(row["video_output_avg_loss_avg"] or 0)
+                                                else:
+                                                    ai_jit = float(row["Sent Audio Jitter (ms)"])
+                                                    ao_jit = float(row["Receive Audio Jitter (ms)"])
+                                                    ai_lat = float(row["Sent Audio Latency (ms)"])
+                                                    ao_lat = float(row["Receive Audio Latency (ms)"])
+                                                    ai_loss = float((row["Sent Audio Packet loss (%)"]).split(" ")[0].replace("%", ""))
+                                                    ao_loss = float((row["Receive Audio Packet loss (%)"]).split(" ")[0].replace("%", ""))
+                                                    vi_jit = float(row["Sent Video Jitter (ms)"])
+                                                    vo_jit = float(row["Receive Video Jitter (ms)"])
+                                                    vi_lat = float(row["Sent Video Latency (ms)"])
+                                                    vo_lat = float(row["Receive Video Latency (ms)"])
+                                                    vi_loss = float((row["Sent Video Packet loss (%)"]).split(" ")[0].replace("%", ""))
+                                                    vo_loss = float((row["Receive Video Packet loss (%)"]).split(" ")[0].replace("%", ""))
 
-                                                per_client_data["audio_jitter_s"].append(
-                                                    float(row["Sent Audio Jitter (ms)"])
-                                                )
-                                                per_client_data["audio_jitter_r"].append(
-                                                    float(row["Receive Audio Jitter (ms)"])
-                                                )
-                                                per_client_data["audio_latency_s"].append(
-                                                    float(row["Sent Audio Latency (ms)"])
-                                                )
-                                                per_client_data["audio_latency_r"].append(
-                                                    float(row["Receive Audio Latency (ms)"])
-                                                )
-                                                per_client_data["audio_pktloss_s"].append(
-                                                    float(
-                                                        (row["Sent Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                )
-                                                per_client_data["audio_pktloss_r"].append(
-                                                    float(
-                                                        (row["Receive Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                )
-                                                per_client_data["video_jitter_s"].append(
-                                                    float(row["Sent Video Jitter (ms)"])
-                                                )
-                                                per_client_data["video_jitter_r"].append(
-                                                    float(row["Receive Video Jitter (ms)"])
-                                                )
-                                                per_client_data["video_latency_s"].append(
-                                                    float(row["Sent Video Latency (ms)"])
-                                                )
-                                                per_client_data["video_latency_r"].append(
-                                                    float(row["Receive Video Latency (ms)"])
-                                                )
-                                                per_client_data["video_pktloss_s"].append(
-                                                    float(
-                                                        (row["Sent Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                )
-                                                per_client_data["video_pktloss_r"].append(
-                                                    float(
-                                                        (row["Receive Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                )
+                                                per_client_data["audio_jitter_s"].append(ai_jit)
+                                                per_client_data["audio_jitter_r"].append(ao_jit)
+                                                per_client_data["audio_latency_s"].append(ai_lat)
+                                                per_client_data["audio_latency_r"].append(ao_lat)
+                                                per_client_data["audio_pktloss_s"].append(ai_loss)
+                                                per_client_data["audio_pktloss_r"].append(ao_loss)
+                                                per_client_data["video_jitter_s"].append(vi_jit)
+                                                per_client_data["video_jitter_r"].append(vo_jit)
+                                                per_client_data["video_latency_s"].append(vi_lat)
+                                                per_client_data["video_latency_r"].append(vo_lat)
+                                                per_client_data["video_pktloss_s"].append(vi_loss)
+                                                per_client_data["video_pktloss_r"].append(vo_loss)
 
-                                                temp_max_audio_jitter_s = max(
-                                                    temp_max_audio_jitter_s,
-                                                    float(row["Sent Audio Jitter (ms)"]),
-                                                )
-                                                temp_max_audio_jitter_r = max(
-                                                    temp_max_audio_jitter_r,
-                                                    float(row["Receive Audio Jitter (ms)"]),
-                                                )
-                                                temp_max_audio_latency_s = max(
-                                                    temp_max_audio_latency_s,
-                                                    float(row["Sent Audio Latency (ms)"]),
-                                                )
-                                                temp_max_audio_latency_r = max(
-                                                    temp_max_audio_latency_r,
-                                                    float(row["Receive Audio Latency (ms)"]),
-                                                )
-                                                temp_max_audio_pktloss_s = max(
-                                                    temp_max_audio_pktloss_s,
-                                                    float(
-                                                        (row["Sent Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    ),
-                                                )
-                                                temp_max_audio_pktloss_r = max(
-                                                    temp_max_audio_pktloss_r,
-                                                    float(
-                                                        (row["Receive Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    ),
-                                                )
+                                                temp_max_audio_jitter_s = max(temp_max_audio_jitter_s, ai_jit)
+                                                temp_max_audio_jitter_r = max(temp_max_audio_jitter_r, ao_jit)
+                                                temp_max_audio_latency_s = max(temp_max_audio_latency_s, ai_lat)
+                                                temp_max_audio_latency_r = max(temp_max_audio_latency_r, ao_lat)
+                                                temp_max_audio_pktloss_s = max(temp_max_audio_pktloss_s, ai_loss)
+                                                temp_max_audio_pktloss_r = max(temp_max_audio_pktloss_r, ao_loss)
+                                                temp_max_video_jitter_s = max(temp_max_video_jitter_s, vi_jit)
+                                                temp_max_video_jitter_r = max(temp_max_video_jitter_r, vo_jit)
+                                                temp_max_video_latency_s = max(temp_max_video_latency_s, vi_lat)
+                                                temp_max_video_latency_r = max(temp_max_video_latency_r, vo_lat)
+                                                temp_max_video_pktloss_s = max(temp_max_video_pktloss_s, vi_loss)
+                                                temp_max_video_pktloss_r = max(temp_max_video_pktloss_r, vo_loss)
 
-                                                temp_max_video_jitter_s = max(
-                                                    temp_max_video_jitter_s,
-                                                    float(row["Sent Video Jitter (ms)"]),
-                                                )
-                                                temp_max_video_jitter_r = max(
-                                                    temp_max_video_jitter_r,
-                                                    float(row["Receive Video Jitter (ms)"]),
-                                                )
-                                                temp_max_video_latency_s = max(
-                                                    temp_max_video_latency_s,
-                                                    float(row["Sent Video Latency (ms)"]),
-                                                )
-                                                temp_max_video_latency_r = max(
-                                                    temp_max_video_latency_r,
-                                                    float(row["Receive Video Latency (ms)"]),
-                                                )
-                                                temp_max_video_pktloss_s = max(
-                                                    temp_max_video_pktloss_s,
-                                                    float(
-                                                        (row["Sent Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    ),
-                                                )
-                                                temp_max_video_pktloss_r = max(
-                                                    temp_max_video_pktloss_r,
-                                                    float(
-                                                        (row["Receive Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    ),
-                                                )
-
-                                                temp_min_audio_jitter_s = (
-                                                    min(
-                                                        temp_min_audio_jitter_s,
-                                                        float(row["Sent Audio Jitter (ms)"]),
-                                                    )
-                                                    if temp_min_audio_jitter_s > 0
-                                                    and float(row["Sent Audio Jitter (ms)"]) > 0
-                                                    else (
-                                                        float(row["Sent Audio Jitter (ms)"])
-                                                        if float(row["Sent Audio Jitter (ms)"]) > 0
-                                                        else temp_min_audio_jitter_s
-                                                    )
-                                                )
-                                                temp_min_audio_jitter_r = (
-                                                    min(
-                                                        temp_min_audio_jitter_r,
-                                                        float(row["Receive Audio Jitter (ms)"]),
-                                                    )
-                                                    if temp_min_audio_jitter_r > 0
-                                                    and float(row["Receive Audio Jitter (ms)"]) > 0
-                                                    else (
-                                                        float(row["Receive Audio Jitter (ms)"])
-                                                        if float(row["Receive Audio Jitter (ms)"]) > 0
-                                                        else temp_min_audio_jitter_r
-                                                    )
-                                                )
-                                                temp_min_audio_latency_s = (
-                                                    min(
-                                                        temp_min_audio_latency_s,
-                                                        float(row["Sent Audio Latency (ms)"]),
-                                                    )
-                                                    if temp_min_audio_latency_s > 0
-                                                    and float(row["Sent Audio Latency (ms)"]) > 0
-                                                    else (
-                                                        float(row["Sent Audio Latency (ms)"])
-                                                        if float(row["Sent Audio Latency (ms)"]) > 0
-                                                        else temp_min_audio_jitter_s
-                                                    )
-                                                )
-                                                temp_min_audio_latency_r = (
-                                                    min(
-                                                        temp_min_audio_latency_r,
-                                                        float(row["Receive Audio Latency (ms)"]),
-                                                    )
-                                                    if temp_min_audio_latency_r > 0
-                                                    and float(row["Receive Audio Latency (ms)"]) > 0
-                                                    else (
-                                                        float(row["Receive Audio Latency (ms)"])
-                                                        if float(row["Receive Audio Latency (ms)"]) > 0
-                                                        else temp_min_audio_jitter_r
-                                                    )
-                                                )
-
-                                                temp_min_audio_pktloss_s = (
-                                                    min(
-                                                        temp_min_audio_pktloss_s,
-                                                        float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        ),
-                                                    )
-                                                    if temp_min_audio_pktloss_s > 0
-                                                    and float(
-                                                        (row["Sent Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                    > 0
-                                                    else (
-                                                        float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        if float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        > 0
-                                                        else temp_min_audio_pktloss_s
-                                                    )
-                                                )
-                                                temp_min_audio_pktloss_r = (
-                                                    min(
-                                                        temp_min_audio_pktloss_r,
-                                                        float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        ),
-                                                    )
-                                                    if temp_min_audio_pktloss_r > 0
-                                                    and float(
-                                                        (row["Sent Audio Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                    > 0
-                                                    else (
-                                                        float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        if float(
-                                                            (row["Sent Audio Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        > 0
-                                                        else temp_min_audio_pktloss_r
-                                                    )
-                                                )
-
-                                                temp_min_video_jitter_s = (
-                                                    min(
-                                                        temp_min_video_jitter_s,
-                                                        float(row["Sent Video Jitter (ms)"]),
-                                                    )
-                                                    if temp_min_video_jitter_s > 0
-                                                    and float(row["Sent Video Jitter (ms)"]) > 0
-                                                    else (
-                                                        float(row["Sent Video Jitter (ms)"])
-                                                        if float(row["Sent Video Jitter (ms)"]) > 0
-                                                        else temp_min_video_jitter_s
-                                                    )
-                                                )
-                                                temp_min_video_jitter_r = (
-                                                    min(
-                                                        temp_min_video_jitter_r,
-                                                        float(row["Receive Video Jitter (ms)"]),
-                                                    )
-                                                    if temp_min_video_jitter_r > 0
-                                                    and float(row["Receive Video Jitter (ms)"]) > 0
-                                                    else (
-                                                        float(row["Receive Video Jitter (ms)"])
-                                                        if float(row["Receive Video Jitter (ms)"]) > 0
-                                                        else temp_min_video_jitter_r
-                                                    )
-                                                )
-                                                temp_min_video_latency_s = (
-                                                    min(
-                                                        temp_min_video_latency_s,
-                                                        float(row["Sent Video Latency (ms)"]),
-                                                    )
-                                                    if temp_min_video_latency_s > 0
-                                                    and float(row["Sent Video Latency (ms)"]) > 0
-                                                    else (
-                                                        float(row["Sent Video Latency (ms)"])
-                                                        if float(row["Sent Video Latency (ms)"]) > 0
-                                                        else temp_min_video_latency_s
-                                                    )
-                                                )
-                                                temp_min_video_latency_r = (
-                                                    min(
-                                                        temp_min_video_latency_r,
-                                                        float(row["Receive Video Latency (ms)"]),
-                                                    )
-                                                    if temp_min_video_latency_r > 0
-                                                    and float(row["Receive Video Latency (ms)"]) > 0
-                                                    else (
-                                                        float(row["Receive Video Latency (ms)"])
-                                                        if float(row["Receive Video Latency (ms)"]) > 0
-                                                        else temp_min_video_latency_r
-                                                    )
-                                                )
-
-                                                temp_min_video_pktloss_s = (
-                                                    min(
-                                                        temp_min_video_pktloss_s,
-                                                        float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        ),
-                                                    )
-                                                    if temp_min_video_pktloss_s > 0
-                                                    and float(
-                                                        (row["Sent Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                    > 0
-                                                    else (
-                                                        float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        if float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        > 0
-                                                        else temp_min_video_pktloss_s
-                                                    )
-                                                )
-                                                temp_min_video_pktloss_r = (
-                                                    min(
-                                                        temp_min_video_pktloss_r,
-                                                        float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        ),
-                                                    )
-                                                    if temp_min_video_pktloss_r > 0
-                                                    and float(
-                                                        (row["Sent Video Packet loss (%)"])
-                                                        .split(" ")[0]
-                                                        .replace("%", "")
-                                                    )
-                                                    > 0
-                                                    else (
-                                                        float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        if float(
-                                                            (row["Sent Video Packet loss (%)"])
-                                                            .split(" ")[0]
-                                                            .replace("%", "")
-                                                        )
-                                                        > 0
-                                                        else temp_min_video_pktloss_r
-                                                    )
-                                                )
+                                                if ai_jit > 0:
+                                                    temp_min_audio_jitter_s = ai_jit if temp_min_audio_jitter_s == 0 else min(temp_min_audio_jitter_s, ai_jit)
+                                                if ao_jit > 0:
+                                                    temp_min_audio_jitter_r = ao_jit if temp_min_audio_jitter_r == 0 else min(temp_min_audio_jitter_r, ao_jit)
+                                                if ai_lat > 0:
+                                                    temp_min_audio_latency_s = ai_lat if temp_min_audio_latency_s == 0 else min(temp_min_audio_latency_s, ai_lat)
+                                                if ao_lat > 0:
+                                                    temp_min_audio_latency_r = ao_lat if temp_min_audio_latency_r == 0 else min(temp_min_audio_latency_r, ao_lat)
+                                                if ai_loss > 0:
+                                                    temp_min_audio_pktloss_s = ai_loss if temp_min_audio_pktloss_s == 0 else min(temp_min_audio_pktloss_s, ai_loss)
+                                                if ao_loss > 0:
+                                                    temp_min_audio_pktloss_r = ao_loss if temp_min_audio_pktloss_r == 0 else min(temp_min_audio_pktloss_r, ao_loss)
+                                                if vi_jit > 0:
+                                                    temp_min_video_jitter_s = vi_jit if temp_min_video_jitter_s == 0 else min(temp_min_video_jitter_s, vi_jit)
+                                                if vo_jit > 0:
+                                                    temp_min_video_jitter_r = vo_jit if temp_min_video_jitter_r == 0 else min(temp_min_video_jitter_r, vo_jit)
+                                                if vi_lat > 0:
+                                                    temp_min_video_latency_s = vi_lat if temp_min_video_latency_s == 0 else min(temp_min_video_latency_s, vi_lat)
+                                                if vo_lat > 0:
+                                                    temp_min_video_latency_r = vo_lat if temp_min_video_latency_r == 0 else min(temp_min_video_latency_r, vo_lat)
+                                                if vi_loss > 0:
+                                                    temp_min_video_pktloss_s = vi_loss if temp_min_video_pktloss_s == 0 else min(temp_min_video_pktloss_s, vi_loss)
+                                                if vo_loss > 0:
+                                                    temp_min_video_pktloss_r = vo_loss if temp_min_video_pktloss_r == 0 else min(temp_min_video_pktloss_r, vo_loss)
 
                                     elif self.do_bandsteering:
                                         if not self.dowebgui:
@@ -11797,7 +11558,7 @@ class MultiTraffic(Realm):
                                                     temp_min_video_pktloss_r = vo_loss if temp_min_video_pktloss_r == 0 else min(temp_min_video_pktloss_r, vo_loss)
 
                                 except Exception as e:
-                                    logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]['obj'].device_names[i]}", e)
+                                    logging.error(f"Error in reading data in client {self.zoom_obj_dict[ce][obj_name]['obj'].device_names[i]}: {e}")
                                     no_csv_client.append(curr_zoom_obj.device_names[i])
                                     rejected_clients.append(curr_zoom_obj.device_names[i])
                                 if curr_zoom_obj.device_names[i] not in no_csv_client:
@@ -11831,6 +11592,19 @@ class MultiTraffic(Realm):
                                     min_video_pktloss_r.append(temp_min_video_pktloss_r)
 
                                     final_dataset.append(per_client_data.copy())
+
+                            try:
+                                src_dir = curr_zoom_obj.report.path_date_time
+                                dst_dir = self.overall_report.path_date_time
+                                for csv_file in os.listdir(src_dir):
+                                    if csv_file.endswith('.csv'):
+                                        shutil.copy2(
+                                            os.path.join(src_dir, csv_file),
+                                            os.path.join(dst_dir, csv_file)
+                                        )
+                                        logging.info(f"Copied zoom CSV {csv_file} to overall report directory")
+                            except Exception as e:
+                                logging.error(f"Error copying zoom CSVs to overall report directory: {e}")
 
                             self.overall_report.set_table_title("Test Devices:")
                             self.overall_report.build_table_title()
@@ -12637,6 +12411,245 @@ class MultiTraffic(Realm):
         logging.info(f"Generated HTML report file: {html_file}")
         self.overall_report.write_pdf()
 
+    def configure_devices(self, device_list=None, ssid=None, passwd='[BLANK]', security='open',
+                          file_name='', wait_time=60, app_flags=None, upstream_port=None,
+                          eap_method='DEFAULT', eap_identity='', ieee8021x=False,
+                          ieee80211u=False, ieee80211w=1, enable_pkc=False,
+                          bss_transition=False, power_save=False, disable_ofdma=False,
+                          roam_ft_ds=False, key_management='DEFAULT', pairwise='NA',
+                          private_key='NA', ca_cert='NA', client_cert='NA',
+                          pk_passwd='NA', pac_file='NA'):
+        """
+        Configure WiFi on a list of real devices via DeviceConfig.
+
+        Args:
+            device_list (str | list): Comma-separated string or list of device identifiers
+                (serial numbers or shelf.resource EIDs). Pass 'all' to target all devices.
+            ssid (str): WiFi SSID to connect to. Required.
+            passwd (str): WiFi passphrase. Use '[BLANK]' for open networks.
+            security (str): Security type — open | wep | wpa | wpa2 | wpa3.
+            file_name (str): DeviceConfig group file name.
+            wait_time (int): Max seconds to wait for device configuration.
+            app_flags: App flags forwarded to DeviceConfig.
+            upstream_port (str): Port whose IP is used as the server_ip in config_dict.
+            eap_method (str): EAP authentication method.
+            eap_identity (str): EAP identity string.
+            ieee8021x (bool): Enable 802.1X enterprise authentication.
+            ieee80211u (bool): Enable 802.11u / Hotspot 2.0.
+            ieee80211w (int): Management Frame Protection level.
+            enable_pkc (bool): Enable PKC (Proactive Key Caching).
+            bss_transition (bool): Enable BSS Transition Management.
+            power_save (bool): Enable power-save mode.
+            disable_ofdma (bool): Disable OFDMA.
+            roam_ft_ds (bool): Enable FT-DS roaming.
+            key_management (str): Key management method (e.g. WPA-PSK, WPA-EAP).
+            pairwise (str): Pairwise cipher suite.
+            private_key (str): Path to EAP private key file.
+            ca_cert (str): Path to CA certificate file.
+            client_cert (str): Path to client certificate file.
+            pk_passwd (str): Password for the private key.
+            pac_file (str): Path to PAC file.
+
+        Returns:
+            list: EIDs of devices that were successfully configured.
+        """
+        if ssid is None:
+            logger.error('configure_devices: ssid is required')
+            return []
+
+        if passwd == '[BLANK]' and security.lower() != 'open':
+            logger.error('configure_devices: passwd is [BLANK] but security is not open')
+            return []
+        if passwd != '[BLANK]' and security.lower() == 'open':
+            logger.error('configure_devices: passwd provided but security is open')
+            return []
+
+        obj = DeviceConfig.DeviceConfig(lanforge_ip=self.lanforge_ip, file_name=file_name,
+                                        wait_time=wait_time, app_flags=app_flags)
+
+        upstream_port_ip = None
+        if upstream_port:
+            upstream_port_ip = obj.change_port_to_ip(upstream_port)
+
+        config_dict = {
+            'ssid': ssid,
+            'passwd': passwd,
+            'enc': security,
+            'eap_method': eap_method,
+            'eap_identity': eap_identity,
+            'ieee80211': ieee8021x,
+            'ieee80211u': ieee80211u,
+            'ieee80211w': ieee80211w,
+            'enable_pkc': enable_pkc,
+            'bss_transition': bss_transition,
+            'power_save': power_save,
+            'disable_ofdma': disable_ofdma,
+            'roam_ft_ds': roam_ft_ds,
+            'key_management': key_management,
+            'pairwise': pairwise,
+            'private_key': private_key,
+            'ca_cert': ca_cert,
+            'client_cert': client_cert,
+            'pk_passwd': pk_passwd,
+            'pac_file': pac_file,
+            'server_ip': upstream_port_ip,
+        }
+
+        all_devices = obj.get_all_devices()
+        display_list = []
+        all_device_ids = []
+        res_to_name = {}
+        name_to_res = {}
+
+        for device in all_devices:
+            if device["type"] == 'laptop':
+                display_list.append(device["shelf"] + '.' + device["resource"] + " " + device["hostname"])
+                all_device_ids.append(device["shelf"] + '.' + device["resource"])
+                name_to_res[device["hostname"]] = device["shelf"] + '.' + device["resource"]
+                res_to_name[device["shelf"] + '.' + device["resource"]] = device["hostname"]
+            else:
+                display_list.append(device["shelf"] + '.' + device["resource"] + " " + device["serial"])
+                all_device_ids.append(device["serial"])
+                name_to_res[device["serial"]] = device["eid"]
+                res_to_name[device["eid"]] = device["serial"]
+
+        logger.info("Available devices: %s", display_list)
+
+        if device_list is None:
+            raw = input("Enter devices to configure (comma-separated) or 'all': ")
+            if raw.strip().lower() == 'all':
+                dev_list = all_device_ids.copy()
+            else:
+                dev_list = [d.strip() for d in raw.split(',')]
+        else:
+            if isinstance(device_list, str):
+                device_list = [d.strip() for d in device_list.split(',')]
+            if any(d.lower() == 'all' for d in device_list):
+                dev_list = all_device_ids.copy()
+            else:
+                dev_list = list(device_list)
+
+        if not dev_list:
+            logger.error('configure_devices: no devices specified')
+            return []
+
+        filtered_dev_list = obj.filter_device_list(dev_list, name_to_res, res_to_name)
+        if not filtered_dev_list:
+            logger.error('configure_devices: no valid devices found after filtering')
+            return []
+
+        logger.info("Devices selected for configuration: %s", dev_list)
+        time.sleep(3)
+        logger.info("Filtered device list: %s", filtered_dev_list)
+
+        configured_eids = asyncio.run(obj.connectivity(device_list=filtered_dev_list, wifi_config=config_dict))
+
+        all_devices = obj.get_all_devices()
+        res_to_name.clear()
+        name_to_res.clear()
+        for device in all_devices:
+            if device["type"] == 'laptop':
+                name_to_res[device["hostname"]] = device["shelf"] + '.' + device["resource"]
+                res_to_name[device["shelf"] + '.' + device["resource"]] = device["hostname"]
+            else:
+                name_to_res[device["serial"]] = device["eid"]
+                res_to_name[device["eid"]] = device["serial"]
+
+        config_set = set(configured_eids)
+        for alias in list(configured_eids):
+            config_set.add(res_to_name.get(alias, alias))
+
+        success_logs = []
+        failed_logs = []
+        for dev in filtered_dev_list:
+            if len(dev.split('.')) == 2:
+                dev_str = f"{dev} / {res_to_name.get(dev, 'NA')}"
+            else:
+                dev_str = f"{name_to_res.get(dev, 'NA')} / {dev}"
+
+            if (dev in config_set
+                    or res_to_name.get(dev) in config_set
+                    or name_to_res.get(dev) in config_set):
+                success_logs.append(f"{dev_str} -> Successfully Configured")
+            else:
+                failed_logs.append(f"{dev_str} -> Configuration Failed")
+
+        logger.info("Configuration Results:")
+        for log in success_logs:
+            logger.info(log)
+        for log in failed_logs:
+            logger.error(log)
+
+        logger.info("Devices set for configuration: %s", filtered_dev_list)
+        logger.info("Devices configured: %s", configured_eids)
+
+        return configured_eids
+
+    def start_app(self, device_list=None, file_name='', wait_time=60, app_flags=None):
+        obj = DeviceConfig.DeviceConfig(lanforge_ip=self.lanforge_ip, file_name=file_name,
+                                        wait_time=wait_time, app_flags=app_flags)
+
+        all_devices = obj.get_all_devices()
+        display_list = []
+        all_device_ids = []
+        res_to_name = {}
+        name_to_res = {}
+
+        for device in all_devices:
+            if device["type"] == 'laptop':
+                display_list.append(device["shelf"] + '.' + device["resource"] + " " + device["hostname"])
+                all_device_ids.append(device["shelf"] + '.' + device["resource"])
+                name_to_res[device["hostname"]] = device["shelf"] + '.' + device["resource"]
+                res_to_name[device["shelf"] + '.' + device["resource"]] = device["hostname"]
+            else:
+                display_list.append(device["shelf"] + '.' + device["resource"] + " " + device["serial"])
+                all_device_ids.append(device["serial"])
+                name_to_res[device["serial"]] = device["eid"]
+                res_to_name[device["eid"]] = device["serial"]
+
+        logger.info("Available devices: %s", display_list)
+
+        if device_list is None:
+            raw = input("Enter devices to start app (comma-separated) or 'all': ")
+            if raw.strip().lower() == 'all':
+                dev_list = all_device_ids.copy()
+            else:
+                dev_list = [d.strip() for d in raw.split(',')]
+        else:
+            if isinstance(device_list, str):
+                device_list = [d.strip() for d in device_list.split(',')]
+            if any(d.lower() == 'all' for d in device_list):
+                dev_list = all_device_ids.copy()
+            else:
+                dev_list = list(device_list)
+
+        if not dev_list:
+            logger.error('start_app: no devices specified')
+            return []
+
+        filtered_dev_list = obj.filter_device_list(dev_list, name_to_res, res_to_name)
+        if not filtered_dev_list:
+            logger.error('start_app: no valid devices found after filtering')
+            return []
+
+        logger.info("Devices selected for start_app: %s", filtered_dev_list)
+
+        adb_port_list = []
+        for device in all_devices:
+            if device["type"] != 'adb':
+                continue
+            if device["serial"] in filtered_dev_list or device["eid"] in filtered_dev_list:
+                adb_port_list.append(device)
+
+        if not adb_port_list:
+            logger.error('start_app: no ADB devices found in filtered list')
+            return []
+
+        asyncio.run(obj.adb_obj.start_app(port_list=adb_port_list))
+
+        logger.info("start_app triggered on devices: %s", [d["serial"] for d in adb_port_list])
+        return [d["serial"] for d in adb_port_list]
+
 
 def validate_individual_args(args, test_name):
     '''
@@ -12854,12 +12867,10 @@ def parse_args(return_parser=False):
         mcast_test
         vs_test
         thput_test
-
-    Real Application Tests (Only Series Supported):
-        yt_test        (YouTube)
-        rb_test        (Real Browser)
-        teams_test     (Microsoft Teams)
-        zoom_test      (Zoom Call)
+        yt_test        (YouTube)       -- only when device list is distinct from all other parallel real-app tests
+        rb_test        (Real Browser)  -- only when device list is distinct from all other parallel real-app tests
+        teams_test     (Microsoft Teams) -- only when device list is distinct from all other parallel real-app tests
+        zoom_test      (Zoom Call)     -- only when device list (including --zoom_host) is distinct from all other parallel real-app tests
 
 
     EXECUTION RULES:
@@ -12872,7 +12883,9 @@ def parse_args(return_parser=False):
     2. PARALLEL TESTS:
     - Runs tests simultaneously
     - Duplicate tests are NOT allowed
-    - Real application tests are NOT supported
+    - Real application tests (rb_test, yt_test, teams_test, zoom_test) are supported in parallel
+      ONLY when each test targets a completely distinct set of devices (no device shared across tests).
+      For zoom_test, --zoom_host is also treated as part of its device set for this check.
 
     3. HYBRID MODE:
     - Both --series_tests and --parallel_tests can be used
@@ -12959,11 +12972,13 @@ def parse_args(return_parser=False):
 
     EXAMPLE-2:
     Command Line Interface to run all parallel tests with full arguments
+    (Real-app tests are allowed in parallel only when each has a distinct, non-overlapping device list.
+    For zoom_test, --zoom_host is included in its device set and must also be unique.)
 
     python3 lf_multi_traffic.py \
     --mgr 192.168.207.78 \
     --upstream_port eth1 \
-    --parallel_tests ping_test,qos_test,ftp_test,http_test,mcast_test,vs_test,thput_test \
+    --parallel_tests ping_test,qos_test,ftp_test,http_test,mcast_test,vs_test,thput_test,rb_test,yt_test,zoom_test,teams_test \
     \
     --ping_target www.google.com \
     --ping_interval 5 \
@@ -13001,7 +13016,31 @@ def parse_args(return_parser=False):
     --thput_test_duration 1m \
     --thput_traffic_type lf_udp \
     --thput_device_list 1.10,1.11,1.20 \
-    --thput_upload 10000000
+    --thput_upload 10000000 \
+    \
+    --rb_duration 1m \
+    --rb_device_list 1.21,1.22 \
+    --rb_webgui_incremental no_increment \
+    --rb_count 10 \
+    \
+    --yt_url "https://youtu.be/BHACKCNDMW8?si=psTEUzrc77p38aU1" \
+    --yt_duration 1m \
+    --yt_res 144p \
+    --yt_device_list 1.23,1.24 \
+    \
+    --zoom_signin_email candelatech2@gmail.com \
+    --zoom_signin_passwd 'CANDELAtech1@530048' \
+    --zoom_duration 2 \
+    --zoom_host 1.25 \
+    --zoom_participants 2 \
+    --zoom_device_list 1.25,1.26 \
+    --zoom_audio \
+    --zoom_video \
+    \
+    --teams_duration 2m \
+    --teams_device_list 1.27,1.28 \
+    --teams_audio \
+    --teams_video
 
     EXAMPLE-3:
     Command Line Interface to run all series tests and parallel with full arguments
@@ -13104,8 +13143,10 @@ def parse_args(return_parser=False):
 
     NOTES:
     1. Duration format: s (seconds), m (minutes), h (hours)
-    2. Parallel execution improves performance but is limited to network tests
-    3. Real application tests must always be executed in series
+    2. Parallel execution improves performance for all supported tests
+    3. Real application tests (rb_test, yt_test, teams_test, zoom_test) can run in parallel
+       only when each uses a completely distinct device list. Sharing any device across
+       parallel real-app tests is an error. For zoom_test, --zoom_host counts as a device.
     4. Avoid duplicates in parallel_tests
     5. Use --order_priority to control execution flow
 
@@ -13148,6 +13189,32 @@ def parse_args(return_parser=False):
     parser.add_argument('--no_cleanup', help='Do not cleanup before exit', action='store_true')
     parser.add_argument('--help_summary', action="store_true", help='Show summary of what this script does')
     parser.add_argument('--run_specific_scenario', action='store_true', help='Specify the scenario to run just by giving CLI as function call')
+    # Global device configuration (applied before any test runs)
+    parser.add_argument('--config', action='store_true', help='Configure devices before running tests')
+    parser.add_argument('--ssid', help='WiFi SSID for global device configuration')
+    parser.add_argument('--passwd', '--password', '--key', default='[BLANK]', help='WiFi passphrase/password/key')
+    parser.add_argument('--security', default='open', help='WiFi Security protocol: < open | wep | wpa | wpa2 | wpa3 >')
+    parser.add_argument('--file_name', type=str, default='', help='DeviceConfig group file name')
+    parser.add_argument('--wait_time', type=int, default=60, help='Max seconds to wait for device configuration')
+    parser.add_argument('--app_flags', default=None, help='App flags forwarded to DeviceConfig')
+    parser.add_argument('--eap_method', type=str, default='DEFAULT', help='EAP method for authentication')
+    parser.add_argument('--eap_identity', type=str, default='', help='EAP identity for authentication')
+    parser.add_argument('--ieee8021x', action='store_true', help='Enable 802.1X enterprise authentication')
+    parser.add_argument('--ieee80211u', action='store_true', help='Enable IEEE 802.11u (Hotspot 2.0) support')
+    parser.add_argument('--ieee80211w', type=int, default=1, help='IEEE 802.11w Management Frame Protection level')
+    parser.add_argument('--enable_pkc', action='store_true', help='Enable PKC (Proactive Key Caching)')
+    parser.add_argument('--bss_transition', action='store_true', help='Enable BSS Transition Management')
+    parser.add_argument('--power_save', action='store_true', help='Enable power-save mode')
+    parser.add_argument('--disable_ofdma', action='store_true', help='Disable OFDMA')
+    parser.add_argument('--roam_ft_ds', action='store_true', help='Enable FT-DS roaming')
+    parser.add_argument('--key_management', type=str, default='DEFAULT', help='Key management method (e.g. WPA-PSK, WPA-EAP)')
+    parser.add_argument('--pairwise', type=str, default='NA', help='Pairwise cipher suite')
+    parser.add_argument('--private_key', type=str, default='NA', help='EAP private key certificate file')
+    parser.add_argument('--ca_cert', type=str, default='NA', help='CA certificate file name')
+    parser.add_argument('--client_cert', type=str, default='NA', help='Client certificate file name')
+    parser.add_argument('--pk_passwd', type=str, default='NA', help='Password for the private key')
+    parser.add_argument('--pac_file', type=str, default='NA', help='PAC file name')
+    parser.add_argument('--start_app', action='store_true', help='Start the WeCAN app on devices before running tests')
     # PING ARGS
     # without config
     parser.add_argument('--ping_test',
@@ -13753,9 +13820,34 @@ def validate_arguments(args, test_map, args_dict):
             if test not in test_map:
                 logger.error(f"{test} is not available in test suite")
                 flag = 0
-        if any(test in tests_to_run_parallel for test in ("rb_test", "teams_test", "yt_test", "zoom_test")):
-            logger.error("Real application tests are not supported in parallel execution.")
-            exit(0)
+        # Real-app tests are allowed in parallel only when every test targets a distinct set of devices.
+        # zoom_host is included in zoom_test's device set because it participates in the session.
+        real_app_parallel = [t for t in tests_to_run_parallel if t in ("rb_test", "teams_test", "yt_test", "zoom_test")]
+        if real_app_parallel:
+            def _real_app_device_set(test_name):
+                raw_map = {
+                    "rb_test": getattr(args, "rb_device_list", None) or "",
+                    "yt_test": getattr(args, "yt_device_list", None) or "",
+                    "zoom_test": getattr(args, "zoom_device_list", None) or "",
+                    "teams_test": getattr(args, "teams_device_list", None) or "",
+                }
+                devices = set(d.strip() for d in raw_map[test_name].split(',') if d.strip())
+                if test_name == "zoom_test" and getattr(args, "zoom_host", None):
+                    devices.add(args.zoom_host.strip())
+                return devices
+
+            for i in range(len(real_app_parallel)):
+                for j in range(i + 1, len(real_app_parallel)):
+                    t1, t2 = real_app_parallel[i], real_app_parallel[j]
+                    overlap = _real_app_device_set(t1) & _real_app_device_set(t2)
+                    if overlap:
+                        logger.error(
+                            f"Parallel real-app tests '{t1}' and '{t2}' share device(s): "
+                            f"{', '.join(sorted(overlap))}. "
+                            "Each parallel real-app test must use a completely distinct device list "
+                            "(including --zoom_host for zoom_test)."
+                        )
+                        exit(1)
 
     # Abort execution if invalid tests were requested
     if not flag:
@@ -13851,6 +13943,45 @@ or a combination of both, with configurable execution priority.
         cycles=args.cycles,
         duration_to_skip=args.duration_to_skip,
         test_map=test_map)
+    if args.config:
+        multi_traffic_obj.configure_devices(
+            device_list=args.device_list or None,
+            ssid=args.ssid,
+            passwd=args.passwd,
+            security=args.security,
+            file_name=args.file_name,
+            wait_time=args.wait_time,
+            app_flags=args.app_flags,
+            upstream_port=args.upstream_port,
+            eap_method=args.eap_method,
+            eap_identity=args.eap_identity,
+            ieee8021x=args.ieee8021x,
+            ieee80211u=args.ieee80211u,
+            ieee80211w=args.ieee80211w,
+            enable_pkc=args.enable_pkc,
+            bss_transition=args.bss_transition,
+            power_save=args.power_save,
+            disable_ofdma=args.disable_ofdma,
+            roam_ft_ds=args.roam_ft_ds,
+            key_management=args.key_management,
+            pairwise=args.pairwise,
+            private_key=args.private_key,
+            ca_cert=args.ca_cert,
+            client_cert=args.client_cert,
+            pk_passwd=args.pk_passwd,
+            pac_file=args.pac_file,
+        )
+        if not args.series_tests and not args.parallel_tests:
+            exit(0)
+    if args.start_app:
+        multi_traffic_obj.start_app(
+            device_list=args.device_list or None,
+            file_name=args.file_name,
+            wait_time=args.wait_time,
+            app_flags=args.app_flags,
+        )
+        if not args.series_tests and not args.parallel_tests:
+            exit(0)
     # Map available test flags to their respective execution methods
     tests_to_run_series, tests_to_run_parallel, duration_dict = validate_arguments(args, test_map, args_dict)
     multi_traffic_obj.duration_dict = duration_dict.copy()
