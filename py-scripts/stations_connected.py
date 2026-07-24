@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 # Contains examples of using realm to query stations and get specific information from them
 import sys
 import os

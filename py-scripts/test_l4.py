@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 NAME: test_l4.py
 
@@ -83,6 +82,16 @@ EXAMPLE (ftp bytes-rd):
                  --report_file test_l4.csv --test_rig Test-Lab --test_tag L4 --dut_hw_version Linux
                  --dut_model_num 1 --dut_sw_version 5.4.5 --dut_serial_num 1234 --test_id "L4 data"
 
+EXAMPLE (using existing stations):
+    ./test_l4.py --mgr localhost --upstream_port eth1 --radio wiphy0 --use_ports "sta000 sta0001"
+                 --security {open|web|wpa|wpa2|wpa3} --ssid <ssid> --test_duration 1m --url "dl http://192.168/-.103/ /dev/null"
+                 --requests_per_ten 600 --test_type 'urls' --test_rig Test-Lab --dut_hw_version Linux --test_id "L4 data"
+
+EXAMPLE (using existing MACVLANS):
+    ./test_l4.py --mgr localhost --upstream_port eth1 --use_ports eth1#0 --security {open|web|wpa|wpa2|wpa3}
+                 --ssid <ssid> --test_duration 1m --url "dl http://192.168/-.103/ /dev/null"
+                 --requests_per_ten 600 --test_type 'urls' --test_rig Test-Lab --dut_hw_version Linux --test_id "L4 data"
+
 STATUS: UNDER DEVELOPMENT
 
 COPYRIGHT:
@@ -114,8 +123,8 @@ LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
 realm = importlib.import_module("py-json.realm")
 Realm = realm.Realm
 lanforge_api = importlib.import_module("lanforge_client.lanforge_api")
-from lanforge_client.lanforge_api import LFSession
-from lanforge_client.lanforge_api import LFJsonCommand
+from lanforge_client.lanforge_api import LFSession  # noqa: E402
+from lanforge_client.lanforge_api import LFJsonCommand  # noqa: E402 F401
 TestGroupProfile = realm.TestGroupProfile
 port_utils = importlib.import_module("py-json.port_utils")
 PortUtils = port_utils.PortUtils
@@ -156,7 +165,8 @@ class IPV4L4(Realm):
                  test_type=None,
                  _exit_on_error=False,
                  _exit_on_fail=False,
-                 l4_7_port=None):
+                 l4_7_port=None,
+                 port_list=None):
         super().__init__(lfclient_host=host, lfclient_port=port, debug_=_debug_on)
 
         self.host = host
@@ -193,7 +203,6 @@ class IPV4L4(Realm):
                                  stream_warnings=True,
                                  require_session=True,
                                  exit_on_error=True)
-        self.command: LFJsonCommand
         self.command = self.session.get_command()
         self.station_profile.lfclient_url = self.lfclient_url
         self.station_profile.ssid = self.ssid
@@ -206,6 +215,7 @@ class IPV4L4(Realm):
         self.ftp_passwd = ftp_passwd
         self.source = source
         self.dest = dest
+        self.port_list = port_list
 
         self.ftp = ftp
         self.http = False
@@ -252,9 +262,7 @@ class IPV4L4(Realm):
         endp_list = self.json_get("/layer4/all")
         # logger.info("endp_list: {endp_list}".format(endp_list=endp_list))
 
-        endp_rx_drop_map = {}
         endp_rx_map = {}
-        our_endps = {}
         endps = []
 
         total_bytes_rd = 0
@@ -356,13 +364,13 @@ class IPV4L4(Realm):
         # logger.debug("total-dl: ", total_dl, " total-ul: ", total_ul, "\n")
         return endp_rx_map, endps, total_bytes_rd, total_bytes_wr, total_rx_rate, total_tx_rate, urls_seconds, total_urls
 
-    def set_port_report_timer(self,cx_names=None):
-        for cx_name in cx_names:    
+    def set_port_report_timer(self, cx_names=None):
+        for cx_name in cx_names:
             self.command.post_set_cx_report_timer(cx_name=cx_name,
-                                             test_mgr="default_tm",
-                                             milliseconds=int(self.rpt_timer),
-                                             debug=self.debug)
-        
+                                                  test_mgr="default_tm",
+                                                  milliseconds=int(self.rpt_timer),
+                                                  debug=self.debug)
+
     def build(self):
         l4_7_port_lst = []
         if 'http' in self.url:
@@ -370,7 +378,13 @@ class IPV4L4(Realm):
             self.http = True
         if 'ftp' in self.url:
             self.port_util.set_ftp(port_name=self.name_to_eid(self.upstream_port)[2], resource=1, on=True)
-        if len(self.sta_list) > 0:
+        if self.port_list:
+            logger.info("Checking that all {num} specified ports exist".format(num=len(self.port_list)))
+            if not LFUtils.wait_until_ports_appear(port_list=self.port_list):
+                logger.critical("Not all ports specified ports exist")
+                exit(1)
+            self._pass("PASS: Specified ports found")
+        elif len(self.sta_list) > 0:
             # Build stations
             self.station_profile.use_security(self.security, self.ssid, self.password)
             logger.info("Creating stations")
@@ -401,21 +415,34 @@ class IPV4L4(Realm):
                     temp_url = self.url.split("//")
                     temp_url = ("//%s:%s@" % (self.ftp_user, self.ftp_passwd)).join(temp_url)
                     self.cx_profile.url = temp_url
-            self.cx_profile.create(
-                ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.station_profile.station_names,
-                sleep_time=.5, debug_=self.debug, suppress_related_commands_=True)
+            if self.port_list is None:
+                self.cx_profile.create(
+                    ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.station_profile.station_names,
+                    sleep_time=.5, debug_=self.debug, suppress_related_commands_=True)
+            else:
+                self.cx_profile.create(
+                    ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.port_list,
+                    sleep_time=.5, debug_=self.debug, suppress_related_commands_=True)
         else:
             # If port name is None, station names will be taken as port name
-            self.cx_profile.create(
-                ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.station_profile.station_names,
-                sleep_time=.5, debug_=self.debug, suppress_related_commands_=None)
+            if self.port_list is None:
+                self.cx_profile.create(
+                    ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.station_profile.station_names,
+                    sleep_time=.5, debug_=self.debug, suppress_related_commands_=None)
+            else:
+                self.cx_profile.create(
+                    ports=l4_7_port_lst if len(l4_7_port_lst) > 0 else self.port_list,
+                    sleep_time=.5, debug_=self.debug, suppress_related_commands_=None)
 
     def start(self, print_pass=False, print_fail=False):
         if self.ftp:
             self.port_util.set_ftp(port_name=self.name_to_eid(self.upstream_port)[2], resource=1, on=True)
         temp_stas = self.sta_list.copy()
 
-        self.station_profile.admin_up()
+        if self.port_list is None:
+            self.station_profile.admin_up()
+        else:
+            LFUtils.waitUntilPortsAdminUp(port_list=self.port_list)
         if len(temp_stas) > 0:
             if self.wait_for_ip(temp_stas):
                 self._pass("All stations got IPs", print_pass)
@@ -435,7 +462,10 @@ class IPV4L4(Realm):
             self.port_util.set_ftp(port_name=self.name_to_eid(self.upstream_port)[2], resource=1, on=False)
         if self.http:
             self.port_util.set_http(port_name=self.name_to_eid(self.upstream_port)[2], resource=1, on=False)
-        self.station_profile.admin_down()
+        if self.port_list is None:
+            self.station_profile.admin_down()
+        else:
+            LFUtils.waitUntilPortsAdminDown(port_list=self.port_list)
 
     def cleanup(self, sta_list, clean_all_sta=False, clean_all_l4_7=False):
         if clean_all_l4_7:
@@ -444,7 +474,7 @@ class IPV4L4(Realm):
                 self.cx_profile.created_cx = {}
                 if len(exist_l4['endpoint']) > 1:
                     for i in exist_l4['endpoint']:
-                        if i[list(i.keys())[0]]['name']!="":
+                        if i[list(i.keys())[0]]['name'] != "":
                             self.cx_profile.created_cx[list(i.keys())[0]] = 'CX_' + i[list(i.keys())[0]]['name']
                 else:
                     if self.cx_profile.created_cx[exist_l4['endpoint']['name']] != "":
@@ -461,8 +491,7 @@ class IPV4L4(Realm):
             self.station_profile.cleanup(desired_stations=exist_sta)
         else:
             self.station_profile.cleanup(sta_list)
-        LFUtils.wait_until_ports_disappear(base_url=self.lfclient_url, port_list=sta_list,
-                                           debug=self.debug)
+        LFUtils.wait_until_ports_disappear(base_url=self.lfclient_url, port_list=sta_list, debug=self.debug)
 
     # builds test data into kpi.csv report
     def record_kpi_csv(
@@ -692,6 +721,9 @@ Generic command example:
                                 default="")
     test_l4_parser.add_argument("--lf_user", type=str, help="--lf_user lanforge user name ", )
     test_l4_parser.add_argument("--lf_passwd", type=str, help="--lf_passwd lanforge password ")
+    test_l4_parser.add_argument('--use_ports', help='list of comma separated ports to use with ips, \'=\' separates name and ip'
+                                '{ port_name1=ip_addr1,port_name1=ip_addr2 }. '
+                                'Ports without ips will be left alone', default=None)
 
     # kpi_csv arguments
     test_l4_parser.add_argument(
@@ -733,6 +765,15 @@ Generic command example:
         default=None)
 
     args = parser.parse_args()
+
+    help_summary = '''\
+Work in Progress:
+This script will create stations and endpoints to generate and verify layer-4 traffic by monitoring the urls/s,
+ bytes-rd, or bytes-wr attribute of the endpoints.
+'''
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
 
     # set up logger
     logger_config = lf_logger_config.lf_logger_config()
@@ -880,8 +921,8 @@ Generic command example:
         shelf = rv[0]
         resource = rv[1]
         port_name = rv[2]
-        request_command = 'http://{lfmgr}:{lfport}/port/1/{resource}/{port_name}'.format(
-            lfmgr=args.mgr, lfport=args.mgr_port, resource=resource, port_name=port_name)
+        request_command = 'http://{lfmgr}:{lfport}/port/{shelf}/{resource}/{port_name}'.format(
+            lfmgr=args.mgr, lfport=args.mgr_port, shelf=shelf, resource=resource, port_name=port_name)
         logger.info("port request command: {request_command}".format(request_command=request_command))
 
         request = requests.get(request_command, auth=(args.lf_user, args.lf_passwd))
@@ -908,8 +949,16 @@ Generic command example:
     if (args.l4_7_port_name is not None) and (int(args.num_stations) == 0):
         num_sta = 0
 
-    station_list = LFUtils.portNameSeries(prefix_="sta", start_id_=0, end_id_=num_sta - 1, padding_number_=10000,
-                                          radio=args.radio)
+    port_list = None
+    if args.use_ports is not None:
+        temp_pl = args.use_ports.replace(',', ' ')
+        port_list = temp_pl.split()
+    station_list = None
+    if port_list and len(port_list) > 0:
+        station_list = port_list
+    else:
+        station_list = LFUtils.portNameSeries(prefix_="sta", start_id_=0, end_id_=num_sta - 1, padding_number_=10000,
+                                              radio=args.radio)
 
     ip_test = IPV4L4(host=args.mgr, port=args.mgr_port,
                      ssid=args.ssid,
@@ -935,11 +984,12 @@ Generic command example:
                      target_requests_per_ten=args.target_per_ten,
                      requests_per_ten=args.requests_per_ten,
                      rpt_timer=args.rpt_timer,
-                     l4_7_port=args.l4_7_port_name)
-    ip_test.cleanup(station_list, clean_all_sta=False if num_sta else True, clean_all_l4_7=False if num_sta else True)
+                     l4_7_port=args.l4_7_port_name,
+                     port_list=port_list)
+    if port_list is None:
+        ip_test.cleanup(station_list, clean_all_sta=False if num_sta else True, clean_all_l4_7=False if num_sta else True)
     ip_test.build()
     ip_test.start()
-    l4_cx_results = {}
     layer4traffic_list = []
     layer4_tm = []
     ip_test_json_data = ip_test.json_get('layer4')['endpoint']
@@ -953,10 +1003,10 @@ Generic command example:
         for endp in ip_test.json_get('layer4')['endpoint']:
             if endp[list(endp.keys())[0]]['name'] != '':
                 layer4traffic_list.append([*endp.keys()][0])
-        layer4traffic = ','.join([str(elem) for i,elem in enumerate(layer4traffic_list)])
+        layer4traffic = ','.join([str(elem) for i, elem in enumerate(layer4traffic_list)])
     # TODO pass in what is to be monitored on the command line
-    for cx_name in layer4traffic_list :
-        layer4_tm.append('CX_'+cx_name)
+    for cx_name in layer4traffic_list:
+        layer4_tm.append('CX_' + cx_name)
     ip_test.set_port_report_timer(cx_names=layer4_tm)
     ip_test.cx_profile.monitor(col_names=['name', 'bytes-rd', 'urls/s', 'bytes-wr'],
                                # report_file is for the monitor
@@ -987,7 +1037,6 @@ Generic command example:
     csv_results_file = ip_test.get_csv_name()
     logger.info("csv_results_file: %s", csv_results_file)
     # csv_results_file = kpi_path + "/" + kpi_filename
-    report_title = "Layer 4-7 Traffic Generation "
     report.set_title("Layer 4-7 Traffic Generation: test_l4.py")
     report.build_banner_left()
     report.start_content_div2()

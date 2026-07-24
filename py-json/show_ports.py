@@ -1,4 +1,3 @@
-# flake8: noqa
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # example of how to check a LANforge json url                                       -
 #                                                                                   -
@@ -33,3 +32,4 @@ def main():
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == "__main__":
     main()
+#

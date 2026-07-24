@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 NAME:       create_bond.py
 
@@ -110,7 +109,7 @@ def parse_args():
         epilog='''\
          Create bonds
             ''',
-        description='''\
+        description=r'''\
 NAME:       create_bond.py
 
 PURPOSE:    Create and configure a single bond port using the specified child ports.

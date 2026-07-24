@@ -1,85 +1,131 @@
 #!/usr/bin/env python3
-# flake8: noqa
-"""
-NAME: lf_create_vap_cv.py
+r"""
+NAME:       lf_create_vap_cv.py
 
-PURPOSE:
-    This script will create a vap using chamberview based upon a user defined frequency.
+PURPOSE:    Create a VAP (virtual access point) using LANforge Chamber View
 
-EXAMPLE:
-    Use './lf_create_vap_cv.py --help' to see command line usage and options
+EXAMPLE:    Use './lf_create_vap_cv.py --help' to see command line usage and options
 
-    ./lf_create_vap_cv.py --mgr localhost --port 8080 --lf_user lanforge --lf_password lanforge
-        --delete_old_scenario --scenario_name Automation --vap_radio wiphy0 --set_upstream True
-        --vap_freq 2437 --vap_ssid routed-AP --vap_passwd something --vap_security wpa2 --vap_bw 20
+            # Configure a basic 2.4GHz vAP with default DHCP server capabilities
+            ./lf_create_vap_cv.py --mgr localhost --port 8080 --lf_user lanforge --lf_password lanforge
+                --delete_old_scenario --scenario_name Automation --vap_radio wiphy0 --set_upstream True
+                --vap_freq 2437 --vap_ssid routed-AP --vap_passwd something --vap_security wpa2 --vap_bw 20
 
-    # For modify the net-smith dhcp min and max range
-    python3 ./lf_create_vap_cv.py --mgr 192.168.200.138 --port 8080 --delete_old_scenario --scenario_name hello
-    --vap_radio 1.1.wiphy0 --vap_freq 2437 --vap_ssid testings --vap_passwd Password@123 --vap_security wpa2 --num_vaps 2
-    --vap_bw 20 --vap_ip 192.168.0.16 --vap_ip_mask 255.255.0.0 --dhcp_min_range 192.168.0.5 --dhcp_max_range 192.168.0.200 
+            # Configure a 2.4GHz vAP with adjusted DHCP server capabilities (namely larger subnet mask and lease range)
+            ./lf_create_vap_cv.py --mgr 192.168.200.138 --port 8080 --delete_old_scenario --scenario_name hello
+            --vap_radio 1.1.wiphy0 --vap_freq 2437 --vap_ssid testings --vap_passwd Password@123 --vap_security wpa2 --num_vaps 2
+            --vap_bw 20 --vap_ip 192.168.0.16 --vap_ip_mask 255.255.0.0 --dhcp_min_range 192.168.0.5 --dhcp_max_range 192.168.0.200
 
-    vs_code launch.json example:
-    "args": ["--mgr","localhost",
-             "--port","8080",
-             "--lf_user","lanforge",
-             "--lf_password","lanforge",
-             "--vap_radio","wiphy0",
-             "--vap_freq","36",
-             "--vap_ssid","test_vap",
-             "--vap_passwd","password",
-             "--vap_security","wpa2",
-             "--vap_upstream_port","1.1.eth1"
+            # Load an existing Chamber View scenario
+            ./lf_create_vap_cv.py --mgr 192.168.200.222 --port 8080 --load_existing_scenario --old_scenario_name hello --instance_name oldscenario
+
+            # Basic 2.4GHz vAP configuration
+
+            # VSCode launch JSON
+            "args": ["--mgr","192.168.50.104",
+                "--port", "8080",
+                "--lf_user", "lanforge",
+                "--lf_password", "lanforge",
+                "--delete_old_scenario",
+                "--vap_radio", "wiphy1",
+                "--vap_channel", "36",
+                "--vap_ssid", "test_vap",
+                "--vap_passwd", "password",
+                "--vap_security", "wpa2",
+                "--vap_upstream_port", "1.1.eth2"
             ]
 
-            "args": ["--mgr","192.168.0.104",
-            "--port","8080",
-            "--lf_user","lanforge",
-            "--lf_password","lanforge",
-            "--delete_old_scenario",
-            "--scenario_name","dfs",
-            "--vap_radio","wiphy3",
-            "--vap_freq","5660",
-            "--vap_ssid","mtk7915_5g",
-            "--vap_passwd","lf_mtk7915_5g",
-            "--vap_security","wpa2",
-            "--vap_bw","20",
-            "--vap_upstream_port","1.1.eth2"
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.50.104\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --vap_radio wiphy1\
+            --vap_freq 36\
+            --vap_ssid test_vap\
+            --vap_passwd password\
+            --vap_security wpa2\
+            --vap_bw 20\
+            --vap_upstream_port 1.1.eth2
+
+            # Basic 5GHz vAP configuration using
+
+            # VSCode launch JSON
+            "args": ["--mgr","192.168.50.104",
+                "--port", "8080",
+                "--lf_user", "lanforge",
+                "--lf_password", "lanforge",
+                "--delete_old_scenario",
+                "--scenario_name", "dfs",
+                "--vap_radio", "wiphy3",
+                "--vap_freq", "5660",
+                "--vap_ssid", "mtk7915_5g",
+                "--vap_passwd", "lf_mtk7915_5g",
+                "--vap_security", "wpa2",
+                "--vap_bw", "20",
+                "--vap_upstream_port", "1.1.eth2"
             ]
 
-    # for loading existing scenario use
-    python3 ./lf_create_vap_cv.py --mgr 192.168.200.222 --port 8080  --load_existing_scenario --old_scenario_name hello --instance_name oldscenario
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.50.104\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --vap_radio wiphy3\
+            --vap_freq 5660\
+            --vap_ssid mtk7915_5g\
+            --vap_passwd lf_mtk7915_5g\
+            --vap_security wpa2\
+            --vap_bw 20\
+            --vap_upstream_port 1.1.eth2
 
-SCRIPT_CLASSIFICATION:  Creation
+            # 6g passing in the --vap_channel
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.101.137\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --scenario_name at7_vap_chan\
+            --vap_radio 1.2.wiphy2\
+            --vap_channel 1e\
+            --vap_ssid at7_6g\
+            --vap_passwd hello123\
+            --vap_security wpa3\
+            --vap_bw 320\
+            --vap_upstream_port 1.1.eth2
 
-SCRIPT_CATEGORIES: Functional
 
+SCRIPT_CLASSIFICATION:
+            Creation
 
-NOTES:
+SCRIPT_CATEGORIES:
+            Functional
 
-This script creates
-1. Chamber view scenario for vap
-2. Vap profile with given parameters
+NOTES:      This script leverages LANforge Chamber View automation, including profiles
+            and Chamber View Scenarios in order to create and configure the desired vAP.
 
-STATUS:   BETA RELEASE
+STATUS:     BETA RELEASE
 
 VERIFIED_ON:
-Working date : 05-July-2023
-Build version: 5.4.6
-Kernel version: 6.2.16+
+            Working date:   05-July-2023
+            Build version:  5.4.6
+            Kernel version: 6.2.16+
 
-LICENSE:
-    Free to distribute and modify. LANforge systems must be licensed.
-    Copyright 2023 Candela Technologies Inc
+LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
+            Copyright 2025 Candela Technologies Inc
 
 INCLUDE_IN_README: False
-
 """
-import subprocess
 import sys
 import os
 import importlib
 import argparse
-import time
 import logging
 import requests
 
@@ -107,9 +153,6 @@ set_port = importlib.import_module("py-json.LANforge.set_port")
 lfcli_base = importlib.import_module("py-json.LANforge.lfcli_base")
 LFCliBase = lfcli_base.LFCliBase
 LFRequest = importlib.import_module("py-json.LANforge.LFRequest")
-
-ipvt = importlib.import_module("py-scripts.test_ip_variable_time")
-IPVariableTime = ipvt.IPVariableTime
 
 radio_modify = importlib.import_module("py-scripts.lf_modify_radio")
 
@@ -151,7 +194,7 @@ class create_vap_cv(cv_test):
                                                             lf_passwd=lf_password,
                                                             debug=False,
                                                             static_ip=vap_ip,
-                                                            ip_mask = vap_ip_mask,
+                                                            ip_mask=vap_ip_mask,
                                                             gateway_ip=gateway_ip)
         self.profile_name = None
         self.vap_radio = None
@@ -159,21 +202,21 @@ class create_vap_cv(cv_test):
         self.set_upstream = set_upstream
         self.vap_bw = vap_bw
         self.vap_mode = vap_mode
-        self.vaps_list= []
+        self.vaps_list = []
 
-    def remove_profile(self,scenario_name="Automation"):
-        post_data = {"name":scenario_name}
-        post_url = "http://{}:{}/cli-json/rm_profile".format(self.lfclient_host,self.lf_port)
-        profile_data = requests.get(url="http://{}:{}/profile/all".format(self.lfclient_host,self.lf_port))
+    def remove_profile(self, scenario_name="Automation"):
+        post_data = {"name": scenario_name}
+        post_url = "http://{}:{}/cli-json/rm_profile".format(self.lfclient_host, self.lf_port)
+        profile_data = requests.get(url="http://{}:{}/profile/all".format(self.lfclient_host, self.lf_port))
         data = profile_data.json()
         for profile in data['profiles']:
-            for key,value in profile.items():
+            for _, value in profile.items():
                 if scenario_name in value['name']:
-                    requests.post(url=post_url,json=post_data)
+                    requests.post(url=post_url, json=post_data)
                 else:
                     logger.info("No existing profile with given scenario name {}".format(scenario_name))
             break
-        
+
     def setup_vap(self, scenario_name="Automation", radio="wiphy0", frequency="-1", name=None, vap_ssid=None, vap_pawd="[BLANK]", vap_security=None):
 
         profile_flag = {"wep": "2", "wpa": "4", "wpa2": "8", "wpa3": "20", "open": None}
@@ -184,7 +227,7 @@ class create_vap_cv(cv_test):
                                  lf_user=self.lf_user,
                                  lf_passwd=self.lf_passwd,
                                  )
-        
+
         if vap_security == "open":
             prof_flag = "1"
         else:
@@ -254,7 +297,7 @@ class create_vap_cv(cv_test):
     def build_chamberview(self, chamber, scenario_name):
         chamber.build(scenario_name)        # self.apply_and_build_scenario("Sushant1")
 
-    def build_and_setup_vap(self,delete_old_scenario=True, scenario_name="Automation", radio="wiphy0", vap_upstream_port="1.1.eth2",
+    def build_and_setup_vap(self, delete_old_scenario=True, scenario_name="Automation", radio="wiphy0", vap_upstream_port="1.1.eth2",
                             frequency=-1, amount=1, vap_ssid=None, vap_pawd="[BLANK]", vap_security=None):
         self.setup_vap(scenario_name=scenario_name,
                        radio=radio,
@@ -274,7 +317,7 @@ class create_vap_cv(cv_test):
                                          line=None)
 
         self.build_chamberview(chamber=chamber, scenario_name=scenario_name)
-        self.vaps_list=list(self.vap_list()[0].keys())
+        self.vaps_list = list(self.vap_list()[0].keys())
         self.wait_for_ip(station_list=self.vaps_list)
 
     def modify_vr_cfg(self, dhcp_min="", dhcp_max=""):  # modify & apply the net-smith vr(virtual router) config settings
@@ -303,77 +346,128 @@ def main():
     parser = argparse.ArgumentParser(
         prog="lf_create_vap_cv.py",
         formatter_class=argparse.RawTextHelpFormatter,
-        description="""
+        description=r"""
+NAME:       lf_create_vap_cv.py
 
-NAME: lf_create_vap_cv.py
+PURPOSE:    Create a VAP (virtual access point) using LANforge Chamber View
 
-PURPOSE:
-    This script will create a vap using chamberview based upon a user defined frequency.
+EXAMPLE:    Use './lf_create_vap_cv.py --help' to see command line usage and options
 
-EXAMPLE:
-    Use './lf_create_vap_cv.py --help' to see command line usage and options
+            # Configure a basic 2.4GHz vAP with default DHCP server capabilities
+            ./lf_create_vap_cv.py --mgr localhost --port 8080 --lf_user lanforge --lf_password lanforge
+                --delete_old_scenario --scenario_name Automation --vap_radio wiphy0 --set_upstream True
+                --vap_freq 2437 --vap_ssid routed-AP --vap_passwd something --vap_security wpa2 --vap_bw 20
 
-    ./lf_create_vap_cv.py --mgr localhost --port 8080 --lf_user lanforge --lf_password lanforge
-        --delete_old_scenario --scenario_name Automation --vap_radio wiphy0 --set_upstream True
-        --vap_freq 2437 --vap_ssid routed-AP --vap_passwd something --vap_security wpa2 --vap_bw 20
-        
-    # For modify the net-smith dhcp min and max range
-    python3 ./lf_create_vap_cv.py --mgr 192.168.200.138 --port 8080 --delete_old_scenario --scenario_name hello 
-    --vap_radio 1.1.wiphy0 --vap_freq 2437 --vap_ssid testings --vap_passwd Password@123 --vap_security wpa2 --num_vaps 2
-    --vap_bw 20 --vap_ip 192.168.0.16 --vap_ip_mask 255.255.0.0 --dhcp_min_range 192.168.0.5 --dhcp_max_range 192.168.0.200 
+            # Configure a 2.4GHz vAP with adjusted DHCP server capabilities (namely larger subnet mask and lease range)
+            ./lf_create_vap_cv.py --mgr 192.168.200.138 --port 8080 --delete_old_scenario --scenario_name hello
+            --vap_radio 1.1.wiphy0 --vap_freq 2437 --vap_ssid testings --vap_passwd Password@123 --vap_security wpa2 --num_vaps 2
+            --vap_bw 20 --vap_ip 192.168.0.16 --vap_ip_mask 255.255.0.0 --dhcp_min_range 192.168.0.5 --dhcp_max_range 192.168.0.200
 
-    vs_code launch.json example:
-    "args": ["--mgr","localhost",
-             "--port","8080",
-             "--lf_user","lanforge",
-             "--lf_password","lanforge",
-             "--vap_radio","wiphy0",
-             "--vap_freq","36",
-             "--vap_ssid","test_vap",
-             "--vap_passwd","password",
-             "--vap_security","wpa2",
-             "--vap_upstream_port","1.1.eth1"
+            # Load an existing Chamber View scenario
+            ./lf_create_vap_cv.py --mgr 192.168.200.222 --port 8080 --load_existing_scenario --old_scenario_name hello --instance_name oldscenario
+
+            # Basic 2.4GHz vAP configuration
+
+            # VSCode launch JSON
+            "args": ["--mgr","192.168.50.104",
+                "--port", "8080",
+                "--lf_user", "lanforge",
+                "--lf_password", "lanforge",
+                "--delete_old_scenario",
+                "--vap_radio", "wiphy1",
+                "--vap_channel", "36",
+                "--vap_ssid", "test_vap",
+                "--vap_passwd", "password",
+                "--vap_security", "wpa2",
+                "--vap_upstream_port", "1.1.eth2"
             ]
 
-            "args": ["--mgr","192.168.0.104",
-            "--port","8080",
-            "--lf_user","lanforge",
-            "--lf_password","lanforge",
-            "--delete_old_scenario",
-            "--scenario_name","dfs",
-            "--vap_radio","wiphy3",
-            "--vap_freq","5660",
-            "--vap_ssid","mtk7915_5g",
-            "--vap_passwd","lf_mtk7915_5g",
-            "--vap_security","wpa2",
-            "--vap_bw","20",
-            "--vap_upstream_port","1.1.eth2"
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.50.104\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --vap_radio wiphy1\
+            --vap_freq 36\
+            --vap_ssid test_vap\
+            --vap_passwd password\
+            --vap_security wpa2\
+            --vap_bw 20\
+            --vap_upstream_port 1.1.eth2
+
+            # Basic 5GHz vAP configuration using
+
+            # VSCode launch JSON
+            "args": ["--mgr","192.168.50.104",
+                "--port", "8080",
+                "--lf_user", "lanforge",
+                "--lf_password", "lanforge",
+                "--delete_old_scenario",
+                "--scenario_name", "dfs",
+                "--vap_radio", "wiphy3",
+                "--vap_freq", "5660",
+                "--vap_ssid", "mtk7915_5g",
+                "--vap_passwd", "lf_mtk7915_5g",
+                "--vap_security", "wpa2",
+                "--vap_bw", "20",
+                "--vap_upstream_port", "1.1.eth2"
             ]
 
-SCRIPT_CLASSIFICATION:  Creation
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.50.104\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --vap_radio wiphy3\
+            --vap_freq 5660\
+            --vap_ssid mtk7915_5g\
+            --vap_passwd lf_mtk7915_5g\
+            --vap_security wpa2\
+            --vap_bw 20\
+            --vap_upstream_port 1.1.eth2
 
-SCRIPT_CATEGORIES: Functional
+            # 6g passing in the --vap_channel
+            # command line
+            ./lf_create_vap_cv.py\
+            --mgr 192.168.101.137\
+            --port 8080\
+            --lf_user lanforge\
+            --lf_password lanforge\
+            --delete_old_scenario\
+            --scenario_name at7_vap_chan\
+            --vap_radio 1.2.wiphy2\
+            --vap_channel 1e\
+            --vap_ssid at7_6g\
+            --vap_passwd hello123\
+            --vap_security wpa3\
+            --vap_bw 320\
+            --vap_upstream_port 1.1.eth2
 
 
-NOTES:
+SCRIPT_CLASSIFICATION:
+            Creation
 
-This script creates
-1. Chamber view scenario for vap
-2. Vap profile with given parameters
+SCRIPT_CATEGORIES:
+            Functional
 
-STATUS:   BETA RELEASE
+NOTES:      This script leverages LANforge Chamber View automation, including profiles
+            and Chamber View Scenarios in order to create and configure the desired vAP.
+
+STATUS:     BETA RELEASE
 
 VERIFIED_ON:
-Working date : 05-July-2023
-Build version: 5.4.6
-Kernel version: 6.2.16+
+            Working date:   05-July-2023
+            Build version:  5.4.6
+            Kernel version: 6.2.16+
 
-LICENSE:
-    Free to distribute and modify. LANforge systems must be licensed.
-    Copyright 2023 Candela Technologies Inc
+LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
+            Copyright 2025 Candela Technologies Inc
 
 INCLUDE_IN_README: False
-
         """)
 
     cv_add_base_parser(parser)  # see cv_test_manager.py
@@ -392,8 +486,10 @@ INCLUDE_IN_README: False
                         help="Chamberview scenario name (by default: Automation")
     parser.add_argument("-vr", "--vap_radio", default="wiphy0",
                         help="vap radio name (by default: wiphy0")
-    parser.add_argument("-vf", "--vap_freq", default="2437",
-                        help="vap frequency (by default: 2437")
+    parser.add_argument("-vf", "--vap_freq",
+                        help="vap frequency, vap_frequency or vap_channel needs to be set")
+    parser.add_argument("-vc", "--vap_channel",
+                        help="vap channel,  vap_frequency or vap_channel needs to be set")
     parser.add_argument("-vs", "--vap_ssid", default="routed-AP",
                         help="vap ssid (by default: routed-AP")
     parser.add_argument("-vp", "--vap_passwd", default=None,
@@ -402,13 +498,13 @@ INCLUDE_IN_README: False
                         help="vap security like wep ,wpa, wpa2, wpa3 (by default: wpa2")
     parser.add_argument("--vap_upstream_port", default="1.1.eth2",
                         help="vap upstream_port (by default: 1.1.eth2")
-    parser.add_argument("--num_vaps", default= 1,
-                        type=int , help="enter the number of vaps need to be created (by default : 1)")
+    parser.add_argument("--num_vaps", default=1,
+                        type=int, help="enter the number of vaps need to be created (by default : 1)")
     parser.add_argument("--vap_bw", type=str, default=None, help="vap bw like 20, 40, 80, 160(by default: None")
     parser.add_argument("--vap_mode", type=str, default="AUTO",
                         help="vap mode can be selected from these"
                              '"AUTO", "a", "aAX", "abg", "abgn", "abgnAC", "abgnAX", "an","anAC", "anAX", "b", "bg", "bgn", "bgnAC"", "bgnAX"')
-    parser.add_argument("--set_upstream", default= True, help="Enter True if upstream need to be set else enter False")
+    parser.add_argument("--set_upstream", default=True, help="Enter True if upstream need to be set else enter False")
     parser.add_argument("--vap_ip", help='Modify the VAP DHCP ip address', default=None)
     parser.add_argument("--vap_ip_mask", help='Modify the VAP ip mask', default=None)
     parser.add_argument("--gateway", help="Modify the VAP Gateway ip")
@@ -444,14 +540,41 @@ INCLUDE_IN_README: False
     lf_create_vap_cv = create_vap_cv(lfclient_host=args.mgr, lf_port=args.port, lf_user=args.lf_user,
                                      lf_password=args.lf_password, vap_upstream_port=args.vap_upstream_port,
                                      vap_ip=args.vap_ip, vap_ip_mask=args.vap_ip_mask, gateway_ip=args.gateway,
-                                     vap_bw=args.vap_bw, vap_mode=args.vap_mode,set_upstream=args.set_upstream,
+                                     vap_bw=args.vap_bw, vap_mode=args.vap_mode, set_upstream=args.set_upstream,
                                      old_scenario_name=args.old_scenario_name, instance_name=args.instance_name)
 
     delete_old_scenario = args.delete_old_scenario
     vap_scenario_name = args.scenario_name
     vap_radio = args.vap_radio
     vap_upstream_port = args.vap_upstream_port
-    vap_freq = args.vap_freq
+    if args.vap_freq is not None:
+        vap_freq = args.vap_freq
+        logger.info("vap frequency {freq}".format(freq=vap_freq))
+    # conversion of 6e channel to frequency
+    # ch_6e = (f - 5000 )  / 5
+    # f = (ch_6e * 5) + 5000
+    elif args.vap_channel is not None:
+        if args.vap_channel != 'AUTO':
+            if 'e' in args.vap_channel:
+                channel_6e = args.vap_channel.replace('e', '')
+                vap_freq = ((int(channel_6e) + 190) * 5) + 5000
+                lf_6e_chan = int(channel_6e) + 190
+                logger.info("6e_chan: {chan} lf_6e_chan: {lf_chan} frequency: {freq}".format(chan=args.vap_channel, lf_chan=lf_6e_chan, freq=vap_freq))
+                # self.channel = lf_6e_chan
+            else:
+                if int(args.vap_channel) <= 13:
+                    # channel 1 is 2412 ,
+                    vap_freq = 2407 + int(args.vap_channel) * 5
+                elif int(args.vap_channel) == 14:
+                    vap_freq = 2484
+                # 5g or 6g Candela numbering
+                else:
+                    vap_freq = int(args.vap_channel) * 5 + 5000
+                logger.info("channel: {chan}  frequency: {freq}".format(chan=args.vap_channel, freq=vap_freq))
+    elif args.vap_freq is None and args.vap_channel is None:
+        logger.error("vap_freq or vap_channel must be entered as an argument")
+        exit(1)
+
     vap_ssid = args.vap_ssid
     vap_passwd = args.vap_passwd
     vap_security = args.vap_security
@@ -459,7 +582,7 @@ INCLUDE_IN_README: False
         lf_create_vap_cv.load_old_scenario()
     else:
         lf_create_vap_cv.remove_profile(scenario_name=vap_scenario_name)
-        lf_create_vap_cv.build_and_setup_vap(delete_old_scenario=delete_old_scenario, scenario_name=vap_scenario_name, radio=vap_radio,amount=args.num_vaps,
+        lf_create_vap_cv.build_and_setup_vap(delete_old_scenario=delete_old_scenario, scenario_name=vap_scenario_name, radio=vap_radio, amount=args.num_vaps,
                                              vap_upstream_port=vap_upstream_port, frequency=vap_freq, vap_ssid=vap_ssid, vap_pawd=vap_passwd, vap_security=vap_security)
         if args.dhcp_min_range and args.dhcp_max_range:
             lf_create_vap_cv.modify_vr_cfg(dhcp_min=args.dhcp_min_range, dhcp_max=args.dhcp_max_range)

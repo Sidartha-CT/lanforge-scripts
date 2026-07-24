@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
     Script for modifying stations.
 """
@@ -181,7 +180,7 @@ class ModifyStation(Realm):
             num_matching = 0
             pprint.pprint(["port_list:", port_list])
             if isinstance(port_list, dict):
-                for eid, record in port_list.items():
+                for _, record in port_list.items():
                     if not record["parent dev"]:
                         continue
                     if self.radio.endswith(record["parent dev"]):
@@ -328,7 +327,7 @@ def main():
     optional.add_argument('--mode',
                           default='NA',
                           help=f"set station wifi mode: "
-                               f"{', '.join(list(add_sta.add_sta_modes.keys()))}")
+                          f"{', '.join(list(add_sta.add_sta_modes.keys()))}")
     optional.add_argument('--bssid',
                           help="specify the BSSID of the AP to associate with, or DEFAULT")
     optional.add_argument('--ip',

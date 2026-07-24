@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 Candela Technologies Inc.
 Info : Standard Script for WLAN Capacity Calculator
@@ -29,16 +28,16 @@ def main():
         ---------------------------------------------------------------------------
 
     Example of command line to run(11ac Station):
-   ./wlan_capacity_calculator.py 
-        -sta 11ac 
-        -t Voice 
-        -d 9 
-        -spa 3    
+   ./wlan_capacity_calculator.py
+        -sta 11ac
+        -t Voice
+        -d 9
+        -spa 3
         -ch 20
-        -gu 800 
+        -gu 800
         -high 1
         -e TKIP
-        -q Yes 
+        -q Yes
         -ip 3
         -mc 0
         -b 6 12 24 54
@@ -46,9 +45,19 @@ def main():
         -co Greenfield
         -cw 15
             ''')
+    parse.add_argument('--help_summary', action="store_true", help='Show summary of what this script does')
 
     try:
         args = parse.parse_args()
+
+        help_summary = '''\
+This script calculates the theoretical value of three different stations( 11abg/11n/11ac)
+'''
+
+        if args.help_summary:
+            print(help_summary)
+            exit(0)
+
         # Station
         if args.station:
             Calculator_name = args.station

@@ -2,27 +2,23 @@
     "ct_us_002":{
         "Notes":[
             "This json file describes LANforge system and test run configuration"
-        ]  
+        ]
     },
     "test_rig_parameters":{
         "TEST_BED": "CT-US-002",
         "TEST_RIG": "CT-US-002",
         "TEST_SERVER": "http://192.168.100.184/",
         "DATABASE_SQLITE":"./tools/CT_002_AXE16K.db",
-        "LF_MGR_IP": "192.168.100.200",
+        "LF_MGR_IP": "192.168.101.18",
         "LF_MGR_PORT": "8080",
         "LF_MGR_USER": "lanforge",
         "LF_MGR_PASS": "lanforge",
         "UPSTREAM_PORT": "1.1.eth2",
         "UPSTREAM_ALIAS": "eth2",
         "TEST_TIMEOUT": 600,
-        "EMAIL_LIST_PRODUCTION": "konikofi@candelatech.com,dylan.eskew@candelatech.com,tricia.smiley@candelatech.com,chuck.rekiere@candelatech.com,rory.little@candelatech.com",
+        "EMAIL_LIST_PRODUCTION": "konikofi@candelatech.com,tricia.smiley@candelatech.com,chuck.rekiere@candelatech.com,rory.little@candelatech.com",
         "EMAIL_LIST_TEST": "tricia.smiley@candelatech.com,chuck.rekiere@candelatech.com",
         "EMAIL_TITLE_TXT": "CT-US-002 (192.168.100.200)",
         "EMAIL_TXT": "CT-US-002 (192.168.100.200"
     }
 }
-			
-	
-		
-	

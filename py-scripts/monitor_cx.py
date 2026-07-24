@@ -1,46 +1,50 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
-NAME: monitor_cx.py
+NAME:       monitor_cx.py
 
-PURPOSE: The Monitor CX script is for collecting CSV data from running Layer 3 connections. It reports data for each
-        endpoint. Start this script after beginning traffic in the GUI or other means. When all connections have
-        stopped, this script will exit. If this script is run before connections are started, it will immediately
-        exit.
+PURPOSE:    This simple script serves to collect and report CSV data from running LANforge Layer-3 connections.
+            It reports data for each specified endpoint and assumes traffic is already running.
 
-EXAMPLE:
-#########################################
-# Examples
-#########################################
+NOTES:      When all connections have stopped, this script will exit. If this script is run before connections
+            are started, it will immediately exit.
 
-Begin by starting traffic in the GUI or other means.
+            This script is kept intentionally simple to serve as a reference querying LANforge, specifically Layer-3 connections.
+            It uses the auto-generated LANforge API code and serves as a good starting ground for customization.
 
-Example monitoring one connection:
-$ ./monitor_cx.py --host ct521a-jana --cx_names cx1 --csv_file connections.csv
+EXAMPLE:    # Monitor a single connection:
+            ./monitor_cx.py \
+                --host      ct521a-jana \
+                --cx_names  cx1 \
+                --csv_file  connections.csv
 
-Example monitoring all connections:
-$ ./monitor_cx.py --host ct521a-jana --cx_names all --csv_file connections.csv
+            # Monitor multiple connections:
+            ./monitor_cx.py \
+                --host      ct521a-jana \
+                --cx_names  cx1,cx2 \
+                --csv_file  connections.csv
 
+            # Monitor all connections:
+            ./monitor_cx.py \
+                --host      ct521a-jana \
+                --cx_names  all \
+                --csv_file  connections.csv
 
-SCRIPT_CLASSIFICATION:  Monitors Traffic
+SCRIPT_CLASSIFICATION:
+            Monitors Traffic
 
-SCRIPT_CATEGORIES:  CSV Generation
+SCRIPT_CATEGORIES:
+            CSV Generation
 
-NOTES:
-        This script is purposely simple. It should serve as a reasonable basis for querying connections
-        in general. Please make a copy of this script and edit it to customize which columns you wish to collect.
+STATUS:     Functional
 
-STATUS: functional
+VERIFIED_ON:
+            Oct 2, 2023 jed@candelatech
 
-VERIFIED_ON: Oct 2, 2023 jed@candelatech
+LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
+            Copyright 2025 Candela Technologies Inc
 
-LICENSE
-          Free to distribute and modify. LANforge systems must be licensed.
-          Copyright 2023 Candela Technologies Inc
-
-INCLUDE_IN_README: True
-
-
+INCLUDE_IN_README:
+            True
 """
 import os
 import sys
@@ -62,9 +66,9 @@ sys.path.insert(1, "../")
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 
 lanforge_api = importlib.import_module("lanforge_client.lanforge_api")
-from lanforge_client.lanforge_api import LFSession
-from lanforge_client.lanforge_api import LFJsonCommand
-from lanforge_client.lanforge_api import LFJsonQuery
+from lanforge_client.lanforge_api import LFSession  # noqa: E402
+from lanforge_client.lanforge_api import LFJsonCommand  # noqa: E402
+from lanforge_client.lanforge_api import LFJsonQuery  # noqa: E402
 
 LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
 
@@ -110,7 +114,7 @@ class CxMonitor:
         self.query.debug_on = True
         self.cxnames: list = []
         self.endp_names: dict = {}
-        self.lines_written: int = 0;
+        self.lines_written: int = 0
 
         if not filename:
             raise ValueError("Please specify a filename")
@@ -274,7 +278,7 @@ class CxMonitor:
                         endp_name_to_alias[LFUtils.eid_to_str(LFUtils.name_to_eid(endp_vals["eid"]))]
                     ])
                     endp_vals: dict = list(endp.values())[0]
-                    if not "run" in endp_vals:
+                    if "run" not in endp_vals:
                         pprint.pprint(list(endp_vals))
                         quitting_time = True
                         raise ValueError("cannot find run column for endpoint, please include the *run* column")
@@ -293,7 +297,7 @@ class CxMonitor:
 
                 if possibly_running < 1:
                     quitting_time = True
-            except KeyboardInterrupt as k:
+            except KeyboardInterrupt:
                 quitting_time = True
 
     def close(self):
@@ -305,35 +309,57 @@ class CxMonitor:
                 pass
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(
         prog=__file__,
         formatter_class=argparse.RawTextHelpFormatter,
-        description="monitors connections and prints data to a csv file",
+        description="Monitor LANforge Layer-3 connections, saving reported data to specified CSV file",
     )
-    parser.add_argument(
-        "--host", "--mgr", help="specify the GUI to connect to, assumes port 8080"
-    )
+
+    parser.add_argument("-m", "--mgr", "--host",
+                        dest="host",
+                        type=str,
+                        default="localhost",
+                        help="Hostname for where LANforge GUI is running")
     parser.add_argument("--cx_names",
                         nargs="+",
-                        help="spsace or comma separated list of cx names, or ALL")
-    parser.add_argument("--csv_file", help="csv filename to save data to")
-    parser.add_argument(
-        "--quit",
-        default=QuitWhen.ALL_CX_STOPPED,
-        help="when to exit the script: all_cx_stopped: when all connections stop",
-    )
-    parser.add_argument(
-        "--debug", action="store_true", default=False, help="turn on debugging"
-    )
-    parser.add_argument("--log_level")
+                        help="Space or comma separated list of specific cx names to monitor, or 'all'")
+    parser.add_argument("--csv_file",
+                        help="CSV filename to save data")
 
-    args = parser.parse_args()
+    # TODO: Only seems to be one state we check for presently?
+    parser.add_argument("--quit",
+                        default=QuitWhen.ALL_CX_STOPPED,
+                        help="When to exit the script: all_cx_stopped: when all connections stop")
+
+    parser.add_argument("--debug",
+                        action="store_true",
+                        default=False,
+                        help="Enable verbose debug logging")
+    parser.add_argument("--log_level")
+    parser.add_argument('--help_summary',
+                        action="store_true",
+                        help='Show summary of what this script does')
+
+    return parser.parse_args()
+
+
+def main():
+    help_summary = "The Monitor CX script is for collecting CSV data from running Layer 3 connections. It reports data for each " \
+                   "endpoint. Start this script after beginning traffic in the GUI or other means. When all connections have " \
+                   "stopped, this script will exit. If this script is run before connections are started, it will immediately exit."
+
+    args = parse_args()
+
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
+
     if not args.csv_file:
-        print("No csv file name provided")
+        print("No CSV file name provided")
         exit(1)
     if not args.cx_names:
-        print("No connection names provided, did you mean ALL?")
+        print("No connection names provided, did you mean 'all'?")
         exit(1)
     if args.log_level:
         logger.setLevel(args.log_level)
@@ -361,6 +387,7 @@ def main():
         print(e)
     finally:
         cx_monitor.close()
+        print()  # Whitespace to break any previous status output from summary printout
         print(f"Wrote {cx_monitor.lines_written} lines to {cx_monitor.csvfile}")
     exit(0)
 

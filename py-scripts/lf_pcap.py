@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 NAME: lf_pcap.py
 
@@ -479,7 +478,7 @@ class LfPcap(Realm):
             if pcap_file is not None:
                 cap = self.read_pcap(pcap_file=pcap_file, apply_filter=filter)
                 packet_count = 0
-                value, data = '', None
+                # value, data = '', None
                 for pkt in cap:
                     # print(pkt)
                     if 'wlan.mgt' in pkt:
@@ -532,12 +531,23 @@ SETUP:
 This script requires pyshark to be installed before,you can install it by running "pip install pyshark"
 
 EXAMPLE:
-see: /py-scritps/lf_pcap.py 
+see: /py-scritps/lf_pcap.py
 ---------------------
 ''')
     parser.add_argument('--pcap_file', '-p', help='provide the pcap file path', dest="pcap_file",  default=None)
     parser.add_argument('--apply_filter', '-f', help='apply the filter you want to', dest='apply_filter', default=None)
+    parser.add_argument('--help_summary', action="store_true", help='Show summary of what this script does')
+
+    help_summary = '''\
+Common Library for reading pcap files and check packet information for specific filters.
+
+SETUP: This script requires pyshark and tshark to be installed before
+'''
     args = parser.parse_args()
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
+
     pcap_obj = LfPcap(
         host="192.168.100.131",
         port=8080,
@@ -556,6 +566,7 @@ see: /py-scritps/lf_pcap.py
     # pcap_obj.get_wlan_mgt_status_code(pcap_file=pcap_obj.pcap_file)
     # pcap_obj.get_packet_info(pcap_obj.pcap_file)
     pcap_obj.read_time(pcap_file="roam_11r_ota_iteration_0_2022-05-05-22-20.pcap")
+
 
 if __name__ == "__main__":
     main()

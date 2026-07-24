@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-# flake8: noqa
+"""
+Note that this code should not be confused with the similarly-named
+example 'port_probe.py' script in 'py-scripts'.
+"""
+
 import importlib
 from time import sleep
-# import pandas as pd
 import sys
 import os
 from pprint import pformat
@@ -10,13 +13,9 @@ import logging
 import traceback
 
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
-
 lfcli_base = importlib.import_module("py-json.LANforge.lfcli_base")
 LFCliBase = lfcli_base.LFCliBase
-
 logger = logging.getLogger(__name__)
-
-# Probe data can change frequently. It is recommended to update
 
 
 class ProbePort(LFCliBase):
@@ -58,7 +57,6 @@ class ProbePort(LFCliBase):
         self.rx_data_rate_gi_long_Mbps = None
 
         self.data_rate = None
-        # folder = os.path.dirname(__file__)
 
     def refreshProbe(self):
         self.json_post(self.probepath, {})

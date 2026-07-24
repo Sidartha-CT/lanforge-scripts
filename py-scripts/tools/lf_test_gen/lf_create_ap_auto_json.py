@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# flake8: noqa
+
 '''
 NAME: lf_create_ap_auto_json.py
 
@@ -51,6 +51,9 @@ class lf_create_ap_auto_json():
                  _file_2g,
                  _file_5g,
                  _file_6g,
+                 _dir_2g,
+                 _dir_5g,
+                 _dir_6g,
                  _ap_auto_duration,
                  _use_radio_dict,
                  _radio_dict,
@@ -68,17 +71,21 @@ class lf_create_ap_auto_json():
                  _suite_test_name_6g_dict,
                  _radio_count,
                  _radio_batch_dict,
-                 _lf_ap_auto_basic_client_connectivity,
-                 _lf_ap_auto_multi_band_performance,
-                 _lf_ap_auto_multi_station_throughput_vs_pkt_size,
-                 _lf_ap_auto_stability,
-                 _lf_ap_auto_channel_switching_test,
-                 _lf_ap_auto_throughput_vs_pkt_size,
-                 _lf_ap_auto_capacity,
-                 _lf_ap_auto_band_steering,
-                 _lf_ap_auto_long_term,
                  _lf_ap_auto_use_qa_var,
-                 _lf_ap_auto_use_inspect_var
+                 _lf_ap_auto_use_inspect_var,
+                 _lf_radio_2g,
+                 _lf_radio_5g,
+                 _lf_radio_6g,
+                 _lf_ap_auto_number_dut_indexes_combobox,
+                 _lf_ap_auto_basic_client_connectivity,  # basic_cx
+                 _lf_ap_auto_band_steering,  # band_steering
+                 _lf_ap_auto_capacity,  # capacity
+                 _lf_ap_auto_channel_switching_test,  # channel_switch
+                 _lf_ap_auto_long_term,  # long_term
+                 _lf_ap_auto_stability,  # mix_stability
+                 _lf_ap_auto_throughput_vs_pkt_size,  # tput_single_sta
+                 _lf_ap_auto_multi_station_throughput_vs_pkt_size,  # tput_multi_sta
+                 # _lf_ap_auto_band_steering,
                  ):
         self.test_suite_band = ""
         self.use_radio_dict = _use_radio_dict
@@ -91,13 +98,13 @@ class lf_create_ap_auto_json():
         self.radio_batch_dict = _radio_batch_dict
 
         self.lf_ap_auto_basic_client_connectivity = _lf_ap_auto_basic_client_connectivity
-        self.lf_ap_auto_multi_band_performance = _lf_ap_auto_multi_band_performance
+        self.lf_ap_auto_band_steering = _lf_ap_auto_band_steering
         self.lf_ap_auto_multi_station_throughput_vs_pkt_size = _lf_ap_auto_multi_station_throughput_vs_pkt_size
         self.lf_ap_auto_stability = _lf_ap_auto_stability
         self.lf_ap_auto_channel_switching_test = _lf_ap_auto_channel_switching_test
         self.lf_ap_auto_throughput_vs_pkt_size = _lf_ap_auto_throughput_vs_pkt_size
         self.lf_ap_auto_capacity = _lf_ap_auto_capacity
-        self.lf_ap_auto_band_steering = _lf_ap_auto_band_steering
+        # self.lf_ap_auto_band_steering = _lf_ap_auto_band_steering
         self.lf_ap_auto_long_term = _lf_ap_auto_long_term
 
         self.lf_ap_auto_use_qa_var = _lf_ap_auto_use_qa_var
@@ -105,10 +112,39 @@ class lf_create_ap_auto_json():
         self.radio_index = ""
 
         # TODO Future copy generated file to alternate file (low priority until requeste)
+        self.dir_2g = _dir_2g
+        self.dir_5g = _dir_5g
+        self.dir_6g = _dir_6g
 
-        self.file_2g = "ct_perf_ap_auto_2g" + _suite_radios_2g + ".json"
-        self.file_5g = "ct_perf_ap_auto_5g" + _suite_radios_5g + ".json"
-        self.file_6g = "ct_perf_ap_auto_6g" + _suite_radios_6g + ".json"
+        self.file_2g = _file_2g
+        self.file_5g = _file_5g
+        self.file_6g = _file_6g
+
+        if self.file_2g == "":
+            self.file_2g = "ct_perf_ap_auto_2g" + _suite_radios_2g + ".json"
+        if self.file_5g == "":
+            self.file_5g = "ct_perf_ap_auto_5g" + _suite_radios_5g + ".json"
+        if self.file_6g == "":
+            self.file_6g = "ct_perf_ap_auto_6g" + _suite_radios_6g + ".json"
+
+        self.dir_file_2g = ""
+        self.dir_file_5g = ""
+        self.dir_file_6g = ""
+
+        if self.dir_2g != "":
+            self.dir_file_2g = self.dir_2g + "/" + self.file_2g
+        else:
+            self.dir_file_2g = self.file_2g
+
+        if self.dir_5g != "":
+            self.dir_file_5g = self.dir_5g + "/" + self.file_5g
+        else:
+            self.dir_file_5g = self.file_5g
+
+        if self.dir_6g != "":
+            self.dir_file_6g = self.dir_6g + "/" + self.file_6g
+        else:
+            self.dir_file_6g = self.file_6g
 
         if _ap_auto_duration == "":
             self.ap_auto_duration = '20000'
@@ -141,6 +177,15 @@ class lf_create_ap_auto_json():
 
     def get_file_6g(self):
         return self.file_6g
+
+    def get_dir_2g(self):
+        return os.path.dirname(os.path.abspath(self.dir_file_2g))
+
+    def get_dir_5g(self):
+        return os.path.dirname(os.path.abspath(self.dir_file_5g))
+
+    def get_dir_6g(self):
+        return os.path.dirname(os.path.abspath(self.dir_file_6g))
 
     # Helper methods
 
@@ -189,6 +234,7 @@ class lf_create_ap_auto_json():
         "{test_suite}":{{
     """.format(test_suite=self.suite_radios_band)
 
+        # find the tests to enable
         # find the last radio to include in test
         count_band_radios = 0
         for radio in range(0, self.radio_dict_size):
@@ -240,11 +286,26 @@ class lf_create_ap_auto_json():
                 "timeout":"600",
                 "iterations":"1",
                 "load_db":"skip",
-                "command":"lf_wifi_capacity_test.py",
+                "command":"lf_ap_auto_test.py",
                 "args":"",
                 "args_list":[
                     " --mgr LF_MGR_IP --port LF_MGR_PORT --lf_user LF_MGR_USER --lf_password LF_MGR_PASS --instance_name {ap_auto_test_name}",
                     " --upstream UPSTREAM_PORT --batch_size {ap_auto_batch_size} --loop_iter 1 --protocol UDP-IPv4 --duration {ap_auto_duration}",
+                    " use_ssid_idx=0 --dut2_0 'USE_DUT_NAME lanforge BSSID_TO_USE (1)'",
+                    " use_ssid_idx=1 --dut5_0 'USE_DUT_NAME lanforge BSSID_TO_USE (2)'",
+                    " --max_stations_2 1 --max_stations_5 1 --max_stations_dual 1",
+                    " --radio2 1.1.wiphy0 --radio2 1.1.wiphy2 --radio2 1.1.wiphy3 --radio2 1.1.wiphy4 --radio2 1.1.wiphy5 --radio2 1.1.wiphy6 --radio2 1.1.wiphy7",
+                    " --radio5 1.1.wiphy1 --radio5 1.1.wiphy2 --radio5 1.1.wiphy3 --radio5 1.1.wiphy4 --radio5 1.1.wiphy5 --radio5 1.1.wiphy6 --radio5 1.1.wiphy7",
+                    " --set 'basic_cx' 0",
+                    " --set 'band_steering' 0",
+                    " --set 'capacity' 1",
+                    " --set 'channel_switch'  0,",
+                    " --set 'long_term' 0",
+                    " --set 'mix_stability' 0",
+                    " --set 'tput_single_sta' 0",
+                    " --set 'tput_multi_sta' 0",
+                    " --set 'tput_multi_band' 0",
+                    " --raw_line 'cx_psk_thresh: 500'",
                     " --pull_report --local_lf_report_dir REPORT_PATH --test_tag '{ap_auto_test_name}'",
                     " --test_rig TEST_RIG ",
                     " --set DUT_SET_NAME",
@@ -317,7 +378,9 @@ NOTES:
 
 STATUS: BETA RELEASE
 
-VERIFIED_ON:
+VERIFIED_ON: December 20 2024,
+             Build Version:  5.4.9
+             Kernel Version: 6.11.11+
 
 LICENSE:
           Free to distribute and modify. LANforge systems must be licensed.

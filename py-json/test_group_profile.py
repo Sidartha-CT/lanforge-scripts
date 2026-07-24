@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-# flake8: noqa
 import sys
 import os
 import importlib
 
- 
+
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 
 lfcli_base = importlib.import_module("py-json.LANforge.lfcli_base")
@@ -20,6 +19,7 @@ class TestGroupProfile(LFCliBase):
 
     def start_group(self):
         if self.group_name is not None:
+            self.local_realm.json_post("/cli-json/start_group", {"name": self.group_name})
             self.local_realm.json_post("/cli-json/start_group", {"name": self.group_name})
         else:
             raise ValueError("test_group name must be set.")
@@ -56,10 +56,16 @@ class TestGroupProfile(LFCliBase):
 
     def check_group_exists(self):
         test_groups = self.local_realm.json_get("/testgroups/all")
+        # This breaks on only one existing group, this expects an array not a single object
         if test_groups is not None and "groups" in test_groups:
             test_groups = test_groups["groups"]
+            if isinstance(test_groups, dict):
+                if test_groups['name'] == self.group_name:
+                    return True
+                else:
+                    return False
             for group in test_groups:
-                for k, v in group.items():
+                for _, v in group.items():
                     if v['name'] == self.group_name:
                         return True
         else:
@@ -69,17 +75,29 @@ class TestGroupProfile(LFCliBase):
         test_groups = self.local_realm.json_get("/testgroups/all")
         tg_list = []
         if test_groups and "groups" in test_groups:
-            for group in test_groups["groups"]:
-                for k, v in group.items():
-                    tg_list.append(v['name'])
+            # if single test_group type == dict
+            if not isinstance(test_groups, list):
+                # be sure the list is not empty
+                if test_groups['groups']:
+                    if test_groups['groups']['name'] != '':
+                        tg_list.append(test_groups['groups']['name'])
+            # if multiple test_group type ==list
+            else:
+                for group in test_groups["groups"]:
+                    for _, v in group.items():
+                        tg_list.append(v['name'])
         return tg_list
 
     def list_cxs(self):
         test_groups = self.local_realm.json_get("/testgroups/all")
         if test_groups is not None:
             test_groups = test_groups["groups"]
+            # if single test_group is not empty
+            if not isinstance(test_groups, list):
+                if test_groups['name'] == self.group_name:
+                    return test_groups['cross connects']
             for group in test_groups:
-                for k, v in group.items():
+                for _, v in group.items():
                     if v['name'] == self.group_name:
                         return v['cross connects']
 

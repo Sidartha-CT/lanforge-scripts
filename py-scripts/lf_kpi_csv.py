@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 
 """
 NAME: lf_kpi_csv.py
@@ -56,8 +55,8 @@ A blank entry is a valid entry in some cases.
 # Do Not pass in headers , Please use the defaults
 class lf_kpi_csv:
     def __init__(self,
-                # NOTE, Passing in _kpi_headers only used for testing.
-                # Do Not pass in headers , Please use the defaults
+                 # NOTE, Passing in _kpi_headers only used for testing.
+                 # Do Not pass in headers , Please use the defaults
                  _kpi_headers=None,
                  _kpi_filename='kpi.csv',  # Currently this is the only file name accepted
                  _kpi_path="",
@@ -164,7 +163,8 @@ lf_kpi_csv.py library :
 
 Example :
 
-    This module is included to assist in filling out the kpi.csv correctly
+    This module is included to assist in filling out the kpi.csv correctly.
+    The kpi.csv is used for graphing data over multiple test runs.
     The Unit test is used for helping to become familiar with the library
 
 ---------
@@ -196,8 +196,19 @@ Example :
     Units : units used for the numeric-scort
     Graph-Group - For the lf_qa.py dashboard
     '''
+    parser.add_argument('--help_summary', default=None, action="store_true", help='Show summary of what this script does')
+
+    help_summary = '''\
+This module is included to assist in filling out the kpi.csv correctly.
+The kpi.csv is used for graphing data over multiple test runs.
+The Unit test is used for helping to become familiar with the library
+'''
 
     args = parser.parse_args()
+
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
 
     # Get the report path to create the kpi.csv path
     # kpi_path = report.get_report_path() in normal use case would get from lf_report.py library

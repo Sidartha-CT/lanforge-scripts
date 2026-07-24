@@ -67,7 +67,6 @@ vr_profile2 = importlib.import_module("py-json.vr_profile2")
 VRProfile = vr_profile2.VRProfile
 
 
-
 def wpa_ent_list():
     return [
         "DEFAULT",
@@ -205,7 +204,7 @@ class Realm(LFCliBase):
         self.chan_to_freq[195] = 4975
         self.chan_to_freq[196] = 4980
 
-        #6E
+        # 6E
 
         self.chan_to_freq[191] = 5955
         self.chan_to_freq[195] = 5975
@@ -279,7 +278,7 @@ class Realm(LFCliBase):
         self.freq_to_chan[5975] = 195
         self.freq_to_chan[4980] = 196
 
-        #6E
+        # 6E
         self.freq_to_chan[5955] = 191
         self.freq_to_chan[5975] = 195
         self.freq_to_chan[5995] = 199
@@ -397,7 +396,7 @@ class Realm(LFCliBase):
         # logger.info("192.admin_up request: resource: %s port_name %s"%(resource, port))
         dbg_param = ""
         if logger.getEffectiveLevel() == logging.DEBUG:
-            #logger.info("enabling url debugging")
+            # logger.info("enabling url debugging")
             dbg_param = "?__debug=1"
         collected_responses = list()
         self.json_post("/cli-json/set_port%s" % dbg_param, request, debug_=self.debug,
@@ -471,9 +470,9 @@ class Realm(LFCliBase):
         tos = _tos
         # Convert some human readable values to numeric needed by LANforge.
         if _tos == "BK":
-            tos = "64"
+            tos = "32"
         if _tos == "BE":
-            tos = "96"
+            tos = "100"
         if _tos == "VI":
             tos = "128"
         if _tos == "VO":
@@ -481,7 +480,7 @@ class Realm(LFCliBase):
         if _tos == "Voice":
             tos = "184"
         if _tos == "Video":
-            tos = "56"
+            tos = "136"
         data = {
             "name": ename,
             "tos": tos
@@ -585,13 +584,13 @@ class Realm(LFCliBase):
             found_endps = {}
             # LAN-2064 the endp_list may be a dict, it shouldbe a list of dictionaries,
             #  need to modify to handle single endpoint as compared to two
-            # Realm, wait for endp if there is a single end point it will time out. 
-            # since json type difference between single station and multiple station 
+            # Realm, wait for endp if there is a single end point it will time out.
+            # since json type difference between single station and multiple station
             # logger.debug("endp_list is type {endp}  keys {keys}".format(endp=type(end_list),keys=endp_list.keys()))
             if 'endpoint' in endp_list.keys():
                 logger.debug(" endpoint type {}".format(type(endp_list['endpoint'])))
                 if not isinstance(endp_list['endpoint'], list):
-                    endp_list['endpoint']= [{endp_list['endpoint']['name']: endp_list['endpoint']}]
+                    endp_list['endpoint'] = [{endp_list['endpoint']['name']: endp_list['endpoint']}]
                     logger.debug("endp_list {}".format(endp_list))
             if debug:
                 logger.debug("Waiting on endpoint endp_list {}".format(endp_list))
@@ -601,7 +600,7 @@ class Realm(LFCliBase):
                     for idx in range(len(endp_list)):
                         name = list(endp_list[idx])[0]
                         found_endps[name] = name
-                except:
+                except BaseException:
                     logger.info(
                         "non-fatal exception endp_list = list(endp_list['endpoint'] did not exist, will wait some more")
                     pprint(endp_list)
@@ -609,7 +608,7 @@ class Realm(LFCliBase):
             for req in these_endp:
                 if req not in found_endps:
                     if debug:
-                        logger.debug("Waiting on endpoint:{req} count:{count}".format(req=req,count=count) )
+                        logger.debug("Waiting on endpoint:{req} count:{count}".format(req=req, count=count))
                     wait_more = True
             count += 1
             if count > timeout:
@@ -715,14 +714,14 @@ class Realm(LFCliBase):
         return response['attenuators']
 
     # EID is shelf.resource.atten-serno.atten-idx
-    def set_atten(self, eid, atten_ddb):
+    def set_atten(self, eid, atten_ddb, atten_idx='all'):
         eid_toks = self.name_to_eid(eid, non_port=True)
         req_url = "cli-json/set_attenuator"
         data = {
             "shelf": eid_toks[0],
             "resource": eid_toks[1],
             "serno": eid_toks[2],
-            "atten_idx": eid_toks[3],
+            "atten_idx": atten_idx,
             "val": atten_ddb,
         }
         self.json_post(req_url, data)
@@ -796,7 +795,7 @@ class Realm(LFCliBase):
 
             elif pattern.find("[") > 0:
                 # TODO: regex below might have too many hack escapes
-                match = re.search(r"^([^\[]+)\[(\d+)\.\.(\d+)\]$", pattern)
+                match = re.search(r"^([^\[]+)\[(\\d+)\.\.(\\d+)\]$", pattern)
                 if match.group(0):
                     if debug_:
                         logger.debug("[group1]: ", match.group(1))
@@ -900,7 +899,7 @@ class Realm(LFCliBase):
             # Check if we need to wait more but timed out. Otherwise, continue polling
             cur_time = int(time.time())
             if wait_more and (cur_time - start_time) > timeout_sec:
-                break # Timed out. Exit while loop
+                break  # Timed out. Exit while loop
             else:
                 sec_elapsed += 1
 
@@ -969,7 +968,7 @@ class Realm(LFCliBase):
     @staticmethod
     def duration_time_to_milliseconds(time_string):
         if isinstance(time_string, str):
-            pattern = re.compile("^(\d+)(\S+$)")
+            pattern = re.compile("^(\\d+)(\\S+$)")
             td = pattern.match(time_string)
             if td:
                 dur_time = int(td.group(1))
@@ -992,11 +991,10 @@ class Realm(LFCliBase):
             raise ValueError("time_string must be of type str. Type %s provided" % type(time_string))
         return duration_millisec
 
-
     @staticmethod
     def duration_time_to_seconds(time_string):
         if isinstance(time_string, str):
-            pattern = re.compile("^(\d+)([dhms]$)")
+            pattern = re.compile("^(\\d+)([dhms]$)")
             td = pattern.match(time_string)
             if td:
                 dur_time = int(td.group(1))
@@ -1146,8 +1144,8 @@ class Realm(LFCliBase):
                           debug_=self.debug)
 
     def new_vr_profile(self):
-       return VRProfile(local_realm=self,
-       debug=self.debug)
+        return VRProfile(local_realm=self,
+                         debug=self.debug)
 
     def new_http_profile(self):
         return HTTPProfile(self.lfclient_host, self.lfclient_port, local_realm=self, debug_=self.debug)

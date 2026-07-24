@@ -96,109 +96,128 @@ NOTES:      This script is intended to only create and configure stations. See o
                 Note this is the path on the LANforge system where this station will be created.
 
 EXAMPLE:    # Create a single station
-               ./create_station.py \\
-                   --mgr       <lanforge ip> \\
-                   --radio     1.1.wiphy1 \\
-                   --ssid      <ssid> \\
-                   --passwd    <password> \\
-                   --security  wpa2
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2
+
+            # Create multiple stations with initial band preference 5G
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2 \
+                --num_stations 10 \
+                --initial_band_pref 5G
 
             # Create multiple stations
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --num_stations  10
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --num_stations  10
+
+            # Create a multiple stations, all associated to specific BSSID
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --bssid     <bssid> \
+                --passwd    <password> \
+                --security  wpa2
 
             # Create a multiple stations with specific numbering scheme
             # In this example, create five stations with names of the format: "sta1000", "sta1001", "sta1002", etc.
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --start_id      1000 \\
-                   --num_stations  5
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --start_id      1000 \
+                --num_stations  5
 
             # Create a station, configuring radio settings like antenna, channel, etc.
             # In this example, configure radio to use antennas (2x2 station) and channel 6
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --radio_antenna 2 \\
-                   --radio_channel 6
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --radio_antenna 2 \
+                --radio_channel 6
 
             # Create a station, configuring the station to be a specific WiFi mode
             # (e.g. configuring an 802.11ax-capable radio to create an 802.11ac station)
             # See the 'add_sta' command's mode option in the CLI documentation for
             # available mode settings. Link here: http://www.candelatech.com/lfcli_ug.php#add_sta
-               ./create_station.py
-                   --mgr       <lanforge ip> \\
-                   --radio     1.1.wiphy1 \\
-                   --ssid      <ssid> \\
-                   --passwd    <password>  \\
-                   --security  wpa2 \\
-                   --mode      6
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2 \
+                --mode      6
 
             # Create a station, configuring specific station flags
             # In this example, enable 160MHz channels and disable 802.11ac short guard interval (SGI).
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2
-                   --radio_antenna 2 \\
-                   --radio_channel 6 \\
-                   --station_flags "ht160_enable,disable_sgi"
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --radio_antenna 2 \
+                --radio_channel 6 \
+                --station_flags "ht160_enable,disable_sgi"
 
             # Create a station using TLS-based enterprise authentication
             # Note that paths are paths on the LANforge system where the station will be created.
-               ./create_station.py \\
-                   --mgr               <lanforge ip> \\
-                   --radio             1.1.wiphy1 \\
-                   --ssid              <ssid> \\
-                   --security          <wpa2|wpa3> \\
-                   --key_mgmt          <key_mgmt>
-                   --pairwise_cipher   <cipher> \\
-                   --groupwise_cipher  <cipher> \\
-                   --eap_method        TLS \\
-                   --eap_identity      <username> \\
-                   --eap_password      <password> \\
-                   --pk_passwd         <password> \\
-                   --private_key       <path> \\
-                   --ca_cert           <path>
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --security          <wpa2|wpa3> \
+                --key_mgmt          <key_mgmt> \
+                --pairwise_cipher   <cipher> \
+                --groupwise_cipher  <cipher> \
+                --eap_method        TLS \
+                --eap_identity      <username> \
+                --eap_password      <password> \
+                --pk_passwd         <password> \
+                --private_key       <path> \
+                --ca_cert           <path>
 
             # Create a station using TTLS-based enterprise authentication
-               ./create_station.py \\
-                   --mgr               <lanforge ip> \\
-                   --radio             1.1.wiphy1 \\
-                   --ssid              <ssid> \\
-                   --security          <wpa2|wpa3> \\
-                   --key_mgmt          <TTLS|PEAP>
-                   --pairwise_cipher   <cipher> \\
-                   --groupwise_cipher  <cipher> \\
-                   --eap_method        TTLS \\
-                   --eap_identity      <username> \\
-                   --eap_password      <password>
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --security          <wpa2|wpa3> \
+                --key_mgmt          <TTLS|PEAP> \
+                --pairwise_cipher   <cipher> \
+                --groupwise_cipher  <cipher> \
+                --eap_method        TTLS \
+                --eap_identity      <username> \
+                --eap_password      <password>
 
             #    Create station specifying a custom 'wpa_supplicant' config command
             #    In this example, specify a background scanning 'wpa_supplicant' command, useful for roaming.
             #    Here, the background scan is configured to a threshold of -65 dBm RSSI with a short and long interval of 50 and 300 seconds.
             #    See 'man wpa_supplicant.conf' for more information.
-                   ./create_station.py \\
-                       --mgr               <lanforge ip> \\
-                       --radio             1.1.wiphy1 \\
-                       --ssid              <ssid> \\
-                       --passwd            <password> \\
-                       --security          wpa2 \\
-                       --custom_wifi_cmd   'bgscan="simple:50:-65:300"'
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --passwd            <password> \
+                --security          wpa2 \
+                --custom_wifi_cmd   'bgscan="simple:50:-65:300"'
 
 SCRIPT_CLASSIFICATION:
             Creation
@@ -344,6 +363,7 @@ class CreateStation(Realm):
                  groupwise_cipher,
                  set_txo_data,
                  custom_wifi_cmd,
+                 initial_band_pref,
                  **kwargs):
         super().__init__(mgr,
                          mgr_port)
@@ -364,6 +384,7 @@ class CreateStation(Realm):
         self.radio = radio
         self.timeout = 120
         self.security = security
+        self.initial_band_pref = initial_band_pref
         self.password = password
 
         # Translate from options displayed in the GUI to options
@@ -420,6 +441,7 @@ class CreateStation(Realm):
         logger.debug(pprint.pformat(self.sta_list))
 
     def cleanup(self):
+        """Remove any conflicting LANforge port(s)."""
         for station in self.sta_list:
             logger.info('Removing the station {} if exists'.format(station))
             self.rm_port(station, check_exists=True)
@@ -428,7 +450,7 @@ class CreateStation(Realm):
             exit(1)
 
     def build(self):
-        # Build stations
+        """Create LANforge port(s) as specified."""
         self.station_profile.use_security(security_type=self.security,
                                           ssid=self.ssid,
                                           passwd=self.password)
@@ -436,6 +458,8 @@ class CreateStation(Realm):
         logger.info("Creating stations")
         self.station_profile.set_command_flag("add_sta", "create_admin_down", 1)
 
+        band_pref = {"2.4GHz": 2, "5GHz": 5, "6GHz": 6}.get(self.initial_band_pref, 0)
+        self.station_profile.set_wifi_extra2(initial_band_pref=band_pref)
         if not self.eap_method:
             # Not 802.1X, but user may have specified other parameters
             #
@@ -468,7 +492,6 @@ class CreateStation(Realm):
                                                     group=self.groupwise_cipher,
                                                     eap=self.eap_method,
                                                     identity=self.eap_identity,
-                                                    passwd=self.eap_password,
                                                     private_key=self.private_key,
                                                     ca_cert=self.ca_cert,
                                                     pk_password=self.pk_passwd,
@@ -551,6 +574,7 @@ class CreateStation(Realm):
                 logger.info("Please re-check the configuration applied")
 
     def modify_radio(self, mgr, radio, antenna, channel, tx_power, country_code):
+        """Configure LANforge WiFi radio port as specified."""
         shelf, resource, radio, *nil = LFUtils.name_to_eid(radio)
 
         modify_radio = lf_modify_radio.lf_modify_radio(lf_mgr=mgr)
@@ -563,6 +587,7 @@ class CreateStation(Realm):
                                     _country_code=country_code)
 
     def get_station_list(self):
+        """Query LANforge system for list of all WiFi Station ports."""
         response = super().json_get("/port/list?fields=_links,alias,device,port+type")
 
         available_stations = []
@@ -574,14 +599,12 @@ class CreateStation(Realm):
 
 
 def parse_args():
+    """Parse CLI arguments."""
     parser = LFCliBase.create_basic_argparse(  # see create_basic_argparse in ../py-json/LANforge/lfcli_base.py
-        prog='create_station.py',
+        prog="create_station.py",
         formatter_class=argparse.RawTextHelpFormatter,
-        epilog='''\
-         Create stations
-            ''',
-
-        description='''\
+        epilog="Create stations",
+        description=r"""\
 NAME:       create_station.py
 
 PURPOSE:    Create and configure one or more of WiFi stations ports using the
@@ -678,109 +701,138 @@ NOTES:      This script is intended to only create and configure stations. See o
                 Note this is the path on the LANforge system where this station will be created.
 
 EXAMPLE:    # Create a single station
-               ./create_station.py \\
-                   --mgr       <lanforge ip> \\
-                   --radio     1.1.wiphy1 \\
-                   --ssid      <ssid> \\
-                   --passwd    <password> \\
-                   --security  wpa2
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2
+
+            # Create multiple stations with initial band preference 5G
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2 \
+                --num_stations 10 \
+                --initial_band_pref 5G
 
             # Create multiple stations
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --num_stations  10
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --num_stations  10
+
+            # Create a multiple stations, all associated to specific BSSID
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --bssid     <bssid> \
+                --passwd    <password> \
+                --security  wpa2
 
             # Create a multiple stations with specific numbering scheme
             # In this example, create five stations with names of the format: "sta1000", "sta1001", "sta1002", etc.
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --start_id      1000 \\
-                   --num_stations  5
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --start_id      1000 \
+                --num_stations  5
 
             # Create a station, configuring radio settings like antenna, channel, etc.
             # In this example, configure radio to use antennas (2x2 station) and channel 6
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2 \\
-                   --radio_antenna 2 \\
-                   --radio_channel 6
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --radio_antenna 2 \
+                --radio_channel 6
 
             # Create a station, configuring the station to be a specific WiFi mode
             # (e.g. configuring an 802.11ax-capable radio to create an 802.11ac station)
             # See the 'add_sta' command's mode option in the CLI documentation for
             # available mode settings. Link here: http://www.candelatech.com/lfcli_ug.php#add_sta
-               ./create_station.py
-                   --mgr       <lanforge ip> \\
-                   --radio     1.1.wiphy1 \\
-                   --ssid      <ssid> \\
-                   --passwd    <password>  \\
-                   --security  wpa2 \\
-                   --mode      6
+            ./create_station.py \
+                --mgr       <lanforge ip> \
+                --radio     1.1.wiphy1 \
+                --ssid      <ssid> \
+                --passwd    <password> \
+                --security  wpa2 \
+                --mode      6
 
             # Create a station, configuring specific station flags
             # In this example, enable 160MHz channels and disable 802.11ac short guard interval (SGI).
-               ./create_station.py \\
-                   --mgr           <lanforge ip> \\
-                   --radio         1.1.wiphy1 \\
-                   --ssid          <ssid> \\
-                   --passwd        <password> \\
-                   --security      wpa2
-                   --radio_antenna 2 \\
-                   --radio_channel 6 \\
-                   --station_flags "ht160_enable,disable_sgi"
+            ./create_station.py \
+                --mgr           <lanforge ip> \
+                --radio         1.1.wiphy1 \
+                --ssid          <ssid> \
+                --passwd        <password> \
+                --security      wpa2 \
+                --radio_antenna 2 \
+                --radio_channel 6 \
+                --station_flags "ht160_enable,disable_sgi"
 
             # Create a station using TLS-based enterprise authentication
             # Note that paths are paths on the LANforge system where the station will be created.
-               ./create_station.py \\
-                   --mgr               <lanforge ip> \\
-                   --radio             1.1.wiphy1 \\
-                   --ssid              <ssid> \\
-                   --security          <wpa2|wpa3> \\
-                   --key_mgmt          <key_mgmt>
-                   --pairwise_cipher   <cipher> \\
-                   --groupwise_cipher  <cipher> \\
-                   --eap_method        TLS \\
-                   --eap_identity      <username> \\
-                   --eap_password      <password> \\
-                   --pk_passwd         <password> \\
-                   --private_key       <path> \\
-                   --ca_cert           <path>
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --security          <wpa2|wpa3> \
+                --key_mgmt          <key_mgmt> \
+                --pairwise_cipher   <cipher> \
+                --groupwise_cipher  <cipher> \
+                --eap_method        TLS \
+                --eap_identity      <username> \
+                --eap_password      <password> \
+                --pk_passwd         <password> \
+                --private_key       <path> \
+                --ca_cert           <path>
 
             # Create a station using TTLS-based enterprise authentication
-               ./create_station.py \\
-                   --mgr               <lanforge ip> \\
-                   --radio             1.1.wiphy1 \\
-                   --ssid              <ssid> \\
-                   --security          <wpa2|wpa3> \\
-                   --key_mgmt          <TTLS|PEAP>
-                   --pairwise_cipher   <cipher> \\
-                   --groupwise_cipher  <cipher> \\
-                   --eap_method        TTLS \\
-                   --eap_identity      <username> \\
-                   --eap_password      <password>
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --security          <wpa2|wpa3> \
+                --key_mgmt          <TTLS|PEAP> \
+                --pairwise_cipher   <cipher> \
+                --groupwise_cipher  <cipher> \
+                --eap_method        TTLS \
+                --eap_identity      <username> \
+                --eap_password      <password>
 
             #    Create station specifying a custom 'wpa_supplicant' config command
             #    In this example, specify a background scanning 'wpa_supplicant' command, useful for roaming.
             #    Here, the background scan is configured to a threshold of -65 dBm RSSI with a short and long interval of 50 and 300 seconds.
             #    See 'man wpa_supplicant.conf' for more information.
-                   ./create_station.py \\
-                       --mgr               <lanforge ip> \\
-                       --radio             1.1.wiphy1 \\
-                       --ssid              <ssid> \\
-                       --passwd            <password> \\
-                       --security          wpa2 \\
-                       --custom_wifi_cmd   'bgscan="simple:50:-65:300"'
+            ./create_station.py \
+                --mgr               <lanforge ip> \
+                --radio             1.1.wiphy1 \
+                --ssid              <ssid> \
+                --passwd            <password> \
+                --security          wpa2 \
+                --custom_wifi_cmd   'bgscan="simple:50:-65:300"'
+
+            #    Create station with bw 320 need to also enable 160
+            ./create_station.py\
+                --mgr 192.168.102.197\
+                --radio 1.1.wiphy11\
+                --ssid TP-Link_CE22_6G\
+                --passwd 79814096\
+                --station_flags "be320-enable,ht160_enable"\
+                --security wpa3\
+                --num_stations 1
 
 SCRIPT_CLASSIFICATION:
             Creation
@@ -800,167 +852,179 @@ LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
 
 INCLUDE_IN_README:
             False
-''')
-    required = parser.add_argument_group('required arguments')
-    required.add_argument('--start_id',
-                          type=int,
-                          help='Specify the station starting id \n e.g: --start_id <value> default 0',
-                          default=0)
-
-    optional = parser.add_argument_group('Optional arguments')
-    optional.add_argument("--prefix",
-                          type=str,
-                          help="Station prefix. Default: \'sta\'",
-                          default="sta")
-    optional.add_argument("--create_admin_down",
-                          help='Create ports in admin down state.',
-                          action='store_true')
-    optional.add_argument("--bssid",
-                          type=str,
-                          help="AP BSSID. For example, \"00:00:00:00:00:00\".",
-                          default="DEFAULT")  # TODO: Fix 'null' when not set issue (REST server-side issue)
-    optional.add_argument('--mode',
-                          help='Mode for your station (as a number)',
-                          default=0)
-    optional.add_argument('--station_flags',
-                          '--station_flag',
-                          dest='station_flags',
-                          help='station flags to add. eg: --station_flags ht40_disable',
-                          required=False,
-                          default=None)
-    optional.add_argument("--mac_pattern",
-                          help="MAC randomization pattern for created stations. "
-                               "In full MAC address pattern, the \'*\' indicates "
-                               "randomizable characters. Most users will not adjust "
-                               "this option. Note that this does not explicitly set "
-                               "the locally-administered address bit.",
-                          default="xx:xx:xx:*:*:xx")
-    optional.add_argument("--radio_antenna",
-                          help='Number of spatial streams: \n'
-                          ' default = -1 \n'
-                          ' 0 Diversity (All) \n'
-                          ' 1 Fixed-A (1x1) \n'
-                          ' 4 AB (2x2) \n'
-                          ' 7 ABC (3x3) \n'
-                          ' 8 ABCD (4x4) \n'
-                          ' 9 (8x8) \n',
-                          default='0')
-    optional.add_argument("--radio_channel",
-                          help='Radio Channel: \n'
-                          ' default: AUTO \n'
-                          ' e.g:   --radio_channel 6 (2.4G) \n'
-                          '\t--radio_channel 36 (5G) \n',
-                          default='AUTO')
-    optional.add_argument("--radio_tx_power",
-                          help='Radio tx-power \n'
-                          ' default: AUTO system defaults',
-                          default='AUTO')
-    optional.add_argument("--country_code",
-                          help='Radio Country Code:\n'
-                               'e.g: \t--country_code 840')
-    optional.add_argument("--eap_method",
-                          type=str,
-                          help='Enter EAP method e.g: TLS')
-    optional.add_argument("--eap_identity",
-                          "--radius_identity",
-                          dest="eap_identity",
-                          type=str,
-                          help="This is synonymous with the RADIUS username.")
-    optional.add_argument("--eap_anonymous_identity",
-                          type=str,
-                          help="",
-                          default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
-    optional.add_argument("--eap_password",
-                          "--radius_passwd",
-                          dest="eap_password",
-                          type=str,
-                          help="This is synonymous with the RADIUS user's password.")
-    optional.add_argument("--eap_phase1",
-                          type=str,
-                          help="EAP Phase 1 (outer authentication, i.e. TLS tunnel) parameters.\n"
-                               "For example, \"peapver=0\" or \"peapver=1 peaplabel=1\".\n"
-                               "Some WPA Enterprise setups may require \"auth=MSCHAPV2\"",
-                          default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
-    optional.add_argument("--eap_phase2",
-                          type=str,
-                          help="EAP Phase 2 (inner authentication) parameters.\n"
-                               "For example, \"autheap=MSCHAPV2 autheap=MD5\" for EAP-TTLS.",
-                          default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
-    optional.add_argument("--pk_passwd",
-                          type=str,
-                          help='Enter the private key password')
-    optional.add_argument("--ca_cert",
-                          type=str,
-                          help='Enter path for certificate e.g: /home/lanforge/ca.pem')
-    optional.add_argument("--private_key",
-                          type=str,
-                          help='Enter private key path e.g: /home/lanforge/client.p12')
-    optional.add_argument("--key_mgmt",
-                          type=str,
-                          help="Authentication key management. Combinations are supported.\n")
-    optional.add_argument("--pairwise_cipher",
-                          help='Pairwise Ciphers\n'
-                               'DEFAULT\n'
-                               'CCMP\n'
-                               'TKIP\n'
-                               'NONE\n'
-                               'CCMP-TKIP\n'
-                               'CCMP-256\n'
-                               'GCMP\n'
-                               'GCMP-256\n'
-                               'CCMP/GCMP-256',
-                               default='[BLANK]')
-    optional.add_argument("--groupwise_cipher",
-                          help='Groupwise Ciphers\n'
-                               'DEFAULT\n'
-                               'CCMP\n'
-                               'TKIP\n'
-                               'WEP104\n'
-                               'WEP40\n'
-                               'GTK_NOT_USED\n'
-                               'GCMP-256\n'
-                               'CCMP-256\n'
-                               'GCMP/CCMP-256\n'
-                               'ALL',
-                          default='[BLANK]')
-    optional.add_argument("--no_pre_cleanup",
-                          help='Add this flag to stop cleaning up before station creation',
-                          action='store_true')
-    optional.add_argument("--cleanup",
-                          help='Add this flag to clean up stations after creation',
-                          action='store_true')
-    optional.add_argument("--custom_wifi_cmd",
-                          help="Mention the custom wifi command.")
+""")
+    parser.add_argument('--start_id',
+                        type=int,
+                        help='Specify the station starting id \n e.g: --start_id <value> default 0',
+                        default=0)
+    parser.add_argument("--prefix",
+                        type=str,
+                        help="Station prefix. Default: \'sta\'",
+                        default="sta")
+    parser.add_argument("--create_admin_down",
+                        help='Create ports in admin down state.',
+                        action='store_true')
+    parser.add_argument("--bssid",
+                        type=str,
+                        help="AP BSSID. For example, \"00:00:00:00:00:00\".",
+                        default="DEFAULT")  # TODO: Fix 'null' when not set issue (REST server-side issue)
+    parser.add_argument('--mode',
+                        help='Mode for your station (as a number)',
+                        default=0)
+    parser.add_argument('--station_flags',
+                        '--station_flag',
+                        dest='station_flags',
+                        help='station flags to add. eg: --station_flags ht40_disable',
+                        required=False,
+                        default=None)
+    parser.add_argument("--mac_pattern",
+                        help="MAC randomization pattern for created stations. "
+                             "In full MAC address pattern, the \'*\' indicates "
+                             "randomizable characters. Most users will not adjust "
+                             "this option. Note that this does not explicitly set "
+                             "the locally-administered address bit.",
+                        default="xx:xx:xx:*:*:xx")
+    parser.add_argument("--radio_antenna",
+                        help='Number of spatial streams: \n'
+                        ' default = -1 \n'
+                        ' 0 Diversity (All) \n'
+                        ' 1 Fixed-A (1x1) \n'
+                        ' 4 AB (2x2) \n'
+                        ' 7 ABC (3x3) \n'
+                        ' 8 ABCD (4x4) \n'
+                        ' 9 (8x8) \n',
+                        default='0')
+    parser.add_argument("--radio_channel",
+                        help='Radio Channel: \n'
+                        ' default: AUTO \n'
+                        ' e.g:   --radio_channel 6 (2.4G) \n'
+                        '\t--radio_channel 36 (5G) \n',
+                        default='AUTO')
+    parser.add_argument("--radio_tx_power",
+                        help='Radio tx-power \n'
+                        ' default: AUTO system defaults',
+                        default='AUTO')
+    parser.add_argument("--country_code",
+                        help='Radio Country Code:\n'
+                             'e.g: \t--country_code 840')
+    parser.add_argument("--eap_method",
+                        type=str,
+                        help='Enter EAP method e.g: TLS')
+    parser.add_argument("--eap_identity",
+                        "--radius_identity",
+                        dest="eap_identity",
+                        type=str,
+                        help="This is synonymous with the RADIUS username.")
+    parser.add_argument("--eap_anonymous_identity",
+                        type=str,
+                        help="",
+                        default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
+    parser.add_argument("--eap_password",
+                        "--radius_passwd",
+                        dest="eap_password",
+                        type=str,
+                        help="This is synonymous with the RADIUS user's password.")
+    parser.add_argument("--eap_phase1",
+                        type=str,
+                        help="EAP Phase 1 (outer authentication, i.e. TLS tunnel) parameters.\n"
+                             "For example, \"peapver=0\" or \"peapver=1 peaplabel=1\".\n"
+                             "Some WPA Enterprise setups may require \"auth=MSCHAPV2\"",
+                        default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
+    parser.add_argument("--eap_phase2",
+                        type=str,
+                        help="EAP Phase 2 (inner authentication) parameters.\n"
+                             "For example, \"autheap=MSCHAPV2 autheap=MD5\" for EAP-TTLS.",
+                        default="[BLANK]")  # TODO: Fix root cause of 'null' when not set issue (REST server-side issue)
+    parser.add_argument("--pk_passwd",
+                        type=str,
+                        help='Enter the private key password')
+    parser.add_argument("--ca_cert",
+                        type=str,
+                        help='Enter path for certificate e.g: /home/lanforge/ca.pem')
+    parser.add_argument("--private_key",
+                        type=str,
+                        help='Enter private key path e.g: /home/lanforge/client.p12')
+    parser.add_argument("--key_mgmt",
+                        type=str,
+                        help="Authentication key management. Combinations are supported.\n")
+    parser.add_argument("--pairwise_cipher",
+                        help='Pairwise Ciphers\n'
+                             'DEFAULT\n'
+                             'CCMP\n'
+                             'TKIP\n'
+                             'NONE\n'
+                             'CCMP-TKIP\n'
+                             'CCMP-256\n'
+                             'GCMP\n'
+                             'GCMP-256\n'
+                             'CCMP/GCMP-256',
+                             default='[BLANK]')
+    parser.add_argument("--groupwise_cipher",
+                        help='Groupwise Ciphers\n'
+                             'DEFAULT\n'
+                             'CCMP\n'
+                             'TKIP\n'
+                             'WEP104\n'
+                             'WEP40\n'
+                             'GTK_NOT_USED\n'
+                             'GCMP-256\n'
+                             'CCMP-256\n'
+                             'GCMP/CCMP-256\n'
+                             'ALL',
+                        default='[BLANK]')
+    parser.add_argument("--no_pre_cleanup",
+                        help='Add this flag to stop cleaning up before station creation',
+                        action='store_true')
+    parser.add_argument("--cleanup",
+                        help='Add this flag to clean up stations after creation',
+                        action='store_true')
+    parser.add_argument("--custom_wifi_cmd",
+                        help="Mention the custom wifi command.")
+    parser.add_argument("--initial_band_pref",
+                        type=str,
+                        choices=["2.4GHz", "5GHz", "6GHz"],
+                        help="Specify the initial band preference for created stations 2.4GHz, 5GHz or 6GHz")
 
     return parser.parse_args()
 
 
 def validate_args(args):
+    """Validate CLI arguments."""
     if args.radio is None:
         logger.error("--radio required")
         exit(1)
 
-    # TODO: Revisit these requirements. May have made some incorrect assumptions
+    # TODO: Revisit these requirements for other EAP methods. Should be mostly correct for EAP-TLS and EAP-TTLS
     if args.eap_method is not None:
+        # Always require an EAP identity, whether it be set to 'anonymous' or a named user
         if args.eap_identity is None:
             logger.error("--eap_identity required")
             exit(1)
-        elif args.eap_password is None:
-            logger.error("--eap_password required")
+
+        # Default LANforge key management methods do not include EAP key management methods
+        # so require user to specify desired method
+        if args.key_mgmt is None:
+            logger.error("Key management method required ('--key_mgmt'). "
+                         "For example: 'WPA-EAP', 'WPA-EAP-SHA256', 'WPA-EAP-SUITE-B', "
+                         "'WPA-EAP-SUITE-B-192', 'FT-EAP', 'FT-EAP-SHA384'")
             exit(1)
-        elif args.key_mgmt is None:
-            logger.error("--key_mgmt required")
-            exit(1)
-        elif args.eap_method == 'TLS':
-            if args.pk_passwd is None:
-                logger.error("--pk_passwd required")
-                exit(1)
-            elif args.ca_cert is None:
-                logger.error('--ca_cert required')
+
+        if args.eap_method == 'TLS':
+            if args.ca_cert is None:
+                logger.error("CA certificate not specified ('--ca_cert')")
                 exit(1)
             elif args.private_key is None:
-                logger.error('--private_key required')
-                exit(0)
+                logger.error("Private key not specified ('--private_key')")
+                exit(1)
+
+            # TODO: Revisit this, possibly private key can have no password set so permit unset
+            if args.pk_passwd is None:
+                logger.warning("Private key password not specified ('--pk_passwd')")
+
+        elif args.eap_password is None:
+            # Don't need to check this for EAP-TLS
+            logger.error("EAP password not specified ('--eap_password')")
+            exit(1)
 
         # Only need to check WPA3 ciphers because user requests 802.1X authentication.
         # Personal WPA3 always uses SAE, so default '[BLANK]' is fine if ciphers
@@ -972,27 +1036,30 @@ def validate_args(args):
         #   '<type1|type2>'
         if 'wpa3' in args.security or 'WPA3' in args.security:
             if args.pairwise_cipher == '[BLANK]':
-                logger.error('--pairwise_cipher required')
+                logger.error("Pairwise cipher not specified ('--pairwise_cipher')")
                 exit(1)
             elif args.groupwise_cipher == '[BLANK]':
-                logger.error('--groupwise_cipher required')
+                logger.error("Groupwise cipher not specified ('--groupwise_cipher')")
                 exit(1)
 
 
 def main():
+    """Create LANforge WiFi station port(s) using specified options."""
     args = parse_args()
+
+    help_summary = "This script will create and configure one or more WiFi station ports " \
+                   "using the single specified WiFi radio parent port."
+
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
+
     validate_args(args)
 
     # Configure logging
     logger_config = lf_logger_config.lf_logger_config()
     logger_config.set_level(level=args.log_level)
     logger_config.set_json(json_file=args.lf_logger_config_json)
-
-    help_summary = "This script will create and configure one or more WiFi station ports " \
-                   "using the single specified WiFi radio parent port."
-    if args.help_summary:
-        print(help_summary)
-        exit(0)
 
     num_sta = 1
     if (args.num_stations is not None) and (int(args.num_stations) > 0):

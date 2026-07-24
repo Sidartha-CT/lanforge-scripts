@@ -657,7 +657,7 @@ class LFCliBase:
     @staticmethod
     def parse_time(time_string):
         if isinstance(time_string, str):
-            pattern = re.compile("^(\d+)([dhms]$)")
+            pattern = re.compile("^(\\d+)([dhms]$)")
             td = pattern.match(time_string)
             if td is not None:
                 dur_time = int(td.group(1))
@@ -758,11 +758,11 @@ class LFCliBase:
         optional.add_argument('--mgr',
                               '--lfmgr',
                               default='localhost',
-                              help='hostname for where LANforge GUI is running')
+                              help='Hostname or IP address of the LANforge GUI machine (localhost is default)')
         optional.add_argument('--mgr_port',
                               '--port',
                               default=8080,
-                              help='port LANforge GUI HTTP service is running on')
+                              help='IP Port the LANforge GUI is listening on (8080 is default)')
         optional.add_argument('-u',
                               '--upstream_port',
                               default='1.eth1',

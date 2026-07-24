@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 NAME: test_l3.py
 
@@ -13,6 +12,7 @@ PURPOSE: The Layer 3 Traffic Generation Test is designed to test the performance
          * Supports creating user-specified amount stations on multiple radios
          * Supports configuring upload and download requested rates and PDU sizes.
          * Supports generating connections with different ToS values.
+         * Supports generating KPI data
          * Supports generating tcp and/or UDP traffic types.
          * Supports iterating over different PDU sizes
          * Supports iterating over different requested tx rates (configurable as total or per-connection value)
@@ -42,48 +42,48 @@ Example running traffic with two radios
 
         # Interopt example Creating stations
             Interopt testing creating stations
-            ./test_l3.py --lfmgr 192.168.0.104\
-             --test_duration 60s\
-            --polling_interval 5s\
-            --upstream_port 1.1.eth2\
-            --radio radio==wiphy1,stations==2,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable\
-            --endp_type lf_udp,lf_tcp,mc_udp\
-            --rates_are_totals\
-            --side_a_min_bps=2000000\
-            --side_b_min_bps=3000000\
-            --test_rig CT-ID-004\
-            --test_tag test_l3\
-            --dut_model_num AXE11000\
-            --dut_sw_version 3.0.0.4.386_44266\
-            --dut_hw_version 1.0\
-            --dut_serial_num 123456\
-            --tos BX,BE,VI,VO\
-            --log_level info\
-            --no_cleanup\
+            ./test_l3.py --lfmgr 192.168.50.104
+             --test_duration 60s
+            --polling_interval 5s
+            --upstream_port 1.1.eth2
+            --radio radio==wiphy1,stations==2,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable
+            --endp_type lf_udp,lf_tcp,mc_udp
+            --rates_are_totals
+            --side_a_min_bps=2000000
+            --side_b_min_bps=3000000
+            --test_rig CT-ID-004
+            --test_tag test_l3
+            --dut_model_num AXE11000
+            --dut_sw_version 3.0.0.4.386_44266
+            --dut_hw_version 1.0
+            --dut_serial_num 123456
+            --tos BX,BE,VI,VO
+            --log_level info
+            --no_cleanup
             --cleanup_cx
 
 
         # Interopt using existing stations
             Interopt testing creating stations
-            ./test_l3.py --lfmgr 192.168.91.50\
-             --test_duration 60s\
-            --polling_interval 5s\
-            --upstream_port 1.50.eth2\
-            --endp_type lf_udp,lf_tcp,mc_udp\
-            --rates_are_totals\
-            --side_a_min_bps=2000000\
-            --side_b_min_bps=3000000\
-            --test_rig CT-ID-004\
-            --test_tag test_l3\
-            --dut_model_num AXE11000\
-            --dut_sw_version 3.0.0.4.386_44266\
-            --dut_hw_version 1.0\
-            --dut_serial_num 123456\
-            --tos BX,BE,VI,VO\
-            --use_existing_station_list\
-            --existing_station_list 1.83.en1,1.84.en1\
-            --log_level info\
-            --no_cleanup\
+            ./test_l3.py --lfmgr 192.168.91.50
+             --test_duration 60s
+            --polling_interval 5s
+            --upstream_port 1.50.eth2
+            --endp_type lf_udp,lf_tcp,mc_udp
+            --rates_are_totals
+            --side_a_min_bps=2000000
+            --side_b_min_bps=3000000
+            --test_rig CT-ID-004
+            --test_tag test_l3
+            --dut_model_num AXE11000
+            --dut_sw_version 3.0.0.4.386_44266
+            --dut_hw_version 1.0
+            --dut_serial_num 123456
+            --tos BX,BE,VI,VO
+            --use_existing_station_list
+            --existing_station_list 1.83.en1,1.84.en1
+            --log_level info
+            --no_cleanup
             --cleanup_cx
 
            * UDP and TCP bi-directional test, no use of controller.
@@ -115,10 +115,14 @@ Example running traffic with two radios
 
          # Have script use wifi_settings enable flages  ::  wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)
              ./test_l3.py --lfmgr 192.168.200.83 --test_duration 20s --polling_interval 5s --upstream_port 1.1.eth1
-             --radio 'radio==1.1.wiphy0,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --radio 'radio==1.1.wiphy1,stations==1,ssid==Netgear5g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --radio 'radio==1.1.wiphy2,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --endp_type lf_udp --rates_are_totals --side_a_min_bps=20000 --side_b_min_bps=300000000 --test_rig ID_003 --test_tag 'l3_longevity' --dut_model_num GT-AXE11000 --dut_sw_version 3.0.0.4.386_44266
+             --radio 'radio==1.1.wiphy0,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --radio 'radio==1.1.wiphy1,stations==1,ssid==Netgear5g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --radio 'radio==1.1.wiphy2,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --endp_type lf_udp --rates_are_totals --side_a_min_bps=20000 --side_b_min_bps=300000000\
+             --test_rig ID_003 --test_tag 'l3_longevity' --dut_model_num GT-AXE11000 --dut_sw_version 3.0.0.4.386_44266
              --dut_hw_version 1.0 --dut_serial_num 12345678 --log_level debug
 
          # Setting wifi_settings per radio
@@ -128,7 +132,8 @@ Example running traffic with two radios
             --test_duration 15s
             --polling_interval 5s
             --upstream_port eth2
-            --radio "radio==wiphy1 stations==4 ssid==asus11ax-5 ssid_pw==hello123 security==wpa2  mode==0 wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down&&ht160_enable) "
+            --radio "radio==wiphy1,stations==4,ssid==asus11ax-5,ssid_pw==hello123,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down&&ht160_enable)"
             --endp_type lf_udp
             --rates_are_totals
             --side_a_min_bps=20000
@@ -138,11 +143,14 @@ Example running traffic with two radios
 
          # Example : LAN-1927  WPA2-TLS-Configuration
             ./test_l3.py
-             --lfmgr 192.168.0.103
+             --lfmgr 192.168.50.104
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Disabled'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==lf_ax88u_5g,security==wpa2
+,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,
+wifi_extra==key_mgmt&&WPA-EAP!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!
+ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Disabled'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -161,7 +169,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Disabled'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Disabled'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -181,7 +190,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Required'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Required'
              --endp_type lf_ud
              --rates_are_totals
              --side_a_min_bps=256000
@@ -200,7 +210,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Required'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Required'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -212,6 +223,94 @@ Example running traffic with two radios
              --dut_hw_version 1.0
              --dut_serial_num 12345678
              --log_level debug
+
+./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --radio 'radio==1.2.wiphy0,stations==1,ssid==TP-Link_C672,ssid_pw==19719207,security==wpa2,wifi_settings==wifi_settings,wifi_mode==17,enable_flags==(wpa2_enable&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag test_l3_a7
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
+
+        # Example : Wifi 7 2G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy0,stations==19,ssid==TPink_C672,ssid_pw==19719207,security==wpa2,wifi_settings==wifi_settings,wifi_mode==17,enable_flags==(wpa2_enable&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
+        # Example : Wifi 7 5G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy1,stations==19,ssid==TPink_C672_5G,ssid_pw==19719207,security==wpa2,wifi_settings==wifi_settings,wifi_mode==18,enable_flags==(wpa2_enable&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
+        # Example : Wifi 7 6G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy2,stations==19,ssid==TPink_C672_6G,ssid_pw==19719207,security==wpa3,wifi_settings==wifi_settings,wifi_mode==19,enable_flags==(use-wpa3&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
 
 SCRIPT_CLASSIFICATION:  Creation & Runs Traffic
 
@@ -259,9 +358,11 @@ BK, BE, VI, VO:  Optional wifi related Tos Settings.  Or, use your preferred num
              is automatically sent to this Queue.
 
 <wifi_mode>:
-    Input       : Enum Val  : Shown by nc_show_ports
+    Input       : Enum Val  : for list ,  telnet <mgr> 4001  , help add_profile
 
-    AUTO        |  0        #  802.11
+    Wifi_Mode
+    <pre options='wifi_mode'>
+    AUTO        |  0        #  Best Available
     802.11a     |  1        #  802.11a
     b           |  2        #  802.11b
     g           |  3        #  802.11g
@@ -278,8 +379,14 @@ BK, BE, VI, VO:  Optional wifi related Tos Settings.  Or, use your preferred num
     bgnAX       | 13        #  802.11bgn-AX
     anAX        | 14        #  802.11an-AX
     aAX         | 15        #  802.11a-AX (6E disables /n and /ac)
+    abgn7       | 16        #  802.11abgn-EHT
+                            #     a/b/g/n/AC/AX/EHT (dual-band AX) support
+    bgn7        | 17        #  802.11bgn-EHT
+    an7         | 18        #  802.11an-EHT
+    a7          | 19        #  802.11a-EHT (6E disables /n and /ac)
 
-wifi_settings flags are currently defined as:
+
+wifi_settings flags are currently defined as: for list ,  telnet <mgr> 4001  , help add_sta
     wpa_enable           | 0x10         # Enable WPA
     custom_conf          | 0x20         # Use Custom wpa_supplicant config file.
     wep_enable           | 0x200        # Use wpa_supplicant configured for WEP encryption.
@@ -315,6 +422,15 @@ wifi_settings flags are currently defined as:
     use-wpa3             | 0x10000000000 # Enable WPA-3 (SAE Personal) mode.
     use-bss-transition   | 0x80000000000 # Enable BSS transition.
     disable-twt          | 0x100000000000 # Disable TWT mode
+    disable-ofdma        | 0x200000000000 # Disable OFDMA mode
+    disable-obss-scan    | 0x400000000000 # Disable OBSS SCAN feature in supplicant.
+    ft-roam-over-ds      | 0x800000000000 # Roam over DS when AP supports it.
+    rrm-ignore-beacon-req | 0x1000000000000 # Ignore (reject) RRM Beacon measurement request.
+    use-owe               | 0x2000000000000 # Enable OWE
+    be320-enable          | 0x4000000000000 # Enable 320Mhz mode.
+    disable-mlo           | 0x8000000000000 # Disable OFDMA
+    ignore-edca           | 0x20000000000000 # Request station to ignore EDCA settings
+
 
 For wifi_extra_keys syntax :
     telnet <lanforge ip> 4001
@@ -501,13 +617,13 @@ Multicast traffic :
 
 STATUS: Functional
 
-VERIFIED_ON:   18-JULY-2023,
-             GUI Version:  5.4.6
-             Kernel Version: 5.19.17+
+VERIFIED_ON: MAY 2025,
+             GUI Version:  5.5.1
+             Kernel Version: 6.11.12+
 
 LICENSE:
           Free to distribute and modify. LANforge systems must be licensed.
-          Copyright 2023 Candela Technologies Inc
+          Copyright 2025 Candela Technologies Inc
 
 INCLUDE_IN_README: False
 
@@ -520,50 +636,46 @@ import os
 import random
 import sys
 import time
-from pprint import pprint
 from pprint import pformat
 import logging
 import platform
 import itertools
 import pandas as pd
-import traceback
+# import traceback # TODO incorporate traceback if using try except
 import json
+import shutil
 
+import asyncio
 if sys.version_info[0] != 3:
     print("This script requires Python 3")
     exit(1)
 
-
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 
+# LANforge automation-specific imports
 lf_report = importlib.import_module("py-scripts.lf_report")
 lf_graph = importlib.import_module("py-scripts.lf_graph")
 lf_kpi_csv = importlib.import_module("py-scripts.lf_kpi_csv")
 lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
 realm = importlib.import_module("py-json.realm")
-
-# from lf_graph import lf_bar_graph_horizontal
-# from lf_graph import lf_bar_graph
-
-
-# additional imports for testing with vap
+DeviceConfig = importlib.import_module("py-scripts.DeviceConfig")
 lf_attenuator = importlib.import_module("py-scripts.lf_atten_mod_test")
-modify_vap = importlib.import_module("py-scripts.modify_vap")
 lf_modify_radio = importlib.import_module("py-scripts.lf_modify_radio")
-
-# cleanup library
 lf_cleanup = importlib.import_module("py-scripts.lf_cleanup")
-
-
 Realm = realm.Realm
 
 logger = logging.getLogger(__name__)
 
 
-# This class handles running the test and generating reports.
 class L3VariableTime(Realm):
-    # May raise an exception if incorrect values specified
+    """Test class for variable-time Layer-3 traffic tests.
+
+    This test class provides methods to run the configured test,
+    query data for relevant LANforge ports and traffic pairs during
+    the test, and generate reports upon completion.
+    """
+
     def __init__(self,
                  endp_types,
                  args,
@@ -632,7 +744,7 @@ class L3VariableTime(Realm):
                  ap_if_6g="eth8",
                  ap_report_dir="",
                  ap_file="",
-                 ap_band_list=['2g', '5g', '6g'],
+                 ap_band_list=None,
 
                  #  for webgui
                  dowebgui=False,
@@ -641,37 +753,42 @@ class L3VariableTime(Realm):
                  # for uniformity from webGUI result_dir as variable is used insead of local_lf_report_dir
                  result_dir="",
                  # wifi extra configuration
-                 key_mgmt_list=[],
-                 pairwise_list=[],
-                 group_list=[],
-                 psk_list=[],
-                 wep_key_list=[],
-                 ca_cert_list=[],
-                 eap_list=[],
-                 identity_list=[],
-                 anonymous_identity_list=[],
-                 phase1_list=[],
-                 phase2_list=[],
-                 passwd_list=[],
-                 pin_list=[],
-                 pac_file_list=[],
-                 private_key_list=[],
-                 pk_password_list=[],
-                 hessid_list=[],
-                 realm_list=[],
-                 client_cert_list=[],
-                 imsi_list=[],
-                 milenage_list=[],
-                 domain_list=[],
-                 roaming_consortium_list=[],
-                 venue_group_list=[],
-                 network_type_list=[],
-                 ipaddr_type_avail_list=[],
-                 network_auth_type_list=[],
-                 anqp_3gpp_cell_net_list=[],
-                 ieee80211w_list=[],
-                 interopt_mode=False
-                 ):
+                 key_mgmt_list=None,
+                 pairwise_list=None,
+                 group_list=None,
+                 psk_list=None,
+                 wep_key_list=None,
+                 ca_cert_list=None,
+                 eap_list=None,
+                 identity_list=None,
+                 anonymous_identity_list=None,
+                 phase1_list=None,
+                 phase2_list=None,
+                 passwd_list=None,
+                 pin_list=None,
+                 pac_file_list=None,
+                 private_key_list=None,
+                 pk_password_list=None,
+                 hessid_list=None,
+                 realm_list=None,
+                 client_cert_list=None,
+                 imsi_list=None,
+                 milenage_list=None,
+                 domain_list=None,
+                 roaming_consortium_list=None,
+                 venue_group_list=None,
+                 network_type_list=None,
+                 ipaddr_type_avail_list=None,
+                 network_auth_type_list=None,
+                 anqp_3gpp_cell_net_list=None,
+                 ieee80211w_list=None,
+                 interopt_mode=False,
+                 endp_input_list=None,
+                 graph_input_list=None,
+                 real=False,
+                 expected_passfail_value=None,
+                 device_csv_name=None,
+                 group_name=None):
 
         self.eth_endps = []
         self.cx_names = []
@@ -718,6 +835,9 @@ class L3VariableTime(Realm):
         self.test_name = test_name
         self.ip = ip
         self.result_dir = result_dir
+        self.device_csv_name = device_csv_name
+        self.expected_passfail_value = expected_passfail_value
+        self.group_name = group_name
         # if it is a dataplane test the side_a is not none and an ethernet port
         if self.side_a is not None:
             self.dataplane = True
@@ -770,6 +890,11 @@ class L3VariableTime(Realm):
         self.no_cleanup = no_cleanup
         self.use_existing_station_lists = use_existing_station_lists
         self.existing_station_lists = existing_station_lists
+
+        # This is set after the 'build()' function is called, as the station
+        # names in newly-created station profiles (i.e. not existing) are only
+        # set *after creation*
+        self.station_names_list = []
 
         self.wait_for_ip_sec = self.duration_time_to_seconds(wait_for_ip_sec)
         self.exit_on_ip_acquired = exit_on_ip_acquired
@@ -836,6 +961,8 @@ class L3VariableTime(Realm):
         self.bk_resource_host_A = []
         self.bk_resource_hw_ver_A = []
         self.bk_resource_eid_A = []
+        self.bk_resource_kernel_A = []
+        self.bk_resource_kernel_A = []
         self.bk_resource_alias_A = []
 
         self.bk_request_dl_A = []
@@ -868,6 +995,8 @@ class L3VariableTime(Realm):
         self.bk_resource_host_B = []
         self.bk_resource_hw_ver_B = []
         self.bk_resource_eid_B = []
+        self.bk_resource_kernel_B = []
+        self.bk_resource_kernel_B = []
         self.bk_resource_alias_B = []
 
         self.bk_request_dl_B = []
@@ -900,6 +1029,8 @@ class L3VariableTime(Realm):
         self.be_resource_host_A = []
         self.be_resource_hw_ver_A = []
         self.be_resource_eid_A = []
+        self.be_resource_kernel_A = []
+        self.be_resource_kernel_A = []
         self.be_resource_alias_A = []
 
         self.be_request_dl_A = []
@@ -932,6 +1063,8 @@ class L3VariableTime(Realm):
         self.be_resource_host_B = []
         self.be_resource_hw_ver_B = []
         self.be_resource_eid_B = []
+        self.be_resource_kernel_B = []
+        self.be_resource_kernel_B = []
         self.be_resource_alias_B = []
 
         self.be_request_dl_B = []
@@ -964,6 +1097,8 @@ class L3VariableTime(Realm):
         self.vi_resource_host_A = []
         self.vi_resource_hw_ver_A = []
         self.vi_resource_eid_A = []
+        self.vi_resource_kernel_A = []
+        self.vi_resource_kernel_A = []
         self.vi_resource_alias_A = []
 
         self.vi_request_dl_A = []
@@ -996,6 +1131,8 @@ class L3VariableTime(Realm):
         self.vi_resource_host_B = []
         self.vi_resource_hw_ver_B = []
         self.vi_resource_eid_B = []
+        self.vi_resource_kernel_B = []
+        self.vi_resource_kernel_B = []
         self.vi_resource_alias_B = []
 
         self.vi_request_dl_B = []
@@ -1035,6 +1172,8 @@ class L3VariableTime(Realm):
         self.vo_resource_host_A = []
         self.vo_resource_hw_ver_A = []
         self.vo_resource_eid_A = []
+        self.vo_resource_kernel_A = []
+        self.vo_resource_kernel_A = []
         self.vo_resource_alias_A = []
 
         self.vo_request_dl_A = []
@@ -1067,6 +1206,8 @@ class L3VariableTime(Realm):
         self.vo_resource_host_B = []
         self.vo_resource_hw_ver_B = []
         self.vo_resource_eid_B = []
+        self.vo_resource_kernel_B = []
+        self.vo_resource_kernel_B = []
         self.vo_resource_alias_B = []
 
         self.vo_request_dl_B = []
@@ -1111,38 +1252,41 @@ class L3VariableTime(Realm):
         self.ap_if_6g = ap_if_6g
         self.ap_report_dir = ap_report_dir
         self.ap_file = ap_file
-        self.ap_band_list = ap_band_list
+        self.ap_band_list = ap_band_list if ap_band_list else ['2g', '5g', '6g']
 
         # wifi extra configuration
-        self.key_mgmt_list = key_mgmt_list
-        self.pairwise_list = pairwise_list
-        self.group_list = group_list
-        self.psk_list = psk_list
-        self.wep_key_list = wep_key_list
-        self.ca_cert_list = ca_cert_list
-        self.eap_list = eap_list
-        self.identity_list = identity_list
-        self.anonymous_identity_list = anonymous_identity_list
-        self.phase1_list = phase1_list
-        self.phase2_list = phase2_list
-        self.passwd_list = passwd_list
-        self.pin_list = pin_list
-        self.pac_file_list = pac_file_list
-        self.private_key_list = private_key_list
-        self.pk_password_list = pk_password_list
-        self.hessid_list = hessid_list
-        self.realm_list = realm_list
-        self.client_cert_list = client_cert_list
-        self.imsi_list = imsi_list
-        self.milenage_list = milenage_list
-        self.domain_list = domain_list
-        self.roaming_consortium_list = roaming_consortium_list
-        self.venue_group_list = venue_group_list
-        self.network_type_list = network_type_list
-        self.ipaddr_type_avail_list = ipaddr_type_avail_list
-        self.network_auth_type_list = network_auth_type_list
-        self.anqp_3gpp_cell_net_list = anqp_3gpp_cell_net_list
-        self.ieee80211w_list = ieee80211w_list
+        self.key_mgmt_list = key_mgmt_list if key_mgmt_list else []
+        self.pairwise_list = pairwise_list if pairwise_list else []
+        self.group_list = group_list if group_list else []
+        self.psk_list = psk_list if psk_list else []
+        self.wep_key_list = wep_key_list if wep_key_list else []
+        self.ca_cert_list = ca_cert_list if ca_cert_list else []
+        self.eap_list = eap_list if eap_list else []
+        self.identity_list = identity_list if identity_list else []
+        self.anonymous_identity_list = anonymous_identity_list if anonymous_identity_list else []
+        self.phase1_list = phase1_list if phase1_list else []
+        self.phase2_list = phase2_list if phase2_list else []
+        self.passwd_list = passwd_list if passwd_list else []
+        self.pin_list = pin_list if pin_list else []
+        self.pac_file_list = pac_file_list if pac_file_list else []
+        self.private_key_list = private_key_list if private_key_list else []
+        self.pk_password_list = pk_password_list if pk_password_list else []
+        self.hessid_list = hessid_list if hessid_list else []
+        self.realm_list = realm_list if realm_list else []
+        self.client_cert_list = client_cert_list if client_cert_list else []
+        self.imsi_list = imsi_list if imsi_list else []
+        self.milenage_list = milenage_list if milenage_list else []
+        self.domain_list = domain_list if domain_list else []
+        self.roaming_consortium_list = roaming_consortium_list if roaming_consortium_list else []
+        self.venue_group_list = venue_group_list if venue_group_list else []
+        self.network_type_list = network_type_list if network_type_list else []
+        self.ipaddr_type_avail_list = ipaddr_type_avail_list if ipaddr_type_avail_list else []
+        self.network_auth_type_list = network_auth_type_list if network_auth_type_list else []
+        self.anqp_3gpp_cell_net_list = anqp_3gpp_cell_net_list if anqp_3gpp_cell_net_list else []
+        self.ieee80211w_list = ieee80211w_list if ieee80211w_list else []
+        self.endp_input_list = endp_input_list
+        self.graph_input_list = graph_input_list
+        self.real = real
 
         # AP information import the module
         if self.ap_read and self.ap_module is not None:
@@ -1168,8 +1312,7 @@ class L3VariableTime(Realm):
             self.ap.say_hi()
 
         else:
-            logger.info(
-                "self.ap_read set to True and self.module is None,  will set self.ap_read to False")
+            logger.debug("self.ap_read set to True and self.module is None, will set self.ap_read to False")
             self.ap_read = False
 
         dur = self.duration_time_to_seconds(self.test_duration)
@@ -1189,7 +1332,7 @@ class L3VariableTime(Realm):
         # if side_a is None then side_a is radios
         if not self.dataplane:
             for (
-                    radio_,
+                    _radio_,
                     ssid_,
                     ssid_password_,
                     ssid_security_,
@@ -1266,80 +1409,82 @@ class L3VariableTime(Realm):
                     self.anqp_3gpp_cell_net_list,
                     self.ieee80211w_list
             ):
-                self.station_profile = self.new_station_profile()
-                self.station_profile.lfclient_url = self.lfclient_url
-                self.station_profile.ssid = ssid_
-                self.station_profile.ssid_pass = ssid_password_
-                self.station_profile.security = ssid_security_
-                self.station_profile.number_template = self.number_template
-                self.station_profile.mode = mode_
-                self.station_profile.desired_add_sta_flags = enable_flags_.copy()
-                self.station_profile.desired_add_sta_flags_mask = enable_flags_.copy()
+                station_profile = self.new_station_profile()
+                station_profile.lfclient_url = self.lfclient_url
+                station_profile.ssid = ssid_
+                station_profile.ssid_pass = ssid_password_
+                station_profile.security = ssid_security_
+                station_profile.number_template = self.number_template
+                station_profile.mode = mode_
+                station_profile.desired_add_sta_flags = enable_flags_.copy()
+                station_profile.desired_add_sta_flags_mask = enable_flags_.copy()
 
                 # set_wifi_extra
                 if key_mgmt_ != '[BLANK]':
-                    # for teesting
-                    # if key_mgmt_ == '[BLANK]':
-                    self.station_profile.set_wifi_extra(key_mgmt=key_mgmt_,
-                                                        pairwise=pairwise_,
-                                                        group=group_,
-                                                        psk=psk_,
-                                                        wep_key=wep_key_,
-                                                        ca_cert=ca_cert_,
-                                                        eap=eap_,
-                                                        identity=identity_,
-                                                        anonymous_identity=anonymous_identity_,
-                                                        phase1=phase1_,
-                                                        phase2=phase2_,
-                                                        passwd=passwd_,
-                                                        pin=pin_,
-                                                        pac_file=pac_file_,
-                                                        private_key=private_key_,
-                                                        pk_password=pk_password_,
-                                                        hessid=hessid_,
-                                                        realm=realm_,
-                                                        client_cert=client_cert_,
-                                                        imsi=imsi_,
-                                                        milenage=milenage_,
-                                                        domain=domain_,
-                                                        roaming_consortium=roaming_consortium_,
-                                                        venue_group=venue_group_,
-                                                        network_type=network_type_,
-                                                        ipaddr_type_avail=ipaddr_type_avail_,
-                                                        network_auth_type=network_auth_type_,
-                                                        anqp_3gpp_cell_net=anqp_3gpp_cell_net_
-                                                        )
+                    station_profile.set_wifi_extra(key_mgmt=key_mgmt_,
+                                                   pairwise=pairwise_,
+                                                   group=group_,
+                                                   psk=psk_,
+                                                   wep_key=wep_key_,
+                                                   ca_cert=ca_cert_,
+                                                   eap=eap_,
+                                                   identity=identity_,
+                                                   anonymous_identity=anonymous_identity_,
+                                                   phase1=phase1_,
+                                                   phase2=phase2_,
+                                                   passwd=passwd_,
+                                                   pin=pin_,
+                                                   pac_file=pac_file_,
+                                                   private_key=private_key_,
+                                                   pk_password=pk_password_,
+                                                   hessid=hessid_,
+                                                   realm=realm_,
+                                                   client_cert=client_cert_,
+                                                   imsi=imsi_,
+                                                   milenage=milenage_,
+                                                   domain=domain_,
+                                                   roaming_consortium=roaming_consortium_,
+                                                   venue_group=venue_group_,
+                                                   network_type=network_type_,
+                                                   ipaddr_type_avail=ipaddr_type_avail_,
+                                                   network_auth_type=network_auth_type_,
+                                                   anqp_3gpp_cell_net=anqp_3gpp_cell_net_)
+
+                    # Configure protected management frames (PMF)
                     if ieee80211w_.lower() == 'disabled':
-                        self.station_profile.set_command_param(
-                            "add_sta", "ieee80211w", 0)
+                        station_profile.set_command_param("add_sta", "ieee80211w", 0)
                     elif ieee80211w_.lower() == 'required':
-                        self.station_profile.set_command_param(
-                            "add_sta", "ieee80211w", 2)
-                    # may want to set an error if not optional yet for now default to optional
+                        station_profile.set_command_param("add_sta", "ieee80211w", 2)
                     else:
-                        self.station_profile.set_command_param(
-                            "add_sta", "ieee80211w", 1)
+                        # may want to set an error if not optional yet for now default to optional
+                        station_profile.set_command_param("add_sta", "ieee80211w", 1)
 
                 # place the enable and disable flags
-                # self.station_profile.desired_add_sta_flags = self.enable_flags
-                # self.station_profile.desired_add_sta_flags_mask = self.enable_flags
-                self.station_profile.set_reset_extra(
-                    reset_port_enable=reset_port_enable_,
-                    test_duration=self.duration_time_to_seconds(
-                        self.test_duration),
-                    reset_port_min_time=self.duration_time_to_seconds(
-                        reset_port_time_min_),
-                    reset_port_max_time=self.duration_time_to_seconds(reset_port_time_max_))
-                self.station_profiles.append(self.station_profile)
+                # station_profile.desired_add_sta_flags = self.enable_flags
+                # station_profile.desired_add_sta_flags_mask = self.enable_flags
+                test_duration_sec = self.duration_time_to_seconds(self.test_duration)
+                reset_port_min_time_sec = self.duration_time_to_seconds(reset_port_time_min_)
+                reset_port_max_time_sec = self.duration_time_to_seconds(reset_port_time_max_)
+
+                station_profile.set_reset_extra(reset_port_enable=reset_port_enable_,
+                                                test_duration=test_duration_sec,
+                                                reset_port_min_time=reset_port_min_time_sec,
+                                                reset_port_max_time=reset_port_max_time_sec)
+                self.station_profiles.append(station_profile)
+
             # Use existing station list is similiar to no rebuild
             if self.use_existing_station_lists:
-                self.station_profile = self.new_station_profile()
+                station_profile = self.new_station_profile()
                 for existing_station_list in self.existing_station_lists:
-                    self.station_profile.station_names.append(
-                        existing_station_list)
-                self.station_profiles.append(self.station_profile)
+                    station_profile.station_names.append(existing_station_list)
+
+                self.station_profiles.append(station_profile)
         else:
-            pass
+            # Dataplane style test
+            #
+            # No need to create anything, as this assumes both test ports created,
+            # rather than just 'side_b'
+            self.station_names_list = [self.side_a]
 
         self.multicast_profile.host = self.lfclient_host
         self.cx_profile.host = self.lfclient_host
@@ -1349,6 +1494,61 @@ class L3VariableTime(Realm):
         self.lf_endps = None
         self.udp_endps = None
         self.tcp_endps = None
+
+    def _set_ports_up(self):
+        """Set all test ports up.
+
+        NOTE: This assumes the 'build()' function has successfully completed.
+              Gathering station names requires the stations to have already been
+              created, given the design of the StationProfile logic.
+        """
+        logger.info(f"Admin up upstream port and station port(s): {self.gather_port_eids()}")
+
+        # Admin up upstream port
+        self.admin_up(self.side_b)
+
+        # Admin up created station port(s)
+        #
+        # NOTE: Could use common 'self.station_names_list' here,
+        #       but there's benefit to up'ing and logging
+        #       created vs. existing stations separately
+        for station_profile in self.station_profiles:
+            for sta in station_profile.station_names:
+                logger.debug(f"Admin up station {sta}")
+                self.admin_up(sta)
+
+        # Admin up existing station port(s)
+        if self.use_existing_station_lists:
+            for existing_station in self.existing_station_lists:
+                logger.debug(f"Bringing up existing stations {existing_station}")
+                self.admin_up(existing_station)
+
+    def _wait_ports_connected(self) -> int:
+        """Check that all test ports connect to the DUT.
+
+        Check includes phantom state, admin state, and IPv4 configured.
+
+        NOTE: This assumes the 'build()' function has successfully completed.
+              Gathering station names requires the stations to have already been
+              created, given the design of the StationProfile logic.
+
+        Returns:
+            int: 0 on success, non-zero on failure
+        """
+        success = self.wait_for_ip([self.side_b] + self.station_names_list,
+                                   timeout_sec=self.wait_for_ip_sec)
+        if success:
+            logger.info("All ports connected successfully")
+            if self.exit_on_ip_acquired:
+                logger.info("Configured to exit on successful IPv4 configuration")
+                exit(1)
+        elif self.interopt_mode:
+            logger.warning("Running in InterOp mode, ignoring IPv4 configuration failure and continuing")
+        else:
+            logger.critical("One or more test ports did not receive an IPv4 address "
+                            f"in {self.wait_for_ip_sec} seconds")
+
+        return 0 if success else -1
 
     def get_results_csv(self):
         # print("self.csv_results_file {}".format(self.csv_results_file.name))
@@ -1371,7 +1571,7 @@ class L3VariableTime(Realm):
 
         eid = port_eid
         eid = self.name_to_eid(port_eid)
-        if self.dowebgui != True:
+        if not self.dowebgui:
             logger.info("endp-stats-for-port, port-eid: {}".format(port_eid))
             logger.debug(
                 "eid: {eid}".format(eid=eid))
@@ -1383,7 +1583,7 @@ class L3VariableTime(Realm):
 
         for endp in endps:
             # pprint(endp)
-            if self.dowebgui != True:
+            if not self.dowebgui:
                 logging.info(pformat(endp))
             eid_endp = endp["eid"].split(".")
             logger.debug(
@@ -1394,14 +1594,14 @@ class L3VariableTime(Realm):
             # Note: the endp eid is shelf.resource.port.endp-id, the eid can be treated somewhat as
             # child class of port-eid , and look up the port the eid is using.
             if eid[0] == eid_endp[0] and eid[1] == eid_endp[1] and eid[2] == eid_endp[2]:
-                if((endp['delay'] is str and not endp['delay'].isnumeric()) or endp['delay'] is None):
+                if ((endp['delay'] is str and not endp['delay'].isnumeric()) or endp['delay'] is None):
                     logging.debug(
                         'Expected integer response for delay, received non-numeric string instead. Replacing with 0')
                     lat += 0
                 else:
                     lat += int(endp['delay'])
 
-                if((endp['jitter'] is str and not endp['jitter'].isnumeric()) or endp['jitter'] is None):
+                if ((endp['jitter'] is str and not endp['jitter'].isnumeric()) or endp['jitter'] is None):
                     logging.debug(
                         'Expected integer response for jitter, received non-numeric string instead. Replacing with 0')
                     jit += 0
@@ -1464,9 +1664,9 @@ class L3VariableTime(Realm):
                             and not endp['rx drop %'].isnumeric()) or endp['rx drop %'] is None:
                         logging.debug(
                             'Expected integer response for rx drop %, received non-numeric string instead. Replacing with 0')
-                        dl_tx_drop_percent = 0
+                        dl_rx_drop_percent = 0
                     else:
-                        dl_tx_drop_percent = round(endp["rx drop %"], 2)
+                        dl_rx_drop_percent = round(endp["rx drop %"], 2)
 
                 # -B upload side
                 else:
@@ -1533,87 +1733,95 @@ class L3VariableTime(Realm):
         # Multicast endpoints
         for e in self.multicast_profile.get_mc_names():
             our_endps[e] = e
-        for endp_name in endp_list['endpoint']:
-            logger.debug("endpoint: {}".format(endp_name))
-            if endp_name != 'uri' and endp_name != 'handler':
-                for item, endp_value in endp_name.items():
-                    # multicast does not support use existing: or self.use_existing_station_lists:
-                    if item in our_endps:
-                        # endps.append(endp_value) need to see how to affect
-                        # NOTE: during each monitor period the rates are added to get the totals
-                        # this is done so that if there is an issue the rate information will be in
-                        # the csv for the individual polling period
-                        logger.debug(
-                            "multicast endpoint: {item} value:\n".format(item=item))
-                        logger.debug(endp_value)
-                        for value_name, value in endp_value.items():
-                            if isinstance(value, str) and not value.isnumeric():
-                                logging.debug(
-                                    'Expected integer response for rx rate, received non-numeric string instead. Replacing with 0')
-                                value = 0
-                            if value_name == 'rx rate':
-                                # This hack breaks for mcast or if someone names endpoints weirdly.
-                                # logger.info("item: ", item, " rx-bps: ", value_rx_bps)
-                                if "-mrx-" in item:
-                                    total_dl += int(value)
-                                else:
-                                    total_ul += int(value)
-                            if value_name == 'rx rate ll':
-                                # This hack breaks for mcast or if someone
-                                # names endpoints weirdly.
-                                if "-mrx-" in item:
-                                    total_dl_ll += int(value)
-                                else:
-                                    total_ul_ll += int(value)
-
-                            # TODO need a way to report rates
-
-        # Unicast endpoints
-        for e in self.cx_profile.created_endp.keys():
-            our_endps[e] = e
-        for endp_name in endp_list['endpoint']:
-            if endp_name != 'uri' and endp_name != 'handler':
-                for item, endp_value in endp_name.items():
-                    if item in our_endps or self.use_existing_station_lists:
-                        endps.append(endp_value)
-                        logger.debug(
-                            "endpoint: {item} value:\n".format(item=item))
-                        logger.debug(endp_value)
-
-                        for value_name, value in endp_value.items():
-                            if value_name == 'rx bytes':
-                                endp_rx_map[item] = value
-                            if value_name == 'rx rate':
-                                endp_rx_map[item] = value
-                            if value_name == 'rx rate ll':
-                                endp_rx_map[item] = value
-                            if value_name == 'rx pkts ll':
-                                endp_rx_map[item] = value
-                            if value_name == 'rx drop %':
-                                endp_rx_drop_map[item] = value
-                            if value_name == 'rx rate':
+        try:
+            for endp_name in endp_list['endpoint']:
+                logger.debug("endpoint: {}".format(endp_name))
+                if endp_name != 'uri' and endp_name != 'handler':
+                    for item, endp_value in endp_name.items():
+                        # multicast does not support use existing: or self.use_existing_station_lists:
+                        if item in our_endps:
+                            # endps.append(endp_value) need to see how to affect
+                            # NOTE: during each monitor period the rates are added to get the totals
+                            # this is done so that if there is an issue the rate information will be in
+                            # the csv for the individual polling period
+                            logger.debug(
+                                "multicast endpoint: {item} value:\n".format(item=item))
+                            logger.debug(endp_value)
+                            for value_name, value in endp_value.items():
                                 if isinstance(value, str) and not value.isnumeric():
                                     logging.debug(
                                         'Expected integer response for rx rate, received non-numeric string instead. Replacing with 0')
                                     value = 0
-                                # This hack breaks for mcast or if someone names endpoints weirdly.
-                                # logger.info("item: ", item, " rx-bps: ", value_rx_bps)
-                                if item.endswith("-A"):
-                                    total_dl += int(value)
-                                elif item.endswith("-B"):
-                                    total_ul += int(value)
-                            if value_name == 'rx rate ll':
-                                if isinstance(value, str) and not value.isnumeric():
-                                    logging.debug(
-                                        'Expected integer response for rx rate ll, received non-numeric string instead. Replacing with 0')
-                                    value = 0
-                                # This hack breaks for mcast or if someone
-                                # names endpoints weirdly.
-                                if item.endswith("-A"):
-                                    total_dl_ll += int(value)
-                                elif item.endswith("-B"):
-                                    total_ul_ll += int(value)
+                                if value_name == 'rx rate':
+                                    # This hack breaks for mcast or if someone names endpoints weirdly.
+                                    # logger.info("item: ", item, " rx-bps: ", value_rx_bps)
+                                    if "-mrx-" in item:
+                                        total_dl += int(value)
+                                    else:
+                                        total_ul += int(value)
+                                if value_name == 'rx rate ll':
+                                    # This hack breaks for mcast or if someone
+                                    # names endpoints weirdly.
+                                    if "-mrx-" in item:
+                                        total_dl_ll += int(value)
+                                    else:
+                                        total_ul_ll += int(value)
 
+                                # TODO need a way to report rates
+        except Exception as e:
+            overall_response = self.json_get('/cx/all/')
+            logger.info(overall_response)
+            logger.error(f"Endpoint not fetched from API {e}")
+        # Unicast endpoints
+        for e in self.cx_profile.created_endp.keys():
+            our_endps[e] = e
+        try:
+            for endp_name in endp_list['endpoint']:
+                if endp_name != 'uri' and endp_name != 'handler':
+                    for item, endp_value in endp_name.items():
+                        if item in our_endps or self.use_existing_station_lists:
+                            endps.append(endp_value)
+                            logger.debug(
+                                "endpoint: {item} value:\n".format(item=item))
+                            logger.debug(endp_value)
+
+                            for value_name, value in endp_value.items():
+                                if value_name == 'rx bytes':
+                                    endp_rx_map[item] = value
+                                if value_name == 'rx rate':
+                                    endp_rx_map[item] = value
+                                if value_name == 'rx rate ll':
+                                    endp_rx_map[item] = value
+                                if value_name == 'rx pkts ll':
+                                    endp_rx_map[item] = value
+                                if value_name == 'rx drop %':
+                                    endp_rx_drop_map[item] = value
+                                if value_name == 'rx rate':
+                                    if isinstance(value, str) and not value.isnumeric():
+                                        logging.debug(
+                                            'Expected integer response for rx rate, received non-numeric string instead. Replacing with 0')
+                                        value = 0
+                                    # This hack breaks for mcast or if someone names endpoints weirdly.
+                                    # logger.info("item: ", item, " rx-bps: ", value_rx_bps)
+                                    if item.endswith("-A"):
+                                        total_dl += int(value)
+                                    elif item.endswith("-B"):
+                                        total_ul += int(value)
+                                if value_name == 'rx rate ll':
+                                    if isinstance(value, str) and not value.isnumeric():
+                                        logging.debug(
+                                            'Expected integer response for rx rate ll, received non-numeric string instead. Replacing with 0')
+                                        value = 0
+                                    # This hack breaks for mcast or if someone
+                                    # names endpoints weirdly.
+                                    if item.endswith("-A"):
+                                        total_dl_ll += int(value)
+                                    elif item.endswith("-B"):
+                                        total_ul_ll += int(value)
+        except Exception as e:
+            overall_response = self.json_get('/cx/all/')
+            logger.info(overall_response)
+            logger.error(f"Endpoint not fetched from API {e}")
         # logger.debug("total-dl: ", total_dl, " total-ul: ", total_ul, "\n")
         return endp_rx_map, endp_rx_drop_map, endps, total_dl, total_ul, total_dl_ll, total_ul_ll
     # This script supports resetting ports, allowing one to test AP/controller under data load
@@ -1699,7 +1907,15 @@ class L3VariableTime(Realm):
             count += 1
             time.sleep(5)
 
-    def gather_port_eids(self):
+    def gather_port_eids(self) -> list:
+        """Query test object for list of ports used in test.
+
+        This includes the both the station(s) and the upstream.
+
+        NOTE: This assumes the 'build()' function has successfully completed.
+              Gathering station names requires the stations to have already been
+              created, given the design of the StationProfile logic.
+        """
         rv = [self.side_b]
 
         for station_profile in self.station_profiles:
@@ -1747,6 +1963,7 @@ class L3VariableTime(Realm):
         else:
             # TODO for multicast when using single station there needs to be an interop mode
             # with a single transmitter for all of the multi-cast
+            logger.info("Creating test station port(s)")
             for station_profile in self.station_profiles:
                 if not rebuild and not self.use_existing_station_lists:
                     station_profile.use_security(
@@ -1755,9 +1972,7 @@ class L3VariableTime(Realm):
                         station_profile.ssid_pass)
                     station_profile.set_number_template(
                         station_profile.number_template)
-                    logger.info(
-                        "Creating stations on radio %s" %
-                        (self.radio_name_list[index]))
+                    logger.debug(f"Creating station port(s) on radio {self.radio_name_list[index]}")
 
                     station_profile.create(
                         radio=self.radio_name_list[index],
@@ -1799,6 +2014,14 @@ class L3VariableTime(Realm):
 
         self.cx_count = self.cx_profile.get_cx_count()
 
+        # Generate list of all stations, both created and existing
+        #
+        # Both are stored in 'self.station_profiles', but only
+        # the 'station_names' field is really valid for the existing
+        # stations profile
+        for station_profile in self.station_profiles:
+            self.station_names_list.extend(station_profile.station_names)
+
         if self.dataplane:
             self._pass(
                 "PASS: CX build finished: created/updated:  %s connections." %
@@ -1808,59 +2031,25 @@ class L3VariableTime(Realm):
                 "PASS: Stations & CX build finished: created/updated: %s stations and %s connections." %
                 (self.station_count, self.cx_count))
 
-    # Run the main body of the test logic.
-    # todo there may be a need to start all existing stations on lanforge
-    # sta_json = super().json_get(
-    #   "port/1/{resource}/list?field=alias".format(resource=self.resource))['interfaces']
+    def start(self, print_pass=False, checkpoint_event=None, resume_event=None) -> int:
+        """Run configured Layer-3 variable time test.
 
-    # Returns 0 on success, non-zero on error
-    def start(self, print_pass=False):
-        logger.info("Bringing up stations")
-        self.admin_up(self.side_b)
-        for station_profile in self.station_profiles:
-            for sta in station_profile.station_names:
-                logger.info("Bringing up station %s" % sta)
-                self.admin_up(sta)
-        # TODO - Admin up existing stations
-        if self.use_existing_station_lists:
-            for existing_station in self.existing_station_lists:
-                logger.info("Bringing up existing stations %s" %
-                            existing_station)
-                self.admin_up(existing_station)
+        Args:
+            print_pass (bool, optional): Enable printing test pass upon completion.
+                                         Defaults to False.
+            checkpoint_event (multiprocessing.Event, optional): if provided, set once CXs are
+                                         started, so callers (e.g. Port Reset orchestration) can
+                                         wait until traffic is up before proceeding.
+            resume_event (multiprocessing.Event, optional): if provided, waited on right after
+                                         signaling checkpoint_event, so callers can hold this test
+                                         at the checkpoint until they are ready for it to continue.
 
-        temp_stations_list = []
-        # temp_stations_list.append(self.side_b)
-        for station_profile in self.station_profiles:
-            temp_stations_list.extend(station_profile.station_names.copy())
+        Returns:
+            int: 0 on success, non-zero on failure.
+        """
+        self._set_ports_up()
+        self._wait_ports_connected()
 
-        # if self.use_existing_station_lists:
-        #    # for existing_station in self.existing_station_lists:
-        #    temp_stations_list.extend(self.existing_station_lists.copy())
-
-        temp_stations_list_with_side_b = temp_stations_list.copy()
-        # wait for b side to get IP
-        temp_stations_list_with_side_b.append(self.side_b)
-        logger.debug("temp_stations_list {temp_stations_list}".format(
-            temp_stations_list=temp_stations_list))
-        logger.debug("temp_stations_list_with_side_b {temp_stations_list_with_side_b}".format(
-            temp_stations_list_with_side_b=temp_stations_list_with_side_b))
-
-        if self.wait_for_ip(temp_stations_list_with_side_b, timeout_sec=self.wait_for_ip_sec):
-            logger.info("ip's acquired")
-            if self.exit_on_ip_acquired:
-                logger.info("exit_on_ip_acquired")
-                exit(1)
-        else:
-            # No reason to continue
-            logger.critical(
-                "ERROR: print failed to get IP's Check station configuration SSID, Security, Is DHCP enabled exiting")
-            if self.interopt_mode:
-                pass  # continue to try to run
-            else:
-                return 1
-
-        # self.csv_generate_column_headers()
-        # logger.debug(csv_header)
         self.csv_add_column_headers()
 
         # dl - ports
@@ -1939,8 +2128,6 @@ class L3VariableTime(Realm):
                 self.multicast_profile.side_b_min_pdu = dl_pdu
                 self.multicast_profile.side_b_max_pdu = dl_pdu
 
-                self
-
                 # Update connections with the new rate and pdu size config.
                 self.build(rebuild=True)
 
@@ -1950,7 +2137,7 @@ class L3VariableTime(Realm):
 
                 for atten_val in self.atten_vals:
                     if atten_val != -1:
-                        for atten_idx in self.attenuators:
+                        for _ in self.attenuators:
                             atten_mod_test = lf_attenuator.CreateAttenuator(
                                 host=self.lfclient_host, port=self.lfclient_port, serno='all', idx='all', val=atten_val, _debug_on=self.debug)
                             atten_mod_test.build()
@@ -1962,6 +2149,10 @@ class L3VariableTime(Realm):
                     logger.info("Starting layer-3 traffic (if any configured)")
                     self.cx_profile.start_cx()
                     self.cx_profile.refresh_cx()
+                    if checkpoint_event is not None:
+                        checkpoint_event.set()
+                    if resume_event is not None:
+                        resume_event.wait()
 
                     cur_time = datetime.datetime.now()
                     logger.info("Getting initial values.")
@@ -2008,7 +2199,7 @@ class L3VariableTime(Realm):
                         log_msg = "main loop, total-dl: {total_dl_bps} total-ul: {total_ul_bps} total-dl-ll: {total_dl_ll_bps}".format(
                             total_dl_bps=total_dl_bps, total_ul_bps=total_ul_bps, total_dl_ll_bps=total_dl_ll_bps)
                         # Added logic creating a csv file for webGUI to get runtime data
-                        if self.dowebgui == True:
+                        if self.dowebgui:
                             time_difference = abs(end_time - datetime.datetime.now())
                             total_hours = time_difference.total_seconds() / 3600
                             remaining_minutes = (total_hours % 1) * 60
@@ -2034,7 +2225,7 @@ class L3VariableTime(Realm):
                                     logging.warning('Test is stopped by the user')
                                     self.overall[len(self.overall) - 1]["end_time"] = self.get_time_stamp_local()
                                     break
-                        if self.dowebgui != True:
+                        if not self.dowebgui:
                             logger.debug(log_msg)
 
                         # AP OUTPUT
@@ -2065,14 +2256,14 @@ class L3VariableTime(Realm):
                                         "query-port: %s: incomplete response:" % url)
                                     logger.info(pformat(response))
                                 else:
-                                    if self.dowebgui != True:
+                                    if not self.dowebgui:
                                         # print("response".format(response))
                                         logger.info(pformat(response))
                                     port_data = response['interface']
                                     logger.info(
                                         "From LANforge: port_data, response['insterface']:{}".format(port_data))
                                     mac = port_data['mac']
-                                    if self.dowebgui != True:
+                                    if not self.dowebgui:
                                         logger.info(
                                             "From LANforge: port_data, response['insterface']:{}".format(port_data))
                                     mac = port_data['mac']
@@ -2090,18 +2281,20 @@ class L3VariableTime(Realm):
                                         port_data["port"], endps)
 
                                 if tx_dl_mac_found:
-                                    if self.dowebgui != True:
+                                    if not self.dowebgui:
                                         logger.info("mac {mac} ap_row_tx_dl {ap_row_tx_dl}".format(
                                             mac=mac, ap_row_tx_dl=ap_row_tx_dl))
                                     # Find latency, jitter for connections
                                     # using this port.
-                                    latency, jitter, total_dl_rate, total_dl_rate_ll, total_dl_pkts_ll, dl_rx_drop_percent, total_ul_rate, total_ul_rate_ll, total_ul_pkts_ll, ul_rx_drop_percent = self.get_endp_stats_for_port(
+                                    (latency, jitter, total_dl_rate, total_dl_rate_ll, total_dl_pkts_ll,
+                                     dl_rx_drop_percent, total_ul_rate, total_ul_rate_ll,
+                                     total_ul_pkts_ll, ul_rx_drop_percent) = self.get_endp_stats_for_port(
                                         port_data["port"], endps)
 
                                     ap_row_tx_dl.append(ap_row_chanim)
 
                                     self.write_dl_port_csv(
-                                        len(temp_stations_list),
+                                        len(self.station_names_list),
                                         ul,
                                         dl,
                                         ul_pdu_str,
@@ -2126,10 +2319,11 @@ class L3VariableTime(Realm):
                                 if rx_ul_mac_found:
                                     # Find latency, jitter for connections
                                     # using this port.
-                                    # latency, jitter, total_dl_rate, total_dl_rate_ll, total_dl_pkts_ll, dl_rx_drop_percent, total_ul_rate, total_ul_rate_ll, total_ul_pkts_ll, ul_tx_drop_percent = self.get_endp_stats_for_port(
+                                    # latency, jitter, total_dl_rate, total_dl_rate_ll, total_dl_pkts_ll, dl_rx_drop_percent, total_ul_rate,
+                                    # total_ul_rate_ll, total_ul_pkts_ll, ul_tx_drop_percent = self.get_endp_stats_for_port(
                                     #    port_data["port"], endps)
                                     self.write_ul_port_csv(
-                                        len(temp_stations_list),
+                                        len(self.station_names_list),
                                         ul,
                                         dl,
                                         ul_pdu_str,
@@ -2146,9 +2340,9 @@ class L3VariableTime(Realm):
                                         total_dl_rate,
                                         total_dl_rate_ll,
                                         total_dl_pkts_ll,
-                                        dl_tx_drop_percent,
+                                        dl_rx_drop_percent,
                                         ap_row_rx_ul)  # ap_ul_row added
-                                if self.dowebgui != True:
+                                if not self.dowebgui:
                                     logger.info("ap_row_rx_ul {ap_row_rx_ul}".format(
                                         ap_row_rx_ul=ap_row_rx_ul))
 
@@ -2173,10 +2367,12 @@ class L3VariableTime(Realm):
                                     logger.debug(pformat(response))
                                 else:
                                     port_data = response['interface']
-                                    latency, jitter, total_dl_rate, total_dl_rate_ll, total_dl_pkts_ll, dl_rx_drop_percent, total_ul_rate, total_ul_rate_ll, total_ul_pkts_ll, ul_rx_drop_percent = self.get_endp_stats_for_port(
+                                    (latency, jitter, total_dl_rate, total_dl_rate_ll,
+                                     total_dl_pkts_ll, dl_rx_drop_percent, total_ul_rate,
+                                     total_ul_rate_ll, total_ul_pkts_ll, ul_rx_drop_percent) = self.get_endp_stats_for_port(
                                         port_data["port"], endps)
                                     self.write_dl_port_csv(
-                                        len(temp_stations_list),
+                                        len(self.station_names_list),
                                         ul,
                                         dl,
                                         ul_pdu_str,
@@ -2242,7 +2438,8 @@ class L3VariableTime(Realm):
                     # FutureWarning: Indexing with multiple keys need to make single [] to double [[]]
                     # https://stackoverflow.com/questions/60999753/pandas-future-warning-indexing-with-multiple-keys
                     all_dl_ports_stations_sum_df = all_dl_ports_stations_df.groupby(['Time epoch'])[['Rx-Bps', 'Tx-Bps', 'Rx-Latency', 'Rx-Jitter',
-                                                                                                    'Ul-Rx-Goodput-bps', 'Ul-Rx-Rate-ll', 'Ul-Rx-Pkts-ll', 'Dl-Rx-Goodput-bps', 'Dl-Rx-Rate-ll', 'Dl-Rx-Pkts-ll']].sum()
+                                                                                                     'Ul-Rx-Goodput-bps', 'Ul-Rx-Rate-ll', 'Ul-Rx-Pkts-ll',
+                                                                                                     'Dl-Rx-Goodput-bps', 'Dl-Rx-Rate-ll', 'Dl-Rx-Pkts-ll']].sum()
                     all_dl_ports_stations_sum_file_name = self.outfile[:-4]
                     all_dl_port_stations_sum_file_name = all_dl_ports_stations_sum_file_name + \
                         "-dl-all-eids-sum-per-interval.csv"
@@ -2313,7 +2510,8 @@ class L3VariableTime(Realm):
                         # FutureWarning: Indexing with multiple keys need to make single [] to double [[]]
                         # https://stackoverflow.com/questions/60999753/pandas-future-warning-indexing-with-multiple-keys
                         all_ul_ports_stations_sum_df = all_dl_ports_stations_df.groupby(['Time epoch'])[['Rx-Bps', 'Tx-Bps', 'Rx-Latency', 'Rx-Jitter',
-                                                                                                        'Ul-Rx-Goodput-bps', 'Ul-Rx-Rate-ll', 'Ul-Rx-Pkts-ll', 'Dl-Rx-Goodput-bps', 'Dl-Rx-Rate-ll', 'Dl-Rx-Pkts-ll']].sum()
+                                                                                                         'Ul-Rx-Goodput-bps', 'Ul-Rx-Rate-ll', 'Ul-Rx-Pkts-ll',
+                                                                                                         'Dl-Rx-Goodput-bps', 'Dl-Rx-Rate-ll', 'Dl-Rx-Pkts-ll']].sum()
                         all_ul_ports_stations_sum_file_name = self.outfile[:-4]
                         all_ul_port_stations_sum_file_name = all_ul_ports_stations_sum_file_name + \
                             "-ul-all-eids-sum-per-interval.csv"
@@ -2354,7 +2552,7 @@ class L3VariableTime(Realm):
 
                     # At end of test step, record KPI into kpi.csv
                     self.record_kpi_csv(
-                        len(temp_stations_list),
+                        len(self.station_names_list),
                         ul,
                         dl,
                         ul_pdu_str,
@@ -2367,7 +2565,7 @@ class L3VariableTime(Realm):
 
                     # At end of test step, record results information. This is
                     self.record_results_total(
-                        len(temp_stations_list),
+                        len(self.station_names_list),
                         ul,
                         dl,
                         ul_pdu_str,
@@ -2627,13 +2825,16 @@ class L3VariableTime(Realm):
             self.csv_results_writer.writerow(row)
             self.csv_results_file.flush()
 
-    def create_resource_alias(self, eid='NA', host='NA', hw_version='NA'):
+    def create_resource_alias(self, eid='NA', host='NA', hw_version='NA', kernel='NA'):
         if "Win" in hw_version:
             hardware = "Win"
         elif "Linux" in hw_version:
             hardware = "Linux"
         elif "Apple" in hw_version:
-            hardware = "Apple"
+            if "iOS" in kernel:
+                hardware = "iOS"
+            else:
+                hardware = "Apple"
         else:
             hardware = "Android"
         alias = eid + "_" + host + "_" + hardware
@@ -2656,18 +2857,18 @@ class L3VariableTime(Realm):
         # gather port data
         # TODO
         self.port_data = self.json_get('port/all?fields=alias,port,mac,channel,ssid,mode,bps+rx,rx-rate,bps+tx,tx-rate')
-        #self.port_data = self.json_get('port/all')
+        # self.port_data = self.json_get('port/all')
         self.port_data.pop("handler")
         self.port_data.pop("uri")
         self.port_data.pop("warnings")
         logger.info("self.port_data type: {dtype} data: {data}".format(dtype=type(self.port_data), data=self.port_data))
 
-        self.resource_data = self.json_get('resource/all?fields=eid,hostname,hw+version')
+        self.resource_data = self.json_get('resource/all?fields=eid,hostname,hw+version,kernel')
         # self.resource_data = self.json_get('resource/all')
         self.resource_data.pop("handler")
         self.resource_data.pop("uri")
         # self.resource_data.pop("warnings")
-        if self.dowebgui != True:
+        if not self.dowebgui:
             logger.info("self.resource_data type: {dtype}".format(dtype=type(self.port_data)))
         # logger.info("self.resource_data : {data}".format(data=self.port_data))
 
@@ -2721,7 +2922,7 @@ class L3VariableTime(Realm):
             if endp_type_present:
                 # note for multicast there is no a side traffic
                 if endp_data[endp_data_key]['type'] == 'Mcast':
-                    if endp_data[endp_data_key]['tos'] == 'BK':
+                    if endp_data[endp_data_key]['tos'] == 'BK' or endp_data[endp_data_key]['tos'] == '64':
                         # for multicast the logic is reversed. A is upstream for multicast, B is
                         # downstream for multicast
                         if endp_data[endp_data_key]['a/b'] == "B":
@@ -2744,10 +2945,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_A.append(client_alias)
                                     break
 
@@ -2755,6 +2958,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_A.append('NA')
                                 self.bk_resource_hw_ver_A.append('NA')
                                 self.bk_resource_eid_A.append('NA')
+                                self.bk_resource_kernel_A.append('NA')
                                 self.bk_resource_alias_A.append('NA')
 
                             # look up port information
@@ -2807,10 +3011,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_B.append(client_alias)
 
                                     break
@@ -2819,6 +3025,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_B.append('NA')
                                 self.bk_resource_hw_ver_B.append('NA')
                                 self.bk_resource_eid_B.append('NA')
+                                self.bk_resource_kernel_B.append('NA')
                                 self.bk_resource_alias_B.append('NA')
 
                             # look up port information
@@ -2850,7 +3057,7 @@ class L3VariableTime(Realm):
                                 self.bk_port_offered_tx_rate_B.append("NA")
                                 self.bk_port_channel_B.append("NA")
 
-                    elif endp_data[endp_data_key]['tos'] == 'BE':
+                    elif endp_data[endp_data_key]['tos'] == 'BE' or endp_data[endp_data_key]['tos'] == '96':
                         # for multicast the logic is reversed. A is upstream for multicast, B is
                         # downstream for multicast
                         if endp_data[endp_data_key]['a/b'] == "B":
@@ -2873,10 +3080,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_A.append(client_alias)
 
                                     break
@@ -2885,6 +3094,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_A.append('NA')
                                 self.be_resource_hw_ver_A.append('NA')
                                 self.be_resource_eid_A.append('NA')
+                                self.be_resource_kernel_A.append('NA')
                                 self.be_resource_alias_A.append('NA')
 
                             # look up port information
@@ -2937,10 +3147,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_B.append(client_alias)
 
                                     break
@@ -2949,6 +3161,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_B.append('NA')
                                 self.be_resource_hw_ver_B.append('NA')
                                 self.be_resource_eid_B.append('NA')
+                                self.be_resource_kernel_B.append('NA')
                                 self.be_resource_alias_B.append('NA')
 
                             # look up port information
@@ -2980,7 +3193,7 @@ class L3VariableTime(Realm):
                                 self.be_port_offered_tx_rate_B.append("NA")
                                 self.be_port_channel_B.append("NA")
 
-                    elif endp_data[endp_data_key]['tos'] == 'VI':
+                    elif endp_data[endp_data_key]['tos'] == 'VI' or endp_data[endp_data_key]['tos'] == '128':
                         # for multicast the logic is reversed. A is upstream for multicast, B is
                         # downstream for multicast
                         if endp_data[endp_data_key]['a/b'] == "B":
@@ -3003,10 +3216,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_A.append(client_alias)
 
                                     break
@@ -3015,6 +3230,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_A.append('NA')
                                 self.vi_resource_hw_ver_A.append('NA')
                                 self.vi_resource_eid_A.append('NA')
+                                self.vi_resource_kernel_A.append('NA')
                                 self.vi_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3067,10 +3283,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_B.append(client_alias)
 
                                     break
@@ -3079,6 +3297,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_B.append('NA')
                                 self.vi_resource_hw_ver_B.append('NA')
                                 self.vi_resource_eid_B.append('NA')
+                                self.vi_resource_kernel_B.append('NA')
                                 self.vi_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3110,7 +3329,7 @@ class L3VariableTime(Realm):
                                 self.vi_port_offered_tx_rate_B.append("NA")
                                 self.vi_port_channel_B.append("NA")
 
-                    elif endp_data[endp_data_key]['tos'] == 'VO':
+                    elif endp_data[endp_data_key]['tos'] == 'VO' or endp_data[endp_data_key]['tos'] == '192':
                         # for multicast the logic is reversed. A is upstream for multicast, B is
                         # downstream for multicast
                         if endp_data[endp_data_key]['a/b'] == "B":
@@ -3133,10 +3352,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_A.append(client_alias)
 
                                     break
@@ -3145,6 +3366,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_A.append('NA')
                                 self.vo_resource_hw_ver_A.append('NA')
                                 self.vo_resource_eid_A.append('NA')
+                                self.vo_resource_kernel_A.append('NA')
                                 self.vo_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3197,10 +3419,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_B.append(client_alias)
 
                                     break
@@ -3209,6 +3433,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_B.append('NA')
                                 self.vo_resource_hw_ver_B.append('NA')
                                 self.vo_resource_eid_B.append('NA')
+                                self.vo_resource_kernel_B.append('NA')
                                 self.vo_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3244,7 +3469,7 @@ class L3VariableTime(Realm):
                 # note for B tx is download and rx is uploat
                 # TODO support  'LF'
                 elif endp_data[endp_data_key]['type'] == 'LF/TCP' or endp_data[endp_data_key]['type'] == 'LF/UDP':
-                    if endp_data[endp_data_key]['tos'] == 'BK':
+                    if endp_data[endp_data_key]['tos'] == 'BK' or endp_data[endp_data_key]['tos'] == '64':
                         if endp_data[endp_data_key]['a/b'] == "A":
                             self.bk_clients_A.append(endp_data[endp_data_key]['name'])
                             self.bk_tos_ul_A.append(endp_data[endp_data_key]["tx rate"])
@@ -3266,16 +3491,19 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_A.append(client_alias)
 
                             if resource_found is False:
                                 self.bk_resource_host_A.append('NA')
                                 self.bk_resource_hw_ver_A.append('NA')
                                 self.bk_resource_eid_A.append('NA')
+                                self.bk_resource_kernel_A.append('NA')
                                 self.bk_resource_alias_A.append('NA')
                                 break
 
@@ -3329,10 +3557,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_B.append(client_alias)
 
                                     break
@@ -3341,6 +3571,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_B.append('NA')
                                 self.bk_resource_hw_ver_B.append('NA')
                                 self.bk_resource_eid_B.append('NA')
+                                self.bk_resource_kernel_B.append('NA')
                                 self.bk_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3372,7 +3603,7 @@ class L3VariableTime(Realm):
                                 self.bk_port_channel_B.append("NA")
 
                     # for unicast the upstream is B and downstream is A
-                    elif endp_data[endp_data_key]['tos'] == 'BE':
+                    elif endp_data[endp_data_key]['tos'] == 'BE' or endp_data[endp_data_key]['tos'] == '96':
 
                         # for unicast the upstream is B and downstream is A
                         if endp_data[endp_data_key]['a/b'] == "A":
@@ -3396,10 +3627,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_A.append(client_alias)
 
                                     break
@@ -3408,6 +3641,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_A.append('NA')
                                 self.be_resource_hw_ver_A.append('NA')
                                 self.be_resource_eid_A.append('NA')
+                                self.be_resource_kernel_A.append('NA')
                                 self.be_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3460,10 +3694,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_B.append(client_alias)
 
                                     break
@@ -3472,6 +3708,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_B.append('NA')
                                 self.be_resource_hw_ver_B.append('NA')
                                 self.be_resource_eid_B.append('NA')
+                                self.be_resource_kernel_B.append('NA')
                                 self.be_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3503,7 +3740,7 @@ class L3VariableTime(Realm):
                                 self.be_port_offered_tx_rate_B.append("NA")
                                 self.be_port_channel_B.append("NA")
 
-                    elif endp_data[endp_data_key]['tos'] == 'VI':
+                    elif endp_data[endp_data_key]['tos'] == 'VI' or endp_data[endp_data_key]['tos'] == '128':
                         # for unicast the upstream is B and downstream is A
                         if endp_data[endp_data_key]['a/b'] == "A":
                             self.vi_clients_A.append(endp_data[endp_data_key]['name'])
@@ -3526,10 +3763,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_A.append(client_alias)
 
                                     break
@@ -3538,6 +3777,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_A.append('NA')
                                 self.vi_resource_hw_ver_A.append('NA')
                                 self.vi_resource_eid_A.append('NA')
+                                self.vi_resource_kernel_A.append('NA')
                                 self.vi_resource_alias_A.append(client_alias)
 
                             # look up port information
@@ -3590,10 +3830,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_B.append(client_alias)
                                     break
 
@@ -3601,6 +3843,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_B.append('NA')
                                 self.vi_resource_hw_ver_B.append('NA')
                                 self.vi_resource_eid_B.append('NA')
+                                self.vi_resource_kernel_B.append('NA')
                                 self.vi_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3632,7 +3875,7 @@ class L3VariableTime(Realm):
                                 self.vi_port_offered_tx_rate_B.append("NA")
                                 self.vi_port_channel_B.append("NA")
 
-                    elif endp_data[endp_data_key]['tos'] == 'VO':
+                    elif endp_data[endp_data_key]['tos'] == 'VO' or endp_data[endp_data_key]['tos'] == '192':
                         # for unicast the upstream is B and downstream is A
                         if endp_data[endp_data_key]['a/b'] == "A":
                             self.vo_clients_A.append(endp_data[endp_data_key]['name'])
@@ -3655,10 +3898,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_A.append(client_alias)
                                     break
 
@@ -3666,6 +3911,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_A.append('NA')
                                 self.vo_resource_hw_ver_A.append('NA')
                                 self.vo_resource_eid_A.append('NA')
+                                self.vo_resource_kernel_A.append('NA')
                                 self.vo_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3718,10 +3964,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_B.append(client_alias)
 
                                     break
@@ -3730,6 +3978,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_B.append('NA')
                                 self.vo_resource_hw_ver_B.append('NA')
                                 self.vo_resource_eid_B.append('NA')
+                                self.vo_resource_kernel_B.append('NA')
                                 self.vo_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3787,10 +4036,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_A.append(client_alias)
 
                                     break
@@ -3799,6 +4050,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_A.append('NA')
                                 self.bk_resource_hw_ver_A.append('NA')
                                 self.bk_resource_eid_A.append('NA')
+                                self.bk_resource_kernel_A.append('NA')
                                 self.bk_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3852,10 +4104,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_B.append(client_alias)
                                     break
 
@@ -3863,6 +4117,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_B.append('NA')
                                 self.bk_resource_hw_ver_B.append('NA')
                                 self.bk_resource_eid_B.append('NA')
+                                self.bk_resource_kernel_B.append('NA')
                                 self.bk_resource_alias_B.append('NA')
 
                             # look up port information
@@ -3916,10 +4171,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_A.append(client_alias)
                                     break
 
@@ -3927,6 +4184,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_A.append('NA')
                                 self.be_resource_hw_ver_A.append('NA')
                                 self.be_resource_eid_A.append('NA')
+                                self.be_resource_kernel_A.append('NA')
                                 self.be_resource_alias_A.append('NA')
 
                             # look up port information
@@ -3979,10 +4237,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_B.append(client_alias)
 
                                     break
@@ -3991,6 +4251,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_B.append('NA')
                                 self.be_resource_hw_ver_B.append('NA')
                                 self.be_resource_eid_B.append('NA')
+                                self.be_resource_kernel_B.append('NA')
                                 self.be_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4045,10 +4306,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_A.append(client_alias)
 
                                     break
@@ -4057,6 +4320,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_A.append('NA')
                                 self.vi_resource_hw_ver_A.append('NA')
                                 self.vi_resource_eid_A.append('NA')
+                                self.vi_resource_kernel_A.append('NA')
                                 self.vi_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4110,10 +4374,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_B.append(client_alias)
 
                                     break
@@ -4122,6 +4388,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_B.append('NA')
                                 self.vi_resource_hw_ver_B.append('NA')
                                 self.vi_resource_eid_B.append('NA')
+                                self.vi_resource_kernel_B.append('NA')
                                 self.vi_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4176,10 +4443,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_A.append(client_alias)
                                     break
 
@@ -4187,6 +4456,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_A.append('NA')
                                 self.vo_resource_hw_ver_A.append('NA')
                                 self.vo_resource_eid_A.append('NA')
+                                self.vo_resource_kernel_A.append('NA')
                                 self.vo_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4239,10 +4509,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_B.append(client_alias)
 
                                     break
@@ -4251,6 +4523,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_B.append('NA')
                                 self.vo_resource_hw_ver_B.append('NA')
                                 self.vo_resource_eid_B.append('NA')
+                                self.vo_resource_kernel_B.append('NA')
                                 self.vo_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4306,10 +4579,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_A.append(client_alias)
 
                                     break
@@ -4318,6 +4593,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_A.append('NA')
                                 self.bk_resource_hw_ver_A.append('NA')
                                 self.bk_resource_eid_A.append('NA')
+                                self.bk_resource_kernel_A.append('NA')
                                 self.bk_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4369,10 +4645,12 @@ class L3VariableTime(Realm):
                                     self.bk_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.bk_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.bk_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.bk_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.bk_resource_alias_B.append(client_alias)
                                     break
 
@@ -4380,6 +4658,7 @@ class L3VariableTime(Realm):
                                 self.bk_resource_host_B.append('NA')
                                 self.bk_resource_hw_ver_B.append('NA')
                                 self.bk_resource_eid_B.append('NA')
+                                self.bk_resource_kernel_B.append('NA')
                                 self.bk_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4434,10 +4713,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_A.append(client_alias)
                                     break
 
@@ -4445,6 +4726,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_A.append('NA')
                                 self.be_resource_hw_ver_A.append('NA')
                                 self.be_resource_eid_A.append('NA')
+                                self.be_resource_kernel_A.append('NA')
                                 self.be_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4496,10 +4778,12 @@ class L3VariableTime(Realm):
                                     self.be_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.be_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.be_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.be_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.be_resource_alias_B.append(client_alias)
 
                                     break
@@ -4508,6 +4792,7 @@ class L3VariableTime(Realm):
                                 self.be_resource_host_B.append('NA')
                                 self.be_resource_hw_ver_B.append('NA')
                                 self.be_resource_eid_B.append('NA')
+                                self.be_resource_kernel_B.append('NA')
                                 self.be_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4560,10 +4845,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_A.append(client_alias)
 
                                     break
@@ -4572,6 +4859,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_A.append('NA')
                                 self.vi_resource_hw_ver_A.append('NA')
                                 self.vi_resource_eid_A.append('NA')
+                                self.vi_resource_kernel_A.append('NA')
                                 self.vi_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4623,10 +4911,12 @@ class L3VariableTime(Realm):
                                     self.vi_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vi_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vi_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vi_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vi_resource_alias_B.append(client_alias)
 
                                     break
@@ -4635,6 +4925,7 @@ class L3VariableTime(Realm):
                                 self.vi_resource_host_B.append('NA')
                                 self.vi_resource_hw_ver_B.append('NA')
                                 self.vi_resource_eid_B.append('NA')
+                                self.vi_resource_kernel_B.append('NA')
                                 self.vi_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4687,10 +4978,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_A.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_A.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_A.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_A.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_A.append(client_alias)
                                     break
 
@@ -4698,6 +4991,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_A.append('NA')
                                 self.vo_resource_hw_ver_A.append('NA')
                                 self.vo_resource_eid_A.append('NA')
+                                self.vo_resource_kernel_A.append('NA')
                                 self.vo_resource_alias_A.append('NA')
 
                             # look up port information
@@ -4745,10 +5039,12 @@ class L3VariableTime(Realm):
                                     self.vo_resource_host_B.append(resource_data[resource_data_key]['hostname'])
                                     self.vo_resource_hw_ver_B.append(resource_data[resource_data_key]['hw version'])
                                     self.vo_resource_eid_B.append(resource_data[resource_data_key]['eid'])
+                                    self.vo_resource_kernel_B.append(resource_data[resource_data_key]['kernel'])
                                     client_alias = self.create_resource_alias(
                                         eid=resource_data[resource_data_key]['eid'],
                                         host=resource_data[resource_data_key]['hostname'],
-                                        hw_version=resource_data[resource_data_key]['hw version'])
+                                        hw_version=resource_data[resource_data_key]['hw version'],
+                                        kernel=resource_data[resource_data_key]['kernel'])
                                     self.vo_resource_alias_B.append(client_alias)
 
                                     break
@@ -4757,6 +5053,7 @@ class L3VariableTime(Realm):
                                 self.vo_resource_host_B.append('NA')
                                 self.vo_resource_hw_ver_B.append('NA')
                                 self.vo_resource_eid_B.append('NA')
+                                self.vo_resource_kernel_B.append('NA')
                                 self.vo_resource_alias_B.append('NA')
 
                             # look up port information
@@ -4804,6 +5101,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.bk_resource_host_A,
                 "resource_hw_ver_A": self.bk_resource_hw_ver_A,
                 "resource_eid_A": self.bk_resource_eid_A,
+                "resource_kernel_A": self.bk_resource_kernel_A,
                 "port_A": self.bk_port_eid_A,
                 "mac_A": self.bk_port_mac_A,
                 "ssid_A": self.bk_port_ssid_A,
@@ -4823,6 +5121,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.bk_resource_host_B,
                 "resource_hw_ver_B": self.bk_resource_hw_ver_B,
                 "resource_eid_B": self.bk_resource_eid_B,
+                "resource_kernel_B": self.bk_resource_kernel_B,
                 "port_B": self.bk_port_eid_B,
                 "mac_B": self.bk_port_mac_B,
                 "ssid_B": self.bk_port_ssid_B,
@@ -4847,6 +5146,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.be_resource_host_A,
                 "resource_hw_ver_A": self.be_resource_hw_ver_A,
                 "resource_eid_A": self.be_resource_eid_A,
+                "resource_kernel_A": self.be_resource_kernel_A,
                 "port_A": self.be_port_eid_A,
                 "mac_A": self.be_port_mac_A,
                 "ssid_A": self.be_port_ssid_A,
@@ -4865,7 +5165,8 @@ class L3VariableTime(Realm):
                 "resource_alias_B": self.be_resource_alias_B,
                 "resource_host_B": self.be_resource_host_B,
                 "resource_hw_ver_B": self.be_resource_hw_ver_B,
-                "resource_eid_B": self.be_resource_hw_ver_B,
+                "resource_eid_B": self.be_resource_eid_B,
+                "resource_kernel_B": self.be_resource_kernel_B,
                 "port_B": self.be_port_eid_B,
                 "mac_B": self.be_port_mac_B,
                 "ssid_B": self.be_port_ssid_B,
@@ -4890,6 +5191,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.vi_resource_host_A,
                 "resource_hw_ver_A": self.vi_resource_hw_ver_A,
                 "resource_eid_A": self.vi_resource_eid_A,
+                "resource_kernel_A": self.vi_resource_kernel_A,
                 "port_A": self.vi_port_eid_A,
                 "mac_A": self.vi_port_mac_A,
                 "ssid_A": self.vi_port_ssid_A,
@@ -4909,6 +5211,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.vi_resource_host_B,
                 "resource_hw_ver_B": self.vi_resource_hw_ver_B,
                 "resource_eid_B": self.vi_resource_eid_B,
+                "resource_kernel_B": self.vi_resource_kernel_B,
                 "port_B": self.vi_port_eid_B,
                 "mac_B": self.vi_port_mac_B,
                 "ssid_B": self.vi_port_ssid_B,
@@ -4933,6 +5236,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.vo_resource_host_A,
                 "resource_hw_ver_A": self.vo_resource_hw_ver_A,
                 "resource_eid_A": self.vo_resource_eid_A,
+                "resource_kernel_A": self.vo_resource_kernel_A,
                 "port_A": self.vo_port_eid_A,
                 "mac_A": self.vo_port_mac_A,
                 "ssid_A": self.vo_port_ssid_A,
@@ -4952,6 +5256,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.vo_resource_host_B,
                 "resource_hw_ver_B": self.vo_resource_hw_ver_B,
                 "resource_eid_B": self.vo_resource_eid_B,
+                "resource_kernel_B": self.vo_resource_kernel_B,
                 "port_B": self.vo_port_eid_B,
                 "mac_B": self.vo_port_mac_B,
                 "ssid_B": self.vo_port_ssid_B,
@@ -4983,6 +5288,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.bk_resource_host_A,
                 "resource_hw_ver_A": self.bk_resource_hw_ver_A,
                 "resource_eid_A": self.bk_resource_eid_A,
+                "resource_kernel_A": self.bk_resource_kernel_A,
                 "port_A": self.bk_port_eid_A,
                 "mac_A": self.bk_port_mac_A,
                 "ssid_A": self.bk_port_ssid_A,
@@ -5002,6 +5308,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.bk_resource_host_B,
                 "resource_hw_ver_B": self.bk_resource_hw_ver_B,
                 "resource_eid_B": self.bk_resource_eid_B,
+                "resource_kernel_B": self.bk_resource_kernel_B,
                 "port_B": self.bk_port_eid_B,
                 "mac_B": self.bk_port_mac_B,
                 "ssid_B": self.bk_port_ssid_B,
@@ -5026,6 +5333,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.be_resource_host_A,
                 "resource_hw_ver_A": self.be_resource_hw_ver_A,
                 "resource_eid_A": self.be_resource_eid_A,
+                "resource_kernel_A": self.be_resource_kernel_A,
                 "port_A": self.be_port_eid_A,
                 "mac_A": self.be_port_mac_A,
                 "ssid_A": self.be_port_ssid_A,
@@ -5045,6 +5353,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.be_resource_host_B,
                 "resource_hw_ver_B": self.be_resource_hw_ver_B,
                 "resource_eid_B": self.be_resource_eid_B,
+                "resource_kernel_B": self.be_resource_kernel_B,
                 "port_B": self.be_port_eid_B,
                 "mac_B": self.be_port_mac_B,
                 "ssid_B": self.be_port_ssid_B,
@@ -5069,6 +5378,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.vi_resource_host_A,
                 "resource_hw_ver_A": self.vi_resource_hw_ver_A,
                 "resource_eid_A": self.vi_resource_eid_A,
+                "resource_kernel_A": self.vi_resource_kernel_A,
                 "port_A": self.vi_port_eid_A,
                 "mac_A": self.vi_port_mac_A,
                 "ssid_A": self.vi_port_ssid_A,
@@ -5088,6 +5398,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.vi_resource_host_B,
                 "resource_hw_ver_B": self.vi_resource_hw_ver_B,
                 "resource_eid_B": self.vi_resource_eid_B,
+                "resource_kernel_B": self.vi_resource_kernel_B,
                 "port_B": self.vi_port_eid_B,
                 "mac_B": self.vi_port_mac_B,
                 "ssid_B": self.vi_port_ssid_B,
@@ -5112,6 +5423,7 @@ class L3VariableTime(Realm):
                 "resource_host_A": self.vo_resource_host_A,
                 "resource_hw_ver_A": self.vo_resource_hw_ver_A,
                 "resource_eid_A": self.vo_resource_eid_A,
+                "resource_kernel_A": self.vo_resource_kernel_A,
                 "port_A": self.vo_port_eid_A,
                 "mac_A": self.vo_port_mac_A,
                 "ssid_A": self.vo_port_ssid_A,
@@ -5131,6 +5443,7 @@ class L3VariableTime(Realm):
                 "resource_host_B": self.vo_resource_host_B,
                 "resource_hw_ver_B": self.vo_resource_hw_ver_B,
                 "resource_eid_B": self.vo_resource_eid_B,
+                "resource_kernel_B": self.vo_resource_kernel_B,
                 "port_B": self.vo_port_eid_B,
                 "mac_B": self.vo_port_mac_B,
                 "ssid_B": self.vo_port_ssid_B,
@@ -5364,14 +5677,17 @@ class L3VariableTime(Realm):
     def set_report_obj(self, report):
         self.report = report
 
-    def set_dut_info(self, dut_model_num='Not Set', dut_hw_version='Not Set',
-                     dut_sw_version='Not Set', dut_serial_num='Not Set'):
+    def set_dut_info(self,
+                     dut_model_num: str = 'Not Set',
+                     dut_hw_version: str = 'Not Set',
+                     dut_sw_version: str = 'Not Set',
+                     dut_serial_num: str = 'Not Set'):
         self.dut_model_num = dut_model_num
         self.dut_hw_version = dut_hw_version
         self.dut_sw_version = dut_sw_version
         self.dut_serial_num = dut_serial_num
 
-    def generate_report(self,):
+    def generate_report(self, config_devices=None, group_device_map=None):
         self.report.set_obj_html("Objective", "The Layer 3 Traffic Generation Test is designed to test the performance of the "
                                  "Access Point by running layer 3 Cross-Connect Traffic.  Layer-3 Cross-Connects represent a stream "
                                  "of data flowing through the system under test. A Cross-Connect (CX) is composed of two Endpoints, "
@@ -5390,14 +5706,29 @@ class L3VariableTime(Realm):
         self.report.build_table_title()
         self.report.test_setup_table(value="Device Under Test",
                                      test_setup_data=test_setup_info)
-
-        test_input_info = {
-            "LANforge ip": self.lfmgr,
-            "LANforge port": self.lfmgr_port,
-            "Upstream": self.upstream_port,
-            "Test Duration": self.test_duration,
-            "Polling Interval": self.polling_interval,
-        }
+        # For real devices when groups specified for configuration
+        if self.real and self.group_name:
+            group_names = ', '.join(config_devices.keys())
+            profile_names = ', '.join(config_devices.values())
+            configmap = "Groups:" + group_names + " -> Profiles:" + profile_names
+            test_input_info = {
+                "LANforge ip": self.lfmgr,
+                "LANforge port": self.lfmgr_port,
+                "Upstream": self.upstream_port,
+                "Test Duration": self.test_duration,
+                "Test Configuration": configmap,
+                "Polling Interval": self.polling_interval,
+                "Total No. of Devices": self.station_count,
+            }
+        else:
+            test_input_info = {
+                "LANforge ip": self.lfmgr,
+                "LANforge port": self.lfmgr_port,
+                "Upstream": self.upstream_port,
+                "Test Duration": self.test_duration,
+                "Polling Interval": self.polling_interval,
+                "Total No. of Devices": self.station_count,
+            }
 
         self.report.set_table_title("Test Configuration")
         self.report.build_table_title()
@@ -5424,19 +5755,23 @@ class L3VariableTime(Realm):
             #     a/b/g/n/AC/AX (dual-band AX) support
             13: '802.11bgnAX',  # 802.11bgn-AX
             14: '802.11anAX',  # 802.11an-AX
-            15: '802.11aAX'  # 802.11a-AX (6E disables /n and /ac)
+            15: '802.11aAX',  # 802.11a-AX (6E disables /n and /ac)
+            16: '802.11abgnEHT',  # 802.11abgn-EHT  a/b/g/n/AC/AX/EHT (dual-band AX) support
+            17: '802.11bgnEHT',  # 802.11bgn-EHT
+            18: '802.11anEHT',  # 802.11an-ETH
+            19: '802.11aBE',  # 802.11a-EHT (6E disables /n and /ac)
         }
 
         for (
                 radio_,
                 ssid_,
-                ssid_password_,  # do not print password
+                _ssid_password_,  # do not print password
                 ssid_security_,
                 mode_,
                 wifi_enable_flags_list_,
-                reset_port_enable_,
-                reset_port_time_min_,
-                reset_port_time_max_) in zip(
+                _reset_port_enable_,
+                _reset_port_time_min_,
+                _reset_port_time_max_) in zip(
                 self.radio_name_list,
                 self.ssid_list,
                 self.ssid_password_list,
@@ -5524,30 +5859,132 @@ class L3VariableTime(Realm):
                 self.report.set_csv_filename(graph_png)
                 self.report.move_csv_file()
 
-                tos_dataframe_A = {
-                    " Client Alias ": self.client_dict_A[tos]['resource_alias_A'],
-                    " Host eid ": self.client_dict_A[tos]['resource_eid_A'],
-                    " Host Name ": self.client_dict_A[tos]['resource_host_A'],
-                    " Device Type / Hw Ver ": self.client_dict_A[tos]['resource_hw_ver_A'],
-                    " Endp Name": self.client_dict_A[tos]["clients_A"],
-                    # TODO : port A being set to many times
-                    " Port Name ": self.client_dict_A[tos]['port_A'],
-                    " Mode ": self.client_dict_A[tos]['mode_A'],
-                    " Mac ": self.client_dict_A[tos]['mac_A'],
-                    " SSID ": self.client_dict_A[tos]['ssid_A'],
-                    " Channel ": self.client_dict_A[tos]['channel_A'],
-                    " Type of traffic ": self.client_dict_A[tos]['traffic_type_A'],
-                    " Traffic Protocol ": self.client_dict_A[tos]['traffic_protocol_A'],
-                    " Offered Upload Rate Per Client": self.client_dict_A[tos]['offered_upload_rate_A'],
-                    " Offered Download Rate Per Client": self.client_dict_A[tos]['offered_download_rate_A'],
-                    " Upload Rate Per Client": self.client_dict_A[tos]['ul_A'],
-                    " Download Rate Per Client": self.client_dict_A[tos]['dl_A'],
-                    " Drop Percentage (%)": self.client_dict_A[tos]['download_rx_drop_percent_A']
-                }
+                # For real devices appending the required data for pass fail criteria
+                if self.real:
+                    up, down, off_up, off_down = [], [], [], []
+                    for i in self.client_dict_A[tos]['ul_A']:
+                        up.append(int(i) / 1000000)
+                    for i in self.client_dict_A[tos]['dl_A']:
+                        down.append(int(i) / 1000000)
+                    for i in self.client_dict_A[tos]['offered_upload_rate_A']:
+                        off_up.append(int(i) / 1000000)
+                    for i in self.client_dict_A[tos]['offered_download_rate_A']:
+                        off_down.append(int(i) / 1000000)
+                    # if either 'expected_passfail_value' or 'device_csv_name' is provided for pass/fail evaluation
+                    if self.expected_passfail_value or self.device_csv_name:
+                        test_input_list, pass_fail_list = self.get_pass_fail_list(tos, up, down)
 
-                dataframe3 = pd.DataFrame(tos_dataframe_A)
-                self.report.set_table_dataframe(dataframe3)
-                self.report.build_table()
+                if self.real:
+                    # When groups and profiles specifed for configuration
+                    if self.group_name:
+                        for key, val in group_device_map.items():
+                            # Generating Dataframe when Groups with their profiles and pass_fail case is specified
+                            if self.expected_passfail_value or self.device_csv_name:
+                                dataframe = self.generate_dataframe(
+                                    val,
+                                    self.client_dict_A[tos]['resource_alias_A'],
+                                    self.client_dict_A[tos]['resource_eid_A'],
+                                    self.client_dict_A[tos]['resource_host_A'],
+                                    self.client_dict_A[tos]['resource_hw_ver_A'],
+                                    self.client_dict_A[tos]["clients_A"],
+                                    self.client_dict_A[tos]['port_A'],
+                                    self.client_dict_A[tos]['mode_A'],
+                                    self.client_dict_A[tos]['mac_A'],
+                                    self.client_dict_A[tos]['ssid_A'],
+                                    self.client_dict_A[tos]['channel_A'],
+                                    self.client_dict_A[tos]['traffic_type_A'],
+                                    self.client_dict_A[tos]['traffic_protocol_A'],
+                                    off_up,
+                                    off_down,
+                                    up,
+                                    down,
+                                    test_input_list,
+                                    self.client_dict_A[tos]['download_rx_drop_percent_A'],
+                                    pass_fail_list)
+                            # Generating Dataframe for groups when pass_fail case is not specified
+                            else:
+                                dataframe = self.generate_dataframe(
+                                    val,
+                                    self.client_dict_A[tos]['resource_alias_A'],
+                                    self.client_dict_A[tos]['resource_eid_A'],
+                                    self.client_dict_A[tos]['resource_host_A'],
+                                    self.client_dict_A[tos]['resource_hw_ver_A'],
+                                    self.client_dict_A[tos]["clients_A"],
+                                    self.client_dict_A[tos]['port_A'],
+                                    self.client_dict_A[tos]['mode_A'],
+                                    self.client_dict_A[tos]['mac_A'],
+                                    self.client_dict_A[tos]['ssid_A'],
+                                    self.client_dict_A[tos]['channel_A'],
+                                    self.client_dict_A[tos]['traffic_type_A'],
+                                    self.client_dict_A[tos]['traffic_protocol_A'],
+                                    off_up,
+                                    off_down,
+                                    up,
+                                    down,
+                                    [],
+                                    self.client_dict_A[tos]['download_rx_drop_percent_A'],
+                                    [],)
+                            # When the client exists in either group.
+                            if dataframe:
+                                self.report.set_obj_html("", "Group: {}".format(key))
+                                self.report.build_objective()
+                                dataframe1 = pd.DataFrame(dataframe)
+                                self.report.set_table_dataframe(dataframe1)
+                                self.report.build_table()
+                    else:
+                        tos_dataframe_A = {
+                            " Client Alias ": self.client_dict_A[tos]['resource_alias_A'],
+                            " Host eid ": self.client_dict_A[tos]['resource_eid_A'],
+                            " Host Name ": self.client_dict_A[tos]['resource_host_A'],
+                            " Device Type / Hw Ver ": self.client_dict_A[tos]['resource_hw_ver_A'],
+                            " Endp Name": self.client_dict_A[tos]["clients_A"],
+                            # TODO : port A being set to many times
+                            " Port Name ": self.client_dict_A[tos]['port_A'],
+                            " Mode ": self.client_dict_A[tos]['mode_A'],
+                            " Mac ": self.client_dict_A[tos]['mac_A'],
+                            " SSID ": self.client_dict_A[tos]['ssid_A'],
+                            " Channel ": self.client_dict_A[tos]['channel_A'],
+                            " Type of traffic ": self.client_dict_A[tos]['traffic_type_A'],
+                            " Traffic Protocol ": self.client_dict_A[tos]['traffic_protocol_A'],
+                            " Offered Upload Rate Per Client": self.client_dict_A[tos]['offered_upload_rate_A'],
+                            " Offered Download Rate Per Client": self.client_dict_A[tos]['offered_download_rate_A'],
+                            " Upload Rate Per Client": self.client_dict_A[tos]['ul_A'],
+                            " Download Rate Per Client": self.client_dict_A[tos]['dl_A'],
+                            " Drop Percentage (%)": self.client_dict_A[tos]['download_rx_drop_percent_A'],
+                        }
+                        # When pass_Fail criteria specified
+                        if self.expected_passfail_value or self.device_csv_name:
+                            tos_dataframe_A[" Expected " + 'Download' + " Rate"] = [float(x) * 10**6 for x in test_input_list]
+                            tos_dataframe_A[" Status "] = pass_fail_list
+
+                        dataframe3 = pd.DataFrame(tos_dataframe_A)
+                        self.report.set_table_dataframe(dataframe3)
+                        self.report.build_table()
+
+                # For virtual clients
+                else:
+                    tos_dataframe_A = {
+                        " Client Alias ": self.client_dict_A[tos]['resource_alias_A'],
+                        " Host eid ": self.client_dict_A[tos]['resource_eid_A'],
+                        " Host Name ": self.client_dict_A[tos]['resource_host_A'],
+                        " Device Type / Hw Ver ": self.client_dict_A[tos]['resource_hw_ver_A'],
+                        " Endp Name": self.client_dict_A[tos]["clients_A"],
+                        " Port Name ": self.client_dict_A[tos]['port_A'],
+                        " Mode ": self.client_dict_A[tos]['mode_A'],
+                        " Mac ": self.client_dict_A[tos]['mac_A'],
+                        " SSID ": self.client_dict_A[tos]['ssid_A'],
+                        " Channel ": self.client_dict_A[tos]['channel_A'],
+                        " Type of traffic ": self.client_dict_A[tos]['traffic_type_A'],
+                        " Traffic Protocol ": self.client_dict_A[tos]['traffic_protocol_A'],
+                        " Offered Upload Rate Per Client": self.client_dict_A[tos]['offered_upload_rate_A'],
+                        " Offered Download Rate Per Client": self.client_dict_A[tos]['offered_download_rate_A'],
+                        " Upload Rate Per Client": self.client_dict_A[tos]['ul_A'],
+                        " Download Rate Per Client": self.client_dict_A[tos]['dl_A'],
+                        " Drop Percentage (%)": self.client_dict_A[tos]['download_rx_drop_percent_A'],
+                    }
+                    dataframe3 = pd.DataFrame(tos_dataframe_A)
+                    self.report.set_table_dataframe(dataframe3)
+                    self.report.build_table()
 
         # TODO both client_dict_A and client_dict_B contains the same information
         for tos in tos_list:
@@ -5643,9 +6080,217 @@ class L3VariableTime(Realm):
                 self.report.set_table_dataframe(last_row)
                 self.report.build_table()
 
-    # End of the main class.
+    def write_report(self):
+        """Write out HTML and PDF report as configured."""
+        self.report.write_report_location()
+        self.report.write_html_with_timestamp()
+        self.report.write_index_html()
+        # report.write_pdf(_page_size = 'A3', _orientation='Landscape')
+        # report.write_pdf_with_timestamp(_page_size='A4', _orientation='Portrait')
+        if platform.system() == 'Linux':
+            self.report.write_pdf_with_timestamp(_page_size='A3', _orientation='Landscape')
 
-# Check some input values.
+    def generate_dataframe(self, groupdevlist, devclient, devhosteid, devhostname, devdevicetype, devendpname, devportname, devmode, devmac, devssid, devchannel,
+                           devtypeoftraffic, devprotocol, devoffupload, devoffdownload, devobsupload, devobsdownload, devExpected, devdrop, devstatus):
+        """
+        Creates a separate DataFrame for each group of devices.
+
+        Returns:
+            DataFrame: A DataFrame for each device group.
+            Returns None if neither device in a group is configured.
+        """
+        device_type = []
+        client = []
+        hosteid = []
+        hostname = []
+        endpname = []
+        portname = []
+        ssid = []
+        mac = []
+        channel = []
+        mode = []
+        typeoftraffic = []
+        protocol = []
+        offdownload = []
+        obsdownload = []
+        offupload = []
+        obsupload = []
+        input_list = []
+        drop = []
+        statuslist = []
+        interop_tab_data = self.json_get('/adb/')["devices"]
+        for i in range(len(devclient)):
+            for j in groupdevlist:
+                if j == devhostname[i] and devclient[i].split('_')[-1] != 'Android':
+                    client.append(devclient[i])
+                    hosteid.append(devhosteid[i])
+                    hostname.append(devhostname[i])
+                    device_type.append(devdevicetype[i])
+                    endpname.append(devendpname[i])
+                    portname.append(devportname[i])
+                    ssid.append(devssid[i])
+                    mac.append(devmac[i])
+                    channel.append(devchannel[i])
+                    mode.append(devmode[i])
+                    typeoftraffic.append(devtypeoftraffic[i])
+                    offdownload.append(devoffdownload[i])
+                    obsdownload.append(devobsdownload[i])
+                    offupload.append(devoffupload[i])
+                    obsupload.append(devobsupload[i])
+                    protocol.append(devprotocol[i])
+                    drop.append(devdrop[i])
+                    if self.expected_passfail_value or self.device_csv_name:
+                        statuslist.append(devstatus[i])
+                        input_list.append(devExpected[i])
+
+                else:
+                    for dev in interop_tab_data:
+                        for item in dev.values():
+                            if item['resource-id'] == devclient[i].split('_')[0] and j == item['name'].split('.')[2]:
+                                client.append(devclient[i])
+                                hosteid.append(devhosteid[i])
+                                hostname.append(devhostname[i])
+                                device_type.append(devdevicetype[i])
+                                endpname.append(devendpname[i])
+                                portname.append(devportname[i])
+                                ssid.append(devssid[i])
+                                mac.append(devmac[i])
+                                channel.append(devchannel[i])
+                                mode.append(devmode[i])
+                                typeoftraffic.append(devtypeoftraffic[i])
+                                offdownload.append(devoffdownload[i])
+                                obsdownload.append(devobsdownload[i])
+                                offupload.append(devoffupload[i])
+                                obsupload.append(devobsupload[i])
+                                protocol.append(devprotocol[i])
+                                drop.append(devdrop[i])
+                                if self.expected_passfail_value or self.device_csv_name:
+                                    statuslist.append(devstatus[i])
+                                    input_list.append(devExpected[i])
+        # Checks if either device in the group is configured
+        if len(client) != 0:
+            dataframe = {
+                " Client Alias ": client,
+                " Host eid ": hosteid,
+                " Host Name ": hostname,
+                " Device Type / Hw Ver ": device_type,
+                " Endp Name": endpname,
+                " Port Name ": portname,
+                " Mode ": mode,
+                " Mac ": mac,
+                " SSID ": ssid,
+                " Channel ": channel,
+                " Type of traffic ": typeoftraffic,
+                " Traffic Protocol ": protocol,
+                " Offered Upload Rate(bps) Per Client": [float(x) * 1000000 for x in offupload],
+                " Offered Download Rate (bps) Per Client": [float(x) * 1000000 for x in offdownload],
+                " Upload Rate (bps) Per Client": [float(x) * 1000000 for x in obsupload],
+                " Download Rate (bps) Per Client": [float(x) * 1000000 for x in obsdownload],
+                " Drop Percentage (%)": drop
+            }
+            if self.expected_passfail_value or self.device_csv_name:
+                dataframe[" Expected " + 'Download' + " Rate (bps)"] = [float(x) * 1000000 for x in input_list]
+                dataframe[" Status "] = statuslist
+            return dataframe
+        # if neither device in the group is configured returns 0
+        else:
+            return None
+
+    def copy_reports_to_home_dir(self):
+        """Copy generated reports to home directory when run in WebGUI mode."""
+        curr_path = self.result_dir
+        home_dir = os.path.expanduser("~")
+        out_folder_name = "WebGui_Reports"
+        new_path = os.path.join(home_dir, out_folder_name)
+        # webgui directory creation
+        if not os.path.exists(new_path):
+            os.makedirs(new_path)
+        test_name = self.test_name
+        test_name_dir = os.path.join(new_path, test_name)
+        # in webgui-reports DIR creating a directory with test name
+        if not os.path.exists(test_name_dir):
+            os.makedirs(test_name_dir)
+        shutil.copytree(curr_path, test_name_dir, dirs_exist_ok=True)
+
+    def webgui_finalize(self):
+        """Test report finalization run when in WebGUI mode."""
+        last_entry = self.overall[len(self.overall) - 1]
+        last_entry["status"] = "Stopped"
+        last_entry["timestamp"] = self.get_time_stamp_local()
+        last_entry["end_time"] = self.get_time_stamp_local()
+        self.overall.append(last_entry)
+
+        df1 = pd.DataFrame(self.overall)
+        df1.to_csv('{}/overall_multicast_throughput.csv'.format(self.result_dir), index=False)
+
+        self.copy_reports_to_home_dir()
+
+    def get_pass_fail_list(self, tos, up, down):
+        res_list = []
+        test_input_list = []
+        pass_fail_list = []
+        # When device_csv_name specified
+        interop_tab_data = self.json_get('/adb/')["devices"]
+        if self.expected_passfail_value == '' or self.expected_passfail_value is None:
+            for client in self.client_dict_A[tos]['resource_alias_A']:
+                # Check if the client type (second word in "1.15 android samsungmob") is 'android'
+                if client.split('_')[-1] != 'Android':
+                    res_list.append('_'.join(client.split('_')[1:-1]))
+                else:
+                    for dev in interop_tab_data:
+                        for item in dev.values():
+                            # Extract the username from the client string (e.g., 'samsungmob' from "1.15 android samsungmob")
+                            if item['resource-id'] == client.split('_')[0]:
+                                res_list.append(item['name'].split('.')[2])
+                                break
+            if self.device_csv_name is None:
+                self.device_csv_name = 'device.csv'
+
+            with open(self.device_csv_name, mode='r') as file:
+                reader = csv.DictReader(file)
+                rows = list(reader)
+            # Append pass fail value for specific device from csv
+            for device in res_list:
+                found = False
+                for row in rows:
+                    for endp in self.endp_input_list:
+                        if row['DeviceList'] == device and row[endp + ' Mbps'].strip() != '':
+                            test_input_list.append(row[endp + ' Mbps'])
+                            found = True
+                            break
+                # Append default value only if it does not exist in the CSV
+                if not found:
+                    logger.info(f'Pass/Fail threshold for device {device} not found in the CSV. Using default threshold of 5 Mbps.')
+                    test_input_list.append(5)
+
+        # When expected_passfail_value argument specified , common value appended for all devices
+        else:
+            test_input_list = [self.expected_passfail_value for val in range(len(self.client_dict_A[tos]['resource_alias_A']))]
+        # Comparing the received rate against the pass/fail threshold rate
+        for k in range(len(test_input_list)):
+            if float(test_input_list[k]) <= float(down[k]):
+                pass_fail_list.append('PASS')
+            else:
+                pass_fail_list.append('FAIL')
+        return test_input_list, pass_fail_list
+
+
+# Converting the upstream_port to IP address for configuration purposes
+def change_port_to_ip(upstream_port, lfclient_host, lfclient_port):
+    if upstream_port.count('.') != 3:
+        target_port_list = LFUtils.name_to_eid(upstream_port)
+        shelf, resource, port, _ = target_port_list
+        try:
+            realm_obj = Realm(lfclient_host=lfclient_host, lfclient_port=lfclient_port)
+            target_port_ip = realm_obj.json_get(f'/port/{shelf}/{resource}/{port}?fields=ip')['interface']['ip']
+            upstream_port = target_port_ip
+        except Exception:
+            logging.warning(f'The upstream port is not an ethernet port. Proceeding with the given upstream_port {upstream_port}.')
+        logging.info(f"Upstream port IP {upstream_port}")
+    else:
+        logging.info(f"Upstream port IP {upstream_port}")
+
+    return upstream_port
 
 
 # Only used by argparser, so safe to exit in this function
@@ -5668,26 +6313,303 @@ def valid_endp_types(_endp_type):
     return _endp_type
 
 
-# Starting point for running this from cmd line.
-# note: when adding command line delimiters : +,=@
-# https://stackoverflow.com/questions/37304799/cross-platform-safe-to-use-command-line-string-separator
-#
-# Safe to exit in this function, as this should only be called by this script
-def main():
-    lfjson_host = "localhost"
-    lfjson_port = 8080
-    endp_types = "lf_udp"
+def configure_reporting(local_lf_report_dir: str,
+                        results_dir_name: str,
+                        csv_outfile: str,
+                        test_rig: str,
+                        test_tag: str,
+                        dut_hw_version: str,
+                        dut_sw_version: str,
+                        dut_model_num: str,
+                        dut_serial_num: str,
+                        test_id: str,
+                        **kwargs):
+    """Configure reporting, including report object and KPI CSV."""
+    # Configure report
+    #
+    # Reporting needs to be in same directory when running w/ test framework (lf_check.py)
+    if local_lf_report_dir != "":
+        report = lf_report.lf_report(
+            _path=local_lf_report_dir,
+            _results_dir_name=results_dir_name,
+            _output_html=f"{results_dir_name}.html",
+            _output_pdf=f"{results_dir_name}.pdf")
+    else:
+        report = lf_report.lf_report(
+            _results_dir_name=results_dir_name,
+            _output_html=f"{results_dir_name}.html",
+            _output_pdf=f"{results_dir_name}.pdf")
 
-    help_summary = '''\
-The Layer 3 Traffic Generation Test is designed to test the performance of the
-Access Point by running layer 3 TCP and/or UDP Traffic.  Layer-3 Cross-Connects represent a stream
-of data flowing through the system under test. A Cross-Connect (CX) is composed of two Endpoints,
-each of which is associated with a particular Port (physical or virtual interface).
+    # Configure report title banner
+    #
+    # Done outside of test class, as other test scripts currently use the
+    # test class and will configure a different title
+    report.set_title("Test Layer 3 Cross-Connect Traffic: test_l3.py ")
+    report.build_banner_left()
+    report.start_content_div2()
 
-The test will create stations, create CX traffic between upstream port and stations, run traffic
-and generate a report.
-'''
+    # Configure KPI CSV. Output located in same directory as report
+    kpi_path = report.get_report_path()
+    logger.info("Report and kpi_path :{kpi_path}".format(kpi_path=kpi_path))
 
+    kpi_csv = lf_kpi_csv.lf_kpi_csv(
+        _kpi_path=kpi_path,
+        _kpi_test_rig=test_rig,
+        _kpi_test_tag=test_tag,
+        _kpi_dut_hw_version=dut_hw_version,
+        _kpi_dut_sw_version=dut_sw_version,
+        _kpi_dut_model_num=dut_model_num,
+        _kpi_dut_serial_num=dut_serial_num,
+        _kpi_test_id=test_id)
+
+    if csv_outfile is not None:
+        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        csv_outfile = "{}_{}-test_l3.csv".format(
+            csv_outfile, current_time)
+        csv_outfile = report.file_add_path(csv_outfile)
+        logger.info("csv output file : {}".format(csv_outfile))
+
+    return report, kpi_csv, csv_outfile
+
+
+def query_real_clients(args):
+    endp_input_list = []
+    graph_input_list = []
+    group_device_map = {}
+    traffic_type = args.endp_type.split(',')
+    if args.lfmgr_port:
+        json_port = args.lfmgr_port
+    else:
+        json_port = 8080
+    upstream_port_ip = change_port_to_ip(args.upstream_port, args.lfmgr, json_port)
+    config_obj = DeviceConfig.DeviceConfig(lanforge_ip=args.lfmgr, file_name=args.file_name, wait_time=args.wait_time)
+    config_devices = {}
+    # group_device_map = {}
+    config_dict = {
+        'ssid': args.ssid,
+        'passwd': args.passwd,
+        'enc': args.security,
+        'eap_method': args.eap_method,
+        'eap_identity': args.eap_identity,
+        'ieee80211': args.ieee8021x,
+        'ieee80211u': args.ieee80211u,
+        'ieee80211w': args.ieee80211w,
+        'enable_pkc': args.enable_pkc,
+        'bss_transition': args.bss_transition,
+        'power_save': args.power_save,
+        'disable_ofdma': args.disable_ofdma,
+        'roam_ft_ds': args.roam_ft_ds,
+        'key_management': args.key_management,
+        'pairwise': args.pairwise,
+        'private_key': args.private_key,
+        'ca_cert': args.ca_cert,
+        'client_cert': args.client_cert,
+        'pk_passwd': args.pk_passwd,
+        'pac_file': args.pac_file,
+        'server_ip': upstream_port_ip,
+    }
+    if not args.expected_passfail_value and args.device_csv_name is None:
+        config_obj.device_csv_file(csv_name="device.csv")
+    # Configuration of devices with groups and profiles
+    if args.group_name and args.file_name and args.profile_name:
+        selected_groups = args.group_name.split(',')
+        selected_profiles = args.profile_name.split(',')
+        for i in range(len(selected_groups)):
+            config_devices[selected_groups[i]] = selected_profiles[i]
+        config_obj.initiate_group()
+        group_device_map = config_obj.get_groups_devices(data=selected_groups, groupdevmap=True)
+        # Configuration of group of devices for the corresponding profiles
+        args.device_list = [','.join(i for i in asyncio.run(config_obj.connectivity(config_devices, upstream=upstream_port_ip)))]
+    elif args.device_list:
+        all_devices = config_obj.get_all_devices()
+        if args.group_name is None and args.file_name is None and args.profile_name is None:
+            dev_list = args.device_list[0].split(',')
+            # Configuration of devices with SSID,Password and Security when device list is specified
+            if args.config:
+                args.device_list = [','.join(i for i in asyncio.run(config_obj.connectivity(device_list=dev_list, wifi_config=config_dict)))]
+
+    elif args.device_list is None and args.config:
+        all_devices = config_obj.get_all_devices()
+        device_list = []
+        for device in all_devices:
+            if device["type"] != 'laptop':
+                device_list.append(device["shelf"] + '.' + device["resource"] + " " + device["serial"])
+            else:
+                device_list.append(device["shelf"] + '.' + device["resource"] + " " + device["hostname"])
+        logger.info("Available devices: %s", device_list)
+        args.device_list = [input("Enter the desired resources to run the test:")]
+        dev1_list = args.device_list[0].split(',')
+        # Configuration of devices with SSID , Password and Security when the device list is not specified
+        if args.config:
+            args.device_list = [','.join(i for i in asyncio.run(config_obj.connectivity(device_list=dev1_list, wifi_config=config_dict)))]
+    all = config_obj.get_all_devices()
+    logger.info("All devices %s Device List %s", all, args.device_list)
+    configdev_list = []
+    configure_list = []
+    if args.dowebgui and args.group_name:
+        configdev_list = args.device_list[0].split(',')
+        for device in all:
+            for config in configdev_list:
+                if device['os'] == 'Android' and device['eid'] == config:
+                    configure_list.append(config + " " + device['os'] + " " + device['user-name'])
+                elif device['shelf'] + '.' + device['resource'] == config:
+                    configure_list.append(config + " " + device['os'] + " " + device['hostname'])
+
+    logger.info("configure list %s", configure_list)
+    # Fetching real devices list
+    port_eid_list = []
+    same_eid_list = []
+    original_port_list = []
+    working_resources_list = []
+    eid_list = []
+    windows_list = []
+    devices_available = []
+    linux_list = []
+    mac_list = []
+    android_list = []
+    mac_id1_list = []
+    user_list = []
+    response = config_obj.json_get("/resource/all")
+
+    if "resources" not in response.keys():
+        logger.error("There are no real devices.")
+        exit(1)
+
+    for key, value in response.items():
+        if key == "resources":
+            for element in value:
+                for (_, b) in element.items():
+
+                    # Check if the resource is not phantom
+                    if not b['phantom']:
+                        working_resources_list.append(b["hw version"])
+
+                        # Categorize based on hw version (type of device)
+                        if "Win" in b['hw version']:
+                            eid_list.append(b['eid'])
+                            windows_list.append(b['hw version'])
+                            devices_available.append(b['eid'] + " " + 'Win' + " " + b['hostname'])
+                        elif "Linux" in b['hw version']:
+                            if 'ct' not in b['hostname']:
+                                if 'lf' not in b['hostname']:
+                                    eid_list.append(b['eid'])
+                                    linux_list.append(b['hw version'])
+                                    devices_available.append(b['eid'] + " " + 'Lin' + " " + b['hostname'])
+                        elif "Apple" in b['hw version']:
+                            eid_list.append(b['eid'])
+                            mac_list.append(b['hw version'])
+                            devices_available.append(b['eid'] + " " + 'Mac' + " " + b['hostname'])
+                        else:
+                            eid_list.append(b['eid'])
+                            android_list.append(b['hw version'])
+                            devices_available.append(b['eid'] + " " + 'android' + " " + b['user'])
+
+    response_port = config_obj.json_get("/port/all")
+    if "interfaces" not in response_port.keys():
+        logger.error("Error: 'interfaces' key not found in port data")
+        exit(1)
+    for interface in response_port['interfaces']:
+        for port, port_data in interface.items():
+
+            # Check conditions for non-phantom ports
+            if not port_data['phantom'] and not port_data['down'] and port_data['parent dev'] == "wiphy0" and port_data['alias'] != 'p2p0':
+                # Check if the port's parent device matches with an eid in the eid_list
+                for id in eid_list:
+                    if id + '.' in port:
+                        original_port_list.append(port)
+                        port_eid_list.append(str(LFUtils.name_to_eid(port)[0]) + '.' + str(LFUtils.name_to_eid(port)[1]))
+                        mac_id1_list.append(str(LFUtils.name_to_eid(port)[0]) + '.' + str(LFUtils.name_to_eid(port)[1]) + ' ' + port_data['mac'])
+
+    for i in range(len(eid_list)):
+        for j in range(len(port_eid_list)):
+            if eid_list[i] == port_eid_list[j]:
+                same_eid_list.append(eid_list[i])
+
+    same_eid_list = [_eid + ' ' for _eid in same_eid_list]
+    for eid in same_eid_list:
+        for device in devices_available:
+            if eid in device:
+                user_list.append(device)
+    if args.device_list is None and not args.config and args.group_name is None:
+        logger.info("AVAILABLE DEVICES TO RUN TEST : {}".format(user_list))
+        args.device_list = [input("Enter the desired resources to run the test:")]
+
+    if args.device_list[0] == '' or args.device_list[0] == ',':
+        logger.info("Device list is empty")
+        exit(1)
+    if args.device_list:
+        csv_device_list = args.device_list[0].split(',')
+        for endp in traffic_type:
+            endp_input_list.append('L3_' + endp.split('_')[1].upper() + '_DL')
+        for _ in range(len(csv_device_list)):
+            for endp in traffic_type:
+                graph_input_list.append('L3_' + endp.split('_')[1].upper() + '_DL')
+    sample_list = []
+    if args.device_list:
+        for interface in response_port['interfaces']:
+            for port, port_data in interface.items():
+                if not port_data['phantom'] and not port_data['down'] and port_data['parent dev'] == "wiphy0" and port_data['alias'] != 'p2p0':
+                    port_list = port.split('.')
+                    for device in args.device_list[0].split(','):
+                        if (port_list[0] + '.' + port_list[1]) == device:
+                            sample_list.append([port])
+        if sample_list == []:
+            logger.info("Selected devices are not available")
+            exit(1)
+        args.existing_station_list = sample_list
+        args.use_existing_station_list = True
+    return endp_input_list, graph_input_list, config_devices, group_device_map
+
+
+def validate_args(args):
+    if args.real and args.expected_passfail_value and args.device_csv_name:
+        logger.error("Specify either --expected_passfail_value or --device_csv_name")
+        exit(1)
+    if args.real and (args.use_existing_station_list or args.use_existing_station_list):
+        logger.error("For real devices --use_existing_station_list and --use_existing_station_list are not needed")
+        exit(1)
+    elif args.real and args.group_name and args.profile_name and args.file_name and args.device_list:
+        logger.error("Either --group_name or --device_list should be entered not both")
+        exit(1)
+    elif args.real and args.ssid and args.profile_name:
+        logger.error("Either --ssid or --profile_name should be given")
+        exit(1)
+    elif args.real and args.file_name and (args.group_name is None or args.profile_name is None):
+        logger.error("Please enter the correct set of arguments")
+        exit(1)
+    # When configuration specified for real devices using --config
+    if args.real and args.config:
+        if args.ssid and args.security and args.security.lower() == 'open' and (args.passwd is None or args.passwd == ''):
+            args.passwd = '[BLANK]'
+        if args.ssid is None or args.passwd is None or args.passwd == '':
+            logger.error('For configuration need to Specify --ssid , --passwd(Optional for "open" type security) , --security')
+            exit(1)
+        elif args.ssid and args.passwd:
+            if args.security is None:
+                logger.error('--security must be provided when --ssid and --passwd specified')
+                exit(1)
+            elif args.security.lower() == 'open' and args.passwd != '[BLANK]':
+                logger.error("For a open type security there will be no password or the password should be left blank (i.e., set to '' or [BLANK]).")
+                exit(1)
+
+        elif args.ssid and args.passwd == '[BLANK]' and args.security and args.security.lower() != 'open':
+            logger.error('Please provide valid --passwd and --security configuration')
+            exit(1)
+    if args.group_name:
+        selected_groups = args.group_name.split(',')
+    else:
+        selected_groups = []
+    if args.profile_name:
+        selected_profiles = args.profile_name.split(',')
+    else:
+        selected_profiles = []
+
+    if len(selected_groups) != len(selected_profiles):
+        logger.error("Number of groups should match number of profiles")
+        exit(1)
+
+
+def parse_args():
     parser = argparse.ArgumentParser(
         prog='test_l3.py',
         # formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -5714,6 +6636,7 @@ PURPOSE: The Layer 3 Traffic Generation Test is designed to test the performance
          * Supports creating user-specified amount stations on multiple radios
          * Supports configuring upload and download requested rates and PDU sizes.
          * Supports generating connections with different ToS values.
+         * Supports generating KPI data
          * Supports generating tcp and/or UDP traffic types.
          * Supports iterating over different PDU sizes
          * Supports iterating over different requested tx rates (configurable as total or per-connection value)
@@ -5747,10 +6670,14 @@ Example running traffic with two radios
              --test_duration 60s\
             --polling_interval 5s\
             --upstream_port 1.1.eth2\
-            --radio 'radio==wiphy4,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy5,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy6,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy7,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy4,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy5,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy6,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy7,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
             --endp_type lf_udp,lf_tcp,mc_udp\
             --rates_are_totals\
             --side_a_min_bps=2000000\
@@ -5772,10 +6699,14 @@ Example running traffic with two radios
             --test_duration 30s\
             --polling_interval 5s\
             --upstream_port 1.1.eth2\
-            --radio 'radio==wiphy4,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy5,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy6,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
-            --radio 'radio==wiphy7,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy4,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy5,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy6,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
+            --radio 'radio==wiphy7,stations==1,ssid==axe11000_5g,ssid_pw==lf_axe11000_5g,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down'\
             --endp_type lf_udp,lf_tcp,mc_udp\
             --side_a_min_bps=1000000\
             --side_b_min_bps=0\
@@ -5845,10 +6776,14 @@ Example running traffic with two radios
 
          # Have script use wifi_settings enable flages  ::  wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)
              ./test_l3.py --lfmgr 192.168.200.83 --test_duration 20s --polling_interval 5s --upstream_port 1.1.eth1
-             --radio 'radio==1.1.wiphy0,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --radio 'radio==1.1.wiphy1,stations==1,ssid==Netgear5g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --radio 'radio==1.1.wiphy2,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
-             --endp_type lf_udp --rates_are_totals --side_a_min_bps=20000 --side_b_min_bps=300000000 --test_rig ID_003 --test_tag 'l3_longevity' --dut_model_num GT-AXE11000 --dut_sw_version 3.0.0.4.386_44266
+             --radio 'radio==1.1.wiphy0,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --radio 'radio==1.1.wiphy1,stations==1,ssid==Netgear5g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --radio 'radio==1.1.wiphy2,stations==1,ssid==Netgear2g,ssid_pw==lanforge,security==wpa2,\
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down)'
+             --endp_type lf_udp --rates_are_totals --side_a_min_bps=20000 --side_b_min_bps=300000000
+             --test_rig ID_003 --test_tag 'l3_longevity' --dut_model_num GT-AXE11000 --dut_sw_version 3.0.0.4.386_44266
              --dut_hw_version 1.0 --dut_serial_num 12345678 --log_level debug
 
          # Setting wifi_settings per radio
@@ -5858,7 +6793,8 @@ Example running traffic with two radios
             --test_duration 15s
             --polling_interval 5s
             --upstream_port eth2
-            --radio "radio==wiphy1 stations==4 ssid==asus11ax-5 ssid_pw==hello123 security==wpa2  mode==0 wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down&&ht160_enable) "
+            --radio "radio==wiphy1,stations==4,ssid==asus11ax-5,ssid_pw==hello123,security==wpa2,
+wifi_mode==0,wifi_settings==wifi_settings,enable_flags==(ht160_enable&&wpa2_enable&&80211u_enable&&create_admin_down&&ht160_enable)"
             --endp_type lf_udp
             --rates_are_totals
             --side_a_min_bps=20000
@@ -5872,7 +6808,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Disabled'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Disabled'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -5891,7 +6828,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Disabled'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa2,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Disabled'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -5911,7 +6849,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Required'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TTLS!!identity&&testuser!!passwd&&testpasswd!!ieee80211w&&Required'
              --endp_type lf_ud
              --rates_are_totals
              --side_a_min_bps=256000
@@ -5930,7 +6869,8 @@ Example running traffic with two radios
              --test_duration 20s
              --polling_interval 5s
              --upstream_port 1.1.eth2
-             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Required'
+             --radio 'radio==wiphy1,stations==1,ssid==ax88u_5g,ssid_pw==[BLANK],security==wpa3,\
+wifi_settings==wifi_settings,wifi_mode==0,enable_flags==8021x_radius&&80211r_pmska_cache,wifi_extra==key_mgmt&&WPA-EAP!!pairwise&&GCMP-256!!group&&GCMP-256!!eap&&TLS!!identity&&testuser!!passwd&&testpasswd!!private_key&&/home/lanforge/client.p12!!ca_cert&&/home/lanforge/ca.pem!!pk_password&&lanforge!!ieee80211w&&Required'
              --endp_type lf_udp
              --rates_are_totals
              --side_a_min_bps=256000
@@ -5942,6 +6882,73 @@ Example running traffic with two radios
              --dut_hw_version 1.0
              --dut_serial_num 12345678
              --log_level debug
+
+        # Example : Wifi 7 2G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy0,stations==19,ssid==TPink_C672,ssid_pw==19719207,security==wpa2,wifi_settings==wifi_settings,wifi_mode==17,enable_flags==(wpa2_enable&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
+        # Example : Wifi 7 5G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy1,stations==19,ssid==TPink_C672_5G,ssid_pw==19719207,security==wpa2,wifi_settings==wifi_settings,wifi_mode==18,enable_flags==(wpa2_enable&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
+        # Example : Wifi 7 6G 802.11bgn-ETH
+            ./test_l3.py
+             --lfmgr 192.168.101.137
+             --test_duration 2m
+             --polling_interval 5s
+             --upstream_port 1.1.eth2
+             --tos BX,BE,VI,VO
+             --radio 'radio==1.2.wiphy2,stations==19,ssid==TPink_C672_6G,ssid_pw==19719207,security==wpa3,wifi_settings==wifi_settings,wifi_mode==19,enable_flags==(use-wpa3&&80211u_enable)'
+             --endp_type lf_udp
+             --rates_are_totals
+             --side_a_min_bps=200000000
+             --side_b_min_bps=300000000
+             --test_rig CT-US-008
+             --test_tag 'test_l3_a7'
+             --dut_model_num TP-link
+             --dut_sw_version 3.0.0.4.386_44266
+             --dut_hw_version 1.0
+             --dut_serial_num 12345678
+             --log_level debug
+             --debug
+             --no_cleanup
+
 
 SCRIPT_CLASSIFICATION:  Creation & Runs Traffic
 
@@ -5989,9 +6996,12 @@ BK, BE, VI, VO:  Optional wifi related Tos Settings.  Or, use your preferred num
              is automatically sent to this Queue.
 
 <wifi_mode>:
-    Input       : Enum Val  : Shown by nc_show_ports
+    Input       : Enum Val  : for list ,  telnet <mgr> 4001  , help add_profile
 
-    AUTO        |  0        #  802.11
+    Wifi_Mode
+    Input       : Enum Val  : Shown by nc_show_ports
+    <pre options='wifi_mode'>
+    AUTO        |  0        #  Best Available
     802.11a     |  1        #  802.11a
     b           |  2        #  802.11b
     g           |  3        #  802.11g
@@ -6008,68 +7018,58 @@ BK, BE, VI, VO:  Optional wifi related Tos Settings.  Or, use your preferred num
     bgnAX       | 13        #  802.11bgn-AX
     anAX        | 14        #  802.11an-AX
     aAX         | 15        #  802.11a-AX (6E disables /n and /ac)
+    abgn7       | 16        #  802.11abgn-EHT
+                            #     a/b/g/n/AC/AX/EHT (dual-band AX) support
+    bgn7        | 17        #  802.11bgn-EHT
+    an7         | 18        #  802.11an-EHT
+    a7          | 19        #  802.11a-EHT (6E disables /n and /ac)
 
-wifi_settings flags are currently defined as:
+
+
+wifi_settings flags are currently defined as: for list ,  telnet <mgr> 4001  , help add_sta
     wpa_enable           | 0x10         # Enable WPA
-    # Use Custom wpa_supplicant config file.
-    custom_conf          | 0x20
-    # Use wpa_supplicant configured for WEP encryption.
-    wep_enable           | 0x200
-    # Use wpa_supplicant configured for WPA2 encryption.
-    wpa2_enable          | 0x400
-    # Disable HT-40 even if hardware and AP support it.
-    ht40_disable         | 0x800
-    # Enable SCAN-SSID flag in wpa_supplicant.
-    scan_ssid            | 0x1000
-    # Use passive scanning (don't send probe requests).
-    passive_scan         | 0x2000
+    custom_conf          | 0x20         # Use Custom wpa_supplicant config file.
+    wep_enable           | 0x200        # Use wpa_supplicant configured for WEP encryption.
+    wpa2_enable          | 0x400        # Use wpa_supplicant configured for WPA2 encryption.
+    ht40_disable         | 0x800        # Disable HT-40 even if hardware and AP support it.
+    scan_ssid            | 0x1000       # Enable SCAN-SSID flag in wpa_supplicant.
+    passive_scan         | 0x2000       # Use passive scanning (don't send probe requests).
     disable_sgi          | 0x4000       # Disable SGI (Short Guard Interval).
-    # OK-To-Migrate (Allow station migration between LANforge radios)
-    lf_sta_migrate       | 0x8000
-    # Verbose-Debug:  Increase debug info in wpa-supplicant and hostapd logs.
-    verbose              | 0x10000
-    # Enable 802.11u (Interworking) feature.
-    80211u_enable        | 0x20000
-    # Enable 802.11u (Interworking) Auto-internetworking feature.  Always enabled currently.
-    80211u_auto          | 0x40000
-    # AP Provides access to internet (802.11u Interworking)
-    80211u_gw            | 0x80000
-    # AP requires additional step for access (802.11u Interworking)
-    80211u_additional    | 0x100000
-    # AP claims emergency services reachable (802.11u Interworking)
-    80211u_e911          | 0x200000
-    # AP provides Unauthenticated emergency services (802.11u Interworking)
-    80211u_e911_unauth   | 0x400000
-    # Enable Hotspot 2.0 (HS20) feature.  Requires WPA-2.
-    hs20_enable          | 0x800000
-    # AP:  Disable DGAF (used by HotSpot 2.0).
-    disable_gdaf         | 0x1000000
+    lf_sta_migrate       | 0x8000       # OK-To-Migrate (Allow station migration between LANforge radios)
+    verbose              | 0x10000      # Verbose-Debug:  Increase debug info in wpa-supplicant and hostapd logs.
+    80211u_enable        | 0x20000      # Enable 802.11u (Interworking) feature.
+    80211u_auto          | 0x40000      # Enable 802.11u (Interworking) Auto-internetworking feature.  Always enabled currently.
+    80211u_gw            | 0x80000      # AP Provides access to internet (802.11u Interworking)
+    80211u_additional    | 0x100000     # AP requires additional step for access (802.11u Interworking)
+    80211u_e911          | 0x200000     # AP claims emergency services reachable (802.11u Interworking)
+    80211u_e911_unauth   | 0x400000     # AP provides Unauthenticated emergency services (802.11u Interworking)
+    hs20_enable          | 0x800000     # Enable Hotspot 2.0 (HS20) feature.  Requires WPA-2.
+    disable_gdaf         | 0x1000000    # AP:  Disable DGAF (used by HotSpot 2.0).
     8021x_radius         | 0x2000000    # Use 802.1x (RADIUS for AP).
-    # Enable oportunistic PMSKA caching for WPA2 (Related to 802.11r).
-    80211r_pmska_cache   | 0x4000000
-    # Disable HT80 (for AC chipset NICs only)
-    disable_ht80         | 0x8000000
+    80211r_pmska_cache   | 0x4000000    # Enable oportunistic PMSKA caching for WPA2 (Related to 802.11r).
+    disable_ht80         | 0x8000000    # Disable HT80 (for AC chipset NICs only)
     ibss_mode            | 0x20000000   # Station should be in IBSS mode.
-    # Enable OSEN protocol (OSU Server-only Authentication)
-    osen_enable          | 0x40000000
-    # Disable automatic station roaming based on scan results.
-    disable_roam         | 0x80000000
+    osen_enable          | 0x40000000   # Enable OSEN protocol (OSU Server-only Authentication)
+    disable_roam         | 0x80000000   # Disable automatic station roaming based on scan results.
     ht160_enable         | 0x100000000  # Enable HT160 mode.
-    # Disable fast_reauth option for virtual stations.
-    disable_fast_reauth  | 0x200000000
+    disable_fast_reauth  | 0x200000000  # Disable fast_reauth option for virtual stations.
     mesh_mode            | 0x400000000  # Station should be in MESH mode.
-    # Station should enable power-save.  May not work in all drivers/configurations.
-    power_save_enable    | 0x800000000
+    power_save_enable    | 0x800000000  # Station should enable power-save.  May not work in all drivers/configurations.
     create_admin_down    | 0x1000000000 # Station should be created admin-down.
-    # WDS station (sort of like a lame mesh), not supported on ath10k
-    wds-mode             | 0x2000000000
-    # Do not include supported-oper-class-IE in assoc requests.  May work around AP bugs.
-    no-supp-op-class-ie  | 0x4000000000
-    # Enable/disable tx-offloads, typically managed by set_wifi_txo command
-    txo-enable           | 0x8000000000
+    wds-mode             | 0x2000000000 # WDS station (sort of like a lame mesh), not supported on ath10k
+    no-supp-op-class-ie  | 0x4000000000 # Do not include supported-oper-class-IE in assoc requests.  May work around AP bugs.
+    txo-enable           | 0x8000000000 # Enable/disable tx-offloads, typically managed by set_wifi_txo command
     use-wpa3             | 0x10000000000 # Enable WPA-3 (SAE Personal) mode.
     use-bss-transition   | 0x80000000000 # Enable BSS transition.
     disable-twt          | 0x100000000000 # Disable TWT mode
+    disable-ofdma        | 0x200000000000 # Disable OFDMA mode
+    disable-obss-scan    | 0x400000000000 # Disable OBSS SCAN feature in supplicant.
+    ft-roam-over-ds      | 0x800000000000 # Roam over DS when AP supports it.
+    rrm-ignore-beacon-req | 0x1000000000000 # Ignore (reject) RRM Beacon measurement request.
+    use-owe               | 0x2000000000000 # Enable OWE
+    be320-enable          | 0x4000000000000 # Enable 320Mhz mode.
+    disable-mlo           | 0x8000000000000 # Disable OFDMA
+    ignore-edca           | 0x20000000000000 # Request station to ignore EDCA settings
 
 For wifi_extra_keys syntax :
     telnet <lanforge ip> 4001
@@ -6256,13 +7256,13 @@ Multicast traffic :
 
 STATUS: Functional
 
-VERIFIED_ON:   18-JULY-2023,
-             GUI Version:  5.4.6
-             Kernel Version: 5.19.17+
+VERIFIED_ON: MAY 2025,
+             GUI Version:  5.5.1
+             Kernel Version: 6.11.12+
 
 LICENSE:
           Free to distribute and modify. LANforge systems must be licensed.
-          Copyright 2023 Candela Technologies Inc
+          Copyright 2025 Candela Technologies Inc
 
 INCLUDE_IN_README: False
 
@@ -6383,7 +7383,9 @@ INCLUDE_IN_README: False
         default='eth1')
     test_l3_parser.add_argument(
         '--downstream_port',
-        help='--downstream_port <cross connect downstream_port>  for use when downstream is ethernet (eth to eth connection) do not use with wifi stations example: --downstream_port eth2', default=None)
+        help='''--downstream_port <cross connect downstream_port>  for use when downstream is ethernet
+        (eth to eth connection) do not use with wifi stations example: --downstream_port eth2''',
+        default=None)
     test_l3_parser.add_argument(
         '--polling_interval',
         help="--polling_interval <seconds>",
@@ -6449,8 +7451,9 @@ INCLUDE_IN_README: False
 
     test_l3_parser.add_argument(
         "--wait",
-        help="--wait <time> , time to wait at the end of the test",
-        default='0')
+        help="Time (in seconds) to pause at end of test",
+        type=int,
+        default=0)
 
     test_l3_parser.add_argument('--sta_start_offset', help='Station start offset for building stations',
                                 default='0')
@@ -6533,37 +7536,99 @@ INCLUDE_IN_README: False
     test_l3_parser.add_argument(
         '--dowebgui',
         help='--dowebgui True  if running through webgui',
-        default="False")
+        default=False)
     test_l3_parser.add_argument(
         '--test_name',
         help='Test name when running through webgui'
     )
+
+    test_l3_parser.add_argument(
+        '--ssid',
+        help='Specify SSID for real clients will be configured only when --config is set to true.'
+    )
+    test_l3_parser.add_argument(
+        '--passwd',
+        type=str, nargs='?', const='',
+        help='Password for the SSID specified with --ssid; only applicable when --ssid is set.'
+    )
+    test_l3_parser.add_argument(
+        '--security',
+        help='Specify the security protocol for the SSID and password (e.g., WPA, WPA2, WPA3)'
+    )
+    test_l3_parser.add_argument(
+        '--device_list',
+        action='append',
+        help='Specify the Resource IDs for real clients. Accepts a comma-separated list (e.g., 1.11,1.95,1.360).'
+    )
+    test_l3_parser.add_argument("--expected_passfail_value", help="Specify the expected download rate in Mbps", default=None)
+    test_l3_parser.add_argument("--device_csv_name", type=str, help='Specify the csv name to store expected url values', default=None)
+    test_l3_parser.add_argument('--file_name', type=str, help='Specify the file name containing group details. Example:file1')
+    test_l3_parser.add_argument('--group_name', type=str, help='Specify the groups name that contains a list of devices. Example: group1,group2')
+    test_l3_parser.add_argument('--profile_name', type=str, help='specify the profile name')
+    test_l3_parser.add_argument("--eap_method", type=str, default='DEFAULT', help="Specify the EAP method for authentication.")
+    test_l3_parser.add_argument("--eap_identity", type=str, default='')
+    test_l3_parser.add_argument("--ieee8021x", action="store_true", help='Enables 802.1X enterprise authentication for test stations.')
+    test_l3_parser.add_argument("--ieee80211u", action="store_true", help='Enables IEEE 802.11u (Hotspot 2.0) support.')
+    test_l3_parser.add_argument("--ieee80211w", type=int, default=1, help='Enables IEEE 802.11w (Management Frame Protection) support.')
+    test_l3_parser.add_argument("--enable_pkc", action="store_true", help='Enables pkc support.')
+    test_l3_parser.add_argument("--bss_transition", action="store_true", help='Enables BSS transition support.')
+    test_l3_parser.add_argument("--power_save", action="store_true", help='Enables power-saving features.')
+    test_l3_parser.add_argument("--disable_ofdma", action="store_true", help='Disables OFDMA support.')
+    test_l3_parser.add_argument("--roam_ft_ds", action="store_true", help='Enables fast BSS transition (FT) support')
+    test_l3_parser.add_argument("--key_management", type=str, default='DEFAULT', help='Specify the key management method (e.g., WPA-PSK, WPA-EAP')
+    test_l3_parser.add_argument("--pairwise", type=str, default='NA')
+    test_l3_parser.add_argument("--private_key", type=str, default='NA', help='Specify EAP private key certificate file.')
+    test_l3_parser.add_argument("--ca_cert", type=str, default='NA', help='Specifiy the CA certificate file name')
+    test_l3_parser.add_argument("--client_cert", type=str, default='NA', help='Specify the client certificate file name')
+    test_l3_parser.add_argument("--pk_passwd", type=str, default='NA', help='Specify the password for the private key')
+    test_l3_parser.add_argument("--pac_file", type=str, default='NA', help='Specify the pac file name')
+    test_l3_parser.add_argument("--config", action="store_true", help="Specify for configuring the devices")
+    test_l3_parser.add_argument("--wait_time", type=int, help='Specify the maximum time to wait for Configuration', default=60)
+    test_l3_parser.add_argument("--real", action="store_true", help='For testing on real devies')
     parser.add_argument('--help_summary',
                         default=None,
                         action="store_true",
                         help='Show summary of what this script does')
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+# Starting point for running this from cmd line.
+# note: when adding command line delimiters : +,=@
+# https://stackoverflow.com/questions/37304799/cross-platform-safe-to-use-command-line-string-separator
+#
+# Safe to exit in this function, as this should only be called by this script
+def main():
+    endp_types = "lf_udp"
+
+    help_summary = '''\
+The Layer 3 Traffic Generation Test is designed to test the performance of the
+Access Point by running layer 3 TCP and/or UDP Traffic.  Layer-3 Cross-Connects represent a stream
+of data flowing through the system under test. A Cross-Connect (CX) is composed of two Endpoints,
+each of which is associated with a particular Port (physical or virtual interface).
+
+The test will create stations, create CX traffic between upstream port and stations, run traffic
+and generate a report.
+'''
+    args = parse_args()
 
     if args.help_summary:
-        logger.info(help_summary)
+        print(help_summary)
         exit(0)
 
-    dowebgui = False
     test_name = ""
     ip = ""
     if args.dowebgui:
         logger.info("In webGUI execution")
-        if args.dowebgui == "True":
-            dowebgui = True
+        if args.dowebgui:
             test_name = args.test_name
             ip = args.lfmgr
-            logger.info("dowebgui", dowebgui, test_name, ip)
+            logger.info(" dowebgui %s %s %s", args.dowebgui, test_name, ip)
 
     # initialize pass / fail
     test_passed = False
 
-    # set up logger
+    # Configure logging
     logger_config = lf_logger_config.lf_logger_config()
 
     # set the logger level to debug
@@ -6576,8 +7641,11 @@ INCLUDE_IN_README: False
         logger_config.lf_logger_config_json = args.lf_logger_config_json
         logger_config.load_lf_logger_config()
 
-    debug = args.debug
-
+    validate_args(args)
+    endp_input_list = []
+    graph_input_list = []
+    if args.real:
+        endp_input_list, graph_input_list, config_devices, group_device_map = query_real_clients(args)
     # Validate existing station list configuration if specified before starting test
     if not args.use_existing_station_list and args.existing_station_list:
         logger.error("Existing stations specified, but argument \'--use_existing_station_list\' not specified")
@@ -6587,85 +7655,17 @@ INCLUDE_IN_README: False
             "Argument \'--use_existing_station_list\' specified, but no existing stations provided. See \'--existing_station_list\'")
         exit(1)
 
-    # Gather data for test reporting
-    # for kpi.csv generation
-    logger.info("read in command line paramaters")
-    local_lf_report_dir = args.local_lf_report_dir
-    test_rig = args.test_rig
-    test_tag = args.test_tag
-    dut_hw_version = args.dut_hw_version
-    dut_sw_version = args.dut_sw_version
-    dut_model_num = args.dut_model_num
-    dut_serial_num = args.dut_serial_num
-    # test_priority = args.test_priority  # this may need to be set per test
-    test_id = args.test_id
-
+    # Gather data for test reporting and KPI generation
+    logger.info("Read in command line paramaters")
     interopt_mode = args.interopt_mode
-
-    if args.test_duration:
-        test_duration = args.test_duration
-
-    if args.polling_interval:
-        polling_interval = args.polling_interval
 
     if args.endp_type:
         endp_types = args.endp_type
-
-    if args.lfmgr:
-        lfjson_host = args.lfmgr
-
-    if args.lfmgr_port:
-        lfjson_port = args.lfmgr_port
-
-    if args.upstream_port:
-        side_b = args.upstream_port
-
-    if args.downstream_port:
-        side_a = args.downstream_port
-    else:
-        side_a = None
 
     if args.radio:
         radios = args.radio
     else:
         radios = None
-
-    # Create report, when running with the test framework (lf_check.py)
-    # results need to be in the same directory
-    logger.info("configure reporting")
-    if local_lf_report_dir != "":
-        report = lf_report.lf_report(
-            _path=local_lf_report_dir,
-            _results_dir_name=args.results_dir_name,
-            _output_html="{results_dir_name}.html".format(
-                results_dir_name=args.results_dir_name),
-            _output_pdf="{results_dir_name}.pdf".format(results_dir_name=args.results_dir_name))
-    else:
-        report = lf_report.lf_report(
-            _results_dir_name=args.results_dir_name,
-            _output_html="{results_dir_name}.html".format(
-                results_dir_name=args.results_dir_name),
-            _output_pdf="{results_dir_name}.pdf".format(results_dir_name=args.results_dir_name))
-
-    kpi_path = report.get_report_path()
-    logger.info("Report and kpi_path :{kpi_path}".format(kpi_path=kpi_path))
-
-    kpi_csv = lf_kpi_csv.lf_kpi_csv(
-        _kpi_path=kpi_path,
-        _kpi_test_rig=test_rig,
-        _kpi_test_tag=test_tag,
-        _kpi_dut_hw_version=dut_hw_version,
-        _kpi_dut_sw_version=dut_sw_version,
-        _kpi_dut_model_num=dut_model_num,
-        _kpi_dut_serial_num=dut_serial_num,
-        _kpi_test_id=test_id)
-
-    if args.csv_outfile is not None:
-        current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
-        csv_outfile = "{}_{}-test_l3.csv".format(
-            args.csv_outfile, current_time)
-        csv_outfile = report.file_add_path(csv_outfile)
-        logger.info("csv output file : {}".format(csv_outfile))
 
     MAX_NUMBER_OF_STATIONS = 1000
 
@@ -6718,8 +7718,7 @@ INCLUDE_IN_README: False
     anqp_3gpp_cell_net_list = []
     ieee80211w_list = []
 
-    #
-    logger.info("parse radio arguments used for station configuration")
+    logger.debug("Parse radio arguments used for station configuration")
     if radios is not None:
         logger.info("radios {}".format(radios))
         for radio_ in radios:
@@ -6739,7 +7738,6 @@ INCLUDE_IN_README: False
                         "").replace(
                             ",",
                         " ").split()))
-            # radio_info_dict = dict(map(lambda x: x.split('=='), str(radio_).replace('"', '').split()))
 
             logger.debug("radio_dict {}".format(radio_info_dict))
 
@@ -6768,38 +7766,8 @@ INCLUDE_IN_README: False
                     break
 
             if wifi_extra_found:
-
                 logger.debug("wifi_extra: {extra}".format(
                     extra=radio_info_dict['wifi_extra']))
-
-                key_mgmt = '[BLANK]'
-                pairwise = '[BLANK]'
-                group = '[BLANK]'
-                psk = '[BLANK]'
-                eap = '[BLANK]'
-                identity = '[BLANK]'
-                anonymous_identity = "[BLANK]"
-                phase1 = "[BLANK]"
-                phase2 = "[BLANK]"
-                passwd = '[BLANK]'
-                pin = '[BLANK]'
-                pac_file = '[BLANK]'
-                private_key = '[BLANK]'
-                pk_password = '[BLANK]'
-                hessid = "00:00:00:00:00:00"
-                realm = "[BLANK]"
-                client_cert = "[BLANK]"
-                imsi = "[BLANK]"
-                milenage = "[BLANK]"
-                domain = "[BLANK]"
-                roaming_consortium = "[BLANK]"
-                venue_group = "[BLANK]"
-                network_type = "[BLANK]"
-                ipaddr_type_avail = "[BLANK]"
-                network_auth_type = "[BLANK]"
-                anqp_3gpp_cell_net = "[BLANK]"
-
-                ieee80211w = 'Optional'
 
                 wifi_extra_dict = dict(
                     map(
@@ -7042,7 +8010,7 @@ INCLUDE_IN_README: False
             wifi_settings_found = True
             for key in wifi_settings_keys:
                 if key not in radio_info_dict:
-                    logger.info("wifi_settings_keys not enabled")
+                    logger.debug("wifi_settings_keys not enabled")
                     wifi_settings_found = False
                     break
 
@@ -7050,12 +8018,11 @@ INCLUDE_IN_README: False
                 # Check for additional flags
                 if {'wifi_mode', 'enable_flags'}.issubset(
                         radio_info_dict.keys()):
-                    logger.info("wifi_settings flags set")
+                    logger.debug("wifi_settings flags set")
                 else:
-                    logger.info(
-                        "wifi_settings is present wifi_mode, enable_flags need to be set")
-                    logger.info(
-                        "or remove the wifi_settings or set wifi_settings==False flag on the radio for defaults")
+                    logger.debug("wifi_settings is present wifi_mode, enable_flags need to be set "
+                                 "or remove the wifi_settings or set wifi_settings==False flag on "
+                                 "the radio for defaults")
                     exit(1)
                 wifi_mode_list.append(radio_info_dict['wifi_mode'])
                 enable_flags_str = radio_info_dict['enable_flags'].replace(
@@ -7160,13 +8127,17 @@ INCLUDE_IN_README: False
             "ul_pdus %s and dl_pdus %s arrays are of different lengths will fill shorter list with size AUTO \n" %
             (len(ul_pdus), len(dl_pdus)))
 
-    logger.info("configure and create test object")
+    # Configure reporting
+    logger.info("Configuring report")
+    report, kpi_csv, csv_outfile = configure_reporting(**vars(args))
+
+    logger.debug("Configure test object")
     ip_var_test = L3VariableTime(
         endp_types=endp_types,
         args=args,
         tos=args.tos,
-        side_b=side_b,
-        side_a=side_a,
+        side_b=args.upstream_port,
+        side_a=args.downstream_port,
         radio_name_list=radio_name_list,
         number_of_stations_per_radio_list=number_of_stations_per_radio_list,
         ssid_list=ssid_list,
@@ -7189,11 +8160,11 @@ INCLUDE_IN_README: False
         attenuators=attenuators,
         atten_vals=atten_vals,
         number_template="00",
-        test_duration=test_duration,
-        polling_interval=polling_interval,
-        lfclient_host=lfjson_host,
-        lfclient_port=lfjson_port,
-        debug=debug,
+        test_duration=args.test_duration,
+        polling_interval=args.polling_interval,
+        lfclient_host=args.lfmgr,
+        lfclient_port=args.lfmgr_port,
+        debug=args.debug,
         kpi_csv=kpi_csv,
         no_cleanup=args.no_cleanup,
         use_existing_station_lists=args.use_existing_station_list,
@@ -7220,10 +8191,10 @@ INCLUDE_IN_README: False
 
         # for webgui execution
         test_name=test_name,
-        dowebgui=dowebgui,
+        dowebgui=args.dowebgui,
         ip=ip,
         # for uniformity from webGUI result_dir as variable is used insead of local_lf_report_dir
-        result_dir=local_lf_report_dir,
+        result_dir=args.local_lf_report_dir,
 
         # wifi extra configuration
         key_mgmt_list=key_mgmt_list,
@@ -7255,48 +8226,54 @@ INCLUDE_IN_README: False
         network_auth_type_list=network_auth_type_list,
         anqp_3gpp_cell_net_list=anqp_3gpp_cell_net_list,
         ieee80211w_list=ieee80211w_list,
-        interopt_mode=interopt_mode
+        interopt_mode=interopt_mode,
+        endp_input_list=endp_input_list,
+        graph_input_list=graph_input_list,
+        real=args.real,
+        expected_passfail_value=args.expected_passfail_value,
+        device_csv_name=args.device_csv_name,
+        group_name=args.group_name
     )
 
-    if args.no_pre_cleanup or args.use_existing_station_list:
-        logger.info("No station pre clean up any existing cxs on LANforge")
+    # Perform pre-test cleanup, if configured to do so
+    if args.no_pre_cleanup:
+        logger.info("Skipping pre-test cleanup, '--no_pre_cleanup' specified")
+    elif args.use_existing_station_list:
+        logger.info("Skipping pre-test cleanup, '--use_existing_station_list' specified")
     else:
-        logger.info("clean up any existing cxs on LANforge")
+        logger.info("Performing pre-test cleanup")
         ip_var_test.pre_cleanup()
 
-    logger.info("create stations or use passed in station_list, build the test")
+    # Build test configuration
+    logger.info("Building test configuration")
     ip_var_test.build()
     if not ip_var_test.passes():
-        logger.critical("build step failed.")
+        logger.critical("Test configuration build failed")
         logger.critical(ip_var_test.get_fail_message())
         exit(1)
 
-    logger.info("Start the test and run for a duration")
+    # Run test
+    logger.info("Starting test")
     ip_var_test.start(False)
 
-    logger.info(
-        "Pausing {wait} seconds for manual inspection before conclusion of test and possible stopping of traffic and station cleanup".format(
-            wait=args.wait))
-    time.sleep(int(args.wait))
+    if args.wait > 0:
+        logger.info(f"Pausing {args.wait} seconds for manual inspection before test conclusion and "
+                    "possible traffic stop/post-test cleanup")
+        time.sleep(args.wait)
 
     # Admin down the stations
     if args.no_stop_traffic:
-        logger.info("--no_stop_traffic set leave traffic running")
+        logger.info("Test complete, '--no_stop_traffic' specified, traffic continues to run")
     else:
         if args.quiesce_cx:
+            logger.info("Test complete, quiescing traffic")
             ip_var_test.quiesce_cx()
             time.sleep(3)
-        # Quisce cx
         else:
+            logger.info("Test complete, stopping traffic")
             ip_var_test.stop()
 
-    # the banner will be set in Main since the test_l3 object may be imported
-    csv_results_file = ip_var_test.get_results_csv()
-    report.set_title("Test Layer 3 Cross-Connect Traffic: test_l3.py ")
-    report.build_banner_left()
-    report.start_content_div2()
-
-    # set dut information for reporting
+    # Set DUT information for reporting
     ip_var_test.set_dut_info(
         dut_model_num=args.dut_model_num,
         dut_hw_version=args.dut_hw_version,
@@ -7304,47 +8281,40 @@ INCLUDE_IN_README: False
         dut_serial_num=args.dut_serial_num)
     ip_var_test.set_report_obj(report=report)
 
-    # generate report
-    ip_var_test.generate_report()
-
-    # generate html and pdf
-    report.write_report_location()
-    report.write_html_with_timestamp()
-    report.write_index_html()
-    # report.write_pdf(_page_size = 'A3', _orientation='Landscape')
-    # report.write_pdf_with_timestamp(_page_size='A4', _orientation='Portrait')
-    if platform.system() == 'Linux':
-        report.write_pdf_with_timestamp(
-            _page_size='A3', _orientation='Landscape')
+    # Generate and write out test report
+    logger.info("Generating test report")
+    if args.real:
+        ip_var_test.generate_report(config_devices, group_device_map)
+    else:
+        ip_var_test.generate_report()
+    ip_var_test.write_report()
 
     # TODO move to after reporting
     if not ip_var_test.passes():
         logger.warning("Test Ended: There were Failures")
         logger.warning(ip_var_test.get_fail_message())
 
-    if args.no_cleanup or args.no_stop_traffic:
-        logger.info(
-            "--no_cleanup or --no_stop_traffic set stations will be left intack")
+    if args.no_cleanup:
+        logger.info("Skipping post-test cleanup, '--no_cleanup' specified")
+    elif args.no_stop_traffic:
+        logger.info("Skipping post-test cleanup, '--no_stop_traffic' specified")
     else:
+        logger.info("Performing post-test cleanup")
         ip_var_test.cleanup()
 
+    # TODO: This is redundant if '--no_cleanup' is not specified (already taken care of there)
     if args.cleanup_cx:
-        logger.info("cleaning layer 3 cx")
+        logger.info("Performing post-test CX traffic pair cleanup")
         ip_var_test.cleanup_cx()
 
     if ip_var_test.passes():
         test_passed = True
         logger.info("Full test passed, all connections increased rx bytes")
-    if ip_var_test.dowebgui == True:
-        last_entry = ip_var_test.overall[len(ip_var_test.overall) - 1]
-        last_entry["status"] = "Stopped"
-        last_entry["timestamp"] = ip_var_test.get_time_stamp_local()
-        last_entry["end_time"] = ip_var_test.get_time_stamp_local()
-        ip_var_test.overall.append(
-            last_entry
-        )
-        df1 = pd.DataFrame(ip_var_test.overall)
-        df1.to_csv('{}/overall_multicast_throughput.csv'.format(ip_var_test.result_dir), index=False)
+
+    # Run WebGUI-specific post test logic
+    if args.dowebgui:
+        ip_var_test.webgui_finalize()
+
     if test_passed:
         ip_var_test.exit_success()
     else:

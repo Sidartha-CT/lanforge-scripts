@@ -10,3 +10,6 @@ echo "Running Wifi Capacity Tests"
 
 echo "Running Dataplane Tests"
 ./ct_us_002_dp.bash
+
+echo "Running ChamberView: Port Reset and Scale Tests"
+./ct_us_002_cv.bash

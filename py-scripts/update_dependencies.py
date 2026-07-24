@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 import argparse
 import os
 import os.path
@@ -12,6 +11,7 @@ from subprocess import PIPE, call, run
 List of packages
 """
 pip_packages: list = [
+    'dlipower',
     'setuptools',
     'cryptography',
     'kaleido',
@@ -20,12 +20,13 @@ pip_packages: list = [
     'pandas',
     'paramiko',
     'pdfkit',
+    'pexpect',
     'pexpect-serial',
-    'pip-search',
     'plotly',
     'psutil',
     'pyserial',
     'pyshark',
+    'requests',
     'scipy',
     'scp',
     'simple-geometry',
@@ -120,7 +121,7 @@ class UpdateDependencies:
         :param venv_directory:  containing virtual environment
         :return: False if unable to find directory
         """
-        has_bin_activate = False
+        # has_bin_activate = False
         if venv_directory and venv_directory.is_dir():
             if os.name == 'nt':
                 if os.path.isfile(f"{venv_directory}\\bin\\activate.bat"):
@@ -195,10 +196,10 @@ class UpdateDependencies:
         print(" ", end="", flush=True)
         res = call(command, shell=True)
         if res == 0:
-            print(f"✔", end=" ", flush=True)
+            print(f"✔", end=" ", flush=True)  # noqa: F541
             self.packages_installed.append(package)
         else:
-            print(f"✘", end=" ", flush=True)
+            print(f"✘", end=" ", flush=True)  # noqa: F541
             self.packages_failed.append(package)
 
     def install_packages(self):
@@ -221,13 +222,14 @@ def main():
     upgrader = UpdateDependencies(packages=pip_packages)
     version = upgrader.py_version
 
-    help_summary = "The lanforge-scripts/py-scripts and lanforge-scripts/py-json collection require "
-    "a number of Pypi libraries. This script installs those libraries or creates "
-    "a virtual environment for those libraries. This script has been updated to "
-    "detect PEP 668 externally-managed libraries; in the presence of the externally-managed "
-    f"condition, a virtual environment will be created in $home/scripts/venv-${version}. "
-    "This script will update a symlink $home/lanforge/venv to default virtual environment "
-    "as necessary."
+    help_summary = f'''\
+The lanforge-scripts/py-scripts and lanforge-scripts/py-json collection require
+a number of Pypi libraries. This script installs those libraries or creates
+a virtual environment for those libraries. This script has been updated to
+detect PEP 668 externally-managed libraries; in the presence of the externally-managed
+condition, a virtual environment will be created in $home/scripts/venv-${version}.
+This script will update a symlink $home/lanforge/venv to default virtual environment
+as necessary.'''
 
     parser = argparse.ArgumentParser(
         prog="update_dependencies.py",
@@ -258,16 +260,16 @@ def main():
     parser.add_argument("--create_venv", "-c",
                         default=False, required=False, action='store_true',
                         help=f"Create a virtual environment named $home/scritps/venv-{version} "
-                             "by default. Will create a symlink $home/scripts/venv to point to "
-                             "this virtual environment in the default case. "
-                             "Symlink will not be created if --venv_path is specified.")
+                        "by default. Will create a symlink $home/scripts/venv to point to "
+                        "this virtual environment in the default case. "
+                        "Symlink will not be created if --venv_path is specified.")
 
     parser.add_argument("--venv_path", "--venv",
                         type=str, default=None, required=False,
                         help=f"specify the path of the virtual environment to create. "
-                             f"Default location is $home/scripts/venv-{version}, and symlink to $home/scripts/venv. "
-                             "Specifying relative path will create named virtual environment in $home/scripts "
-                             "but will NOT create the default venv symlink.")
+                        f"Default location is $home/scripts/venv-{version}, and symlink to $home/scripts/venv. "
+                        "Specifying relative path will create named virtual environment in $home/scripts "
+                        "but will NOT create the default venv symlink.")
 
     parser.add_argument("--destroy_venv", "--remove_venv",
                         type=str, required=False, const=upgrader.venv_path, nargs='?',
@@ -302,10 +304,19 @@ def main():
                         required=False, default=False, action="store_true",
                         help="The command `sudo pip3 install --upgrade pip` will be run before the virtual "
                              "environment is created. Requires a version of python3-pip to be installed. "
-                             "This option will help if pip is installed but packages fail with permission errors. " 
+                             "This option will help if pip is installed but packages fail with permission errors. "
                              "Do not use this option in PEP 668 externally managed environments.")
 
+    # help summary
+    parser.add_argument('--help_summary',
+                        default=None,
+                        action="store_true",
+                        help='Show summary of what this script does')
+
     args = parser.parse_args()
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
 
     py_path = None
     if args.use_python:
@@ -369,7 +380,7 @@ def main():
         upgrader.install_packages()
         exit(0)
     else:
-        print(f"Installing packages to system scope...")
+        print("Installing packages to system scope...")
         sysconfig_dir = sysconfig.get_path("stdlib")
         external_marker = pathlib.Path(f"{sysconfig_dir}/EXTERNALLY-MANAGED")
         if external_marker.is_file():

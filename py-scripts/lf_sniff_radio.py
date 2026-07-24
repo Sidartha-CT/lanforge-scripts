@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
     NAME:       lf_sniff_radio.py
     PURPOSE:    This script will sniff a Radio after changing the Radio settings.
@@ -50,6 +49,7 @@ import argparse
 import time
 import paramiko
 import logging
+import traceback
 
 
 logger = logging.getLogger(__name__)
@@ -99,8 +99,8 @@ class SniffRadio(Realm):
         self.mode = radio_mode
         self.monitor_name = monitor_name
         self.monitor_info = ''
-        self.sniff_snapshot_bytes = sniff_snapshot_bytes # default to max size
-        self.sniff_flags = sniff_flags # will default to dumpcap, see wifi_monitor_profile::SNIFF_X constants
+        self.sniff_snapshot_bytes = sniff_snapshot_bytes  # default to max size
+        self.sniff_flags = sniff_flags  # will default to dumpcap, see wifi_monitor_profile::SNIFF_X constants
 
         # TODO allow the channel_frequency to be entered
         # if self.channel is None and self.channel_freq is None:
@@ -374,7 +374,7 @@ def parse_args():
                              'mate_xterm:         make tshark/dumpcap interactive in an xterm\n'
                              'mate_kill_dumpcap:  kill previously issued dumpcap',
                         default=None)
-    parser.add_argument('--help_summary',help='shows summary of the script',action='store_true')
+    parser.add_argument('--help_summary', help='shows summary of the script', action='store_true')
 
     return parser.parse_args()
 
@@ -401,20 +401,20 @@ def do_6ghz_workaround(args):
             station_list = args.station_list
 
     create_l3 = createL3.CreateL3(host=args.mgr,
-                                    port=args.mgr_port,
-                                    number_template=str(args.number_template),
-                                    sta_list=station_list,
-                                    name_prefix="VT",
-                                    upstream=args.upstream_port,
-                                    ssid=args.ssid,
-                                    password=args.password,
-                                    radio=args.radio,
-                                    security=args.security,
-                                    side_a_min_rate=args.side_a_min_rate,
-                                    side_b_min_rate=args.side_b_min_rate,
-                                    mode=args.mode,
-                                    ap=args.ap,
-                                    _debug_on=True)
+                                  port=args.mgr_port,
+                                  number_template=str(args.number_template),
+                                  sta_list=station_list,
+                                  name_prefix="VT",
+                                  upstream=args.upstream_port,
+                                  ssid=args.ssid,
+                                  password=args.password,
+                                  radio=args.radio,
+                                  security=args.security,
+                                  side_a_min_rate=args.side_a_min_rate,
+                                  side_b_min_rate=args.side_b_min_rate,
+                                  mode=args.mode,
+                                  ap=args.ap,
+                                  _debug_on=True)
     create_l3.build()
     create_l3.start()
 
@@ -430,7 +430,7 @@ def do_6ghz_workaround(args):
 def main():
     args = parse_args()
 
-    help_summary='''\
+    help_summary = '''\
      This script is intended to sniff the radio specified by the user on a particular channel for a specified duration.
     '''
     if args.help_summary:
@@ -460,7 +460,8 @@ def main():
                 sniff_snaplen_choice = bytesize
             else:
                 raise ValueError("bad sniff_bytes")
-        except:
+        except Exception as x:
+            traceback.print_exception(Exception, x, x.__traceback__, chain=True)
             print(f"Strange sniff length [{args.sniff_bytes}], please choose a positive value")
             exit(1)
 

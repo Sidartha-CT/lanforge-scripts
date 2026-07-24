@@ -1,28 +1,35 @@
 #!/usr/bin/env python3
-# flake8: noqa
-"""
-NAME: lf_create_wanlink.py
+r"""
+NAME:       lf_create_wanlink.py
 
-PURPOSE: create a wanlink using the lanforge api
+PURPOSE:    Create and configure a LANforge WANLink used for network impairment.
 
-EXAMPLE:
-Both port_A and port_B have the same configuraiton
-$ ./lf_create_wanlink.py --mgr 192.168.0.104 --mgr_port 8080 --port_A eth1 --port_B eth2\
-    --speed 1024000 --wl_name wanlink --latency 24 --max_jitter 50 --jitter_freq 6 --drop_freq 12\
-    --log_level debug --debug
+NOTES:      Underlying port IP addresses must be configured in order for wanlink endpoints
+            to become active
 
-Mixed configuration for port_A and port_B
-$ ./lf_create_wanlink.py --mgr 192.168.0.104 --mgr_port 8080 --port_A eth1 --port_B eth2\
-    --speed_A 1024000 --speed_B 2048000 --wl_name wanlink --latency_A 24 --latency_B 32 --max_jitter 50 --jitter_freq 6 --drop_freq 12\
-    --log_level debug --debug
+EXAMPLE:    # Duplicate configuration for both ends of the WANLink
+            ./lf_create_wanlink.py \
+                --wl_name       wanlink \
+                --port_A        eth1 \
+                --port_B        eth2 \
+                --speed         1024000 \
+                --latency       24 \
+                --max_jitter    50 \
+                --jitter_freq   6 \
+                --drop_freq     12
 
-
-
-NOTES:
-ip-address must be assigned to the wanlink endpoints in the LANforge gui for scenario to run.
-
-TO DO NOTES:
-
+            # Mixed configuration, each end of WANLink has specific config
+            ./lf_create_wanlink.py \
+                --wl_name       wanlink \
+                --port_A        eth1 \
+                --port_B        eth2 \
+                --speed_A       1024000 \
+                --speed_B       2048000 \
+                --latency_A     24 \
+                --latency_B     32 \
+                --max_jitter    50 \
+                --jitter_freq   6 \
+                --drop_freq     12
 """
 import sys
 import time
@@ -40,9 +47,9 @@ import logging
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 lanforge_api = importlib.import_module("lanforge_client.lanforge_api")
 LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
-from lanforge_client.lanforge_api import LFSession
-from lanforge_client.lanforge_api import LFJsonCommand
-from lanforge_client.lanforge_api import LFJsonQuery
+from lanforge_client.lanforge_api import LFSession  # noqa: 402
+from lanforge_client.lanforge_api import LFJsonCommand # noqa: 402
+from lanforge_client.lanforge_api import LFJsonQuery # noqa: 402
 
 
 lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
@@ -213,8 +220,8 @@ class lf_create_wanlink():
 
     def add_cx(self,
                _alias=None,
-               _rx_endp=None,  # endp_A
-               _tx_endp=None,  # endp_B
+               _rx_endp=None,  # endp_B
+               _tx_endp=None,  # endp_A
                _test_mgr="default_tm"):
 
         self.command.post_add_cx(alias=_alias,
@@ -238,7 +245,7 @@ class lf_create_wanlink():
                                        errors_warnings=ewarn_list,
                                        debug=self.debug)
             logger.debug(pformat(result))
-        except:
+        except BaseException:  # noqa: B036
             logger.warning(pformat(ewarn_list))
         return result
 
@@ -265,37 +272,48 @@ class lf_create_wanlink():
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- #
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(
         prog=__file__,
         formatter_class=argparse.RawTextHelpFormatter,
-        description='''\
-NAME: lf_create_wanlink.py
+        description=r'''\
+NAME:       lf_create_wanlink.py
 
-PURPOSE: creates a wanlink using the lanforge api.
+PURPOSE:    Create and configure a LANforge WANLink used for network impairment.
 
-EXAMPLE:
-Both port_A and port_B have the same configuraiton
-$ ./lf_create_wanlink.py --mgr 192.168.0.104 --mgr_port 8080 --port_A eth1 --port_B eth2\
-    --speed 1024000 --wl_name wanlink --latency 24 --max_jitter 50 --jitter_freq 6 --drop_freq 12\
-    --log_level debug --debug
+NOTES:      Underlying port IP addresses must be configured in order for wanlink endpoints
+            to become active
 
-Mixed configuration for port_A and port_B
-$ ./lf_create_wanlink.py --mgr 192.168.0.104 --mgr_port 8080 --port_A eth1 --port_B eth2\
-    --speed_A 1024000 --speed_B 2048000 --wl_name wanlink --latency_A 24 --latency_B 32 --max_jitter 50 --jitter_freq 6 --drop_freq 12\
-    --log_level debug --debug
+EXAMPLE:    # Duplicate configuration for both ends of the WANLink
+            ./lf_create_wanlink.py \
+                --wl_name       wanlink \
+                --port_A        eth1 \
+                --port_B        eth2 \
+                --speed         1024000 \
+                --latency       24 \
+                --max_jitter    50 \
+                --jitter_freq   6 \
+                --drop_freq     12
 
-
-NOTES:
-ip-address must be assigned to the wanlink endpoints in the LANforge gui for scenario to run.
-
+            # Mixed configuration, each end of WANLink has specific config
+            ./lf_create_wanlink.py \
+                --wl_name       wanlink \
+                --port_A        eth1 \
+                --port_B        eth2 \
+                --speed_A       1024000 \
+                --speed_B       2048000 \
+                --latency_A     24 \
+                --latency_B     32 \
+                --max_jitter    50 \
+                --jitter_freq   6 \
+                --drop_freq     12
             ''')
     # http://www.candelatech.com/lfcli_ug.php#add_wl_endp
     parser.add_argument("--host", "--mgr", dest='mgr', help='specify the GUI to connect to')
     parser.add_argument("--mgr_port", help="specify the GUI to connect to, default 8080", default="8080")
     parser.add_argument("--lf_user", help="lanforge user name default lanforge", default="lanforge")
     parser.add_argument("--lf_passwd", help="lanforge password defualt lanforge ", default="lanforge")
-    parser.add_argument('--wl_name', '--alias', dest='wl_name', help='(add wl endp) The name of the endpoint we are configuring. [R] ', required=True)
+    parser.add_argument('--wl_name', '--alias', dest='wl_name', help='(add wl endp) The name of the endpoint we are configuring. [R] ')
     parser.add_argument('--cpu_id', help="(add wl endp) The CPU/thread that this process should run on (kernel-mode only). Default = 'NA'", default='NA')
     parser.add_argument('--description', help="(add wl endp) Description for this endpoint, put in single quotes if it contains spaces Default = 'NA'", default='NA')
     parser.add_argument("--latency", help="(add wl endp) The latency (ms) that will be added to each packet entering this WanLink. Default = 'NA' both ports", default='NA')
@@ -317,15 +335,15 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
     parser.add_argument('--dup_freq', help='(set wanlink info) How often, out of 1,000,000 packets, should we purposefully duplicate a packet. Default = 0 Both ports (%%)', default="0")
     parser.add_argument('--dup_freq_A', help='(set wanlink info) How often, out of 1,000,000 packets, should we purposefully duplicate a packet. Default = None port A (%%)', default=None)
     parser.add_argument('--dup_freq_B', help='(set wanlink info) How often, out of 1,000,000 packets, should we purposefully duplicate a packet. Default = None port B (%%)', default=None)
-    parser.add_argument('--extra_buffer', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = -1 Both ports (%%)', default="-1")
-    parser.add_argument('--extra_buffer_A', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = None port A (%%)', default=None)
-    parser.add_argument('--extra_buffer_B', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = None port B (%%)', default=None)
+    parser.add_argument('--extra_buffer', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = -1 Both ports (%%)', default="-1")  # noqa E501
+    parser.add_argument('--extra_buffer_A', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = None port A (%%)', default=None)  # noqa E501
+    parser.add_argument('--extra_buffer_B', help='(set wanlink info) The extra amount of bytes to buffer before dropping pkts, in units of 1024. Use -1 for AUTO. Default = None port B (%%)', default=None)  # noqa E501
     parser.add_argument('--jitter_freq', help='(set wanlink info) How often, out of 1,000,000 packets, should we apply jitter. Default = 0 both ports (%%)', default="0")
     parser.add_argument('--jitter_freq_A', help='(set wanlink info) How often, out of 1,000,000 packets, should we apply jitter. Default = None port A (%%)', default=None)
     parser.add_argument('--jitter_freq_B', help='(set wanlink info) How often, out of 1,000,000 packets, should we apply jitter. Default = None port B (%%)', default=None)
-    parser.add_argument('--latency_packet', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = 20 both ports", default="20")
-    parser.add_argument('--latency_packet_A', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = None port A", default=None)
-    parser.add_argument('--latency_packet_B', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = None port B", default=None)
+    parser.add_argument('--latency_packet', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = 20 both ports", default="20")  # noqa E501
+    parser.add_argument('--latency_packet_A', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = None port A", default=None)  # noqa E501
+    parser.add_argument('--latency_packet_B', help="(set wanlink info) The base latency added to all packets, in milliseconds (or add 'us' suffix for microseconds. Default = None port B", default=None)  # noqa E501
     parser.add_argument('--max_drop_amt', help='(set wanlink info) Maximum amount of packets to drop in a row. Default is 1. both ports', default="1")
     parser.add_argument('--max_drop_amt_A', help='(set wanlink info) Maximum amount of packets to drop in a row. Default is None. port A', default=None)
     parser.add_argument('--max_drop_amt_B', help='(set wanlink info) Maximum amount of packets to drop in a row. Default is None. port B', default=None)
@@ -368,7 +386,19 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
     parser.add_argument("--lf_logger_config_json", help="--lf_logger_config_json <json file> , json configuration of logger")
     parser.add_argument('--debug', help='Legacy debug flag', action='store_true')
 
-    args = parser.parse_args()
+    # Help Summary
+    parser.add_argument('--help_summary', default=None, action="store_true", help='Show summary of what this script does')
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    help_summary = "This script creates a wanlink using the lanforge api."
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
 
     # set up logger
     logger_config = lf_logger_config.lf_logger_config()
@@ -384,7 +414,7 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
         logger_config.load_lf_logger_config()
 
     if not args.wl_name:
-        logger.error("No wanlink name provided")
+        logger.error("--wl_name/--alias required arguments")
         exit(1)
 
     # The order to creating an wanlink between two ethernet ports
@@ -457,8 +487,9 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
 
     # Comment out some parameters like 'max_jitter', 'drop_freq' and 'wanlink'
     # in order to view the X-Errors headers
-    logger.info(f"drop_freq_A:{drop_freq_A}, drop_freq_B:{drop_freq_B}, min_drop_amt_A:{min_drop_amt_A}, min_drop_amt_B:{min_drop_amt_B},"
-    f" drop_nth_pkt_A:{drop_nth_pkt_A}, drop_nth_pkt_B:{drop_nth_pkt_B}");
+    logger.info(
+        f"drop_freq_A:{drop_freq_A}, drop_freq_B:{drop_freq_B}, min_drop_amt_A:{min_drop_amt_A}, min_drop_amt_B:{min_drop_amt_B},"
+        f" drop_nth_pkt_A:{drop_nth_pkt_A}, drop_nth_pkt_B:{drop_nth_pkt_B}")
 
     # have to determine if the wanlink exists and is running or not
     wl_exists = False
@@ -470,12 +501,12 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
                                       requested_col_names=("name", "eid"),
                                       debug=args.debug,
                                       _errors_warnings=ewarns)
-    except:
+    except BaseException:  # noqa: B036
         logger.warning(ewarns)
-    wl_exists = (False, True) [ result is not None ]
+    wl_exists = (False, True)[result is not None]
     if wl_exists:
         logger.debug(pformat(result))
-        wl_running = (False, True) [ result["state"] == "Run"]
+        wl_running = (False, True)[result["state"] == "Run"]
         logger.warning(f"running? {wl_running}")
 
     if wl_running:
@@ -483,7 +514,7 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
                                           cx_state='STOPPED',
                                           test_mgr='all',
                                           debug=args.debug)
-        for n in range(1,60):
+        for _ in range(1, 60):
             result = wanlink.query.get_wl(eid_list=args.wl_name,
                                           requested_col_names=("name", "eid", "running"),
                                           debug=False)
@@ -523,8 +554,8 @@ ip-address must be assigned to the wanlink endpoints in the LANforge gui for sce
 
     else:
         result = wanlink.add_cx(_alias=args.wl_name,
-                                _rx_endp=endp_A,
-                                _tx_endp=endp_B,
+                                _rx_endp=endp_B,
+                                _tx_endp=endp_A,
                                 _test_mgr="default_tm")
         logger.info(f"updated wanlink {args.wl_name}")
 

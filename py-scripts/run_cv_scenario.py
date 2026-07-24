@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 # This script will set the LANforge to a BLANK database then it will load the specified database
 # and start a graphical report
 import logging
@@ -36,6 +35,7 @@ Realm = realm.Realm
 # configure the test profile with auto save selected so that
 # the auto_save parameter does not toggle on and off
 
+
 class RunCvScenario(LFCliBase):
     def __init__(self, lfhost="localhost", lfport=8080, debug_=False, lanforge_db_=None, cv_scenario_=None,
                  cv_test_=None, test_scenario_=None, report_file_name=None):
@@ -51,6 +51,7 @@ class RunCvScenario(LFCliBase):
         self.report_verbosity = None
         self.leave_test_open = False
         self.toggle_autosave = False
+        self.set_autosave = None
         self.click_save = False
         self.commands_pre: list = []
         self.commands_start: list = []
@@ -133,7 +134,7 @@ class RunCvScenario(LFCliBase):
             for event_o in events_response[pronoun]:
                 if load_completed:
                     break
-                for (key, record) in event_o.items():
+                for (_, record) in event_o.items():
                     if "event description" not in record:
                         continue
                     if not record["event description"]:
@@ -191,13 +192,13 @@ class RunCvScenario(LFCliBase):
         commands = []
         if self.cv_scenario and self.cv_scenario != "DFLT":
             commands.extend(["cv sync",
-                            "sleep 4",
-                            "cv apply '%s'" % self.cv_scenario,
-                            "sleep 4",
-                            "cv build",
-                            "sleep 4",
-                            "cv is_built",
-                            ])
+                             "sleep 4",
+                             "cv apply '%s'" % self.cv_scenario,
+                             "sleep 4",
+                             "cv build",
+                             "sleep 4",
+                             "cv is_built",
+                             ])
         commands.extend(["cv sync",
                          "echo -  waiting to sync",
                          "sleep 4",
@@ -221,6 +222,9 @@ class RunCvScenario(LFCliBase):
                              ])
         if self.toggle_autosave:
             commands.append("cv click test_ref 'Auto Save Report'")
+
+        if self.set_autosave:
+            commands.append("cv set test_ref 'Auto Save Report' %s" % self.set_autosave)
 
         if self.commands_pre:
             for pre_cmd in self.commands_pre:
@@ -321,7 +325,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
         description="""Chamber View testing script:  Load a Chamber View (CV) scenario, build it, and run a test.
 
-Example of loading a CV scenario, build it, and run the  WiFi Capacity 
+Example of loading a CV scenario, build it, and run the  WiFi Capacity
 test using a previously saved profile:
     ./run_cv_scenario.py --lfmgr 127.0.0.1 --lanforge_db 'handsets' \\
         --cv_scenario Mobile20 \\
@@ -330,7 +334,7 @@ test using a previously saved profile:
 
 Example of running a WiFi Capacity test using the current CV scenario.
 This combination of parameters will not re-generate the present CV scenario:
-    ./run_cv_scenario.py --lanforge_db DFLT \\ 
+    ./run_cv_scenario.py --lanforge_db DFLT \\
         --cv_scenario CURRENT \\
         --cv_test 'WiFi Capacity' \\
         --test_profile DEFAULT
@@ -366,14 +370,15 @@ This combination of parameters will not re-generate the present CV scenario:
     # While the option --auto_save is available, it is better to
     # configure the test profile with auto save selected so that
     # the auto_save parameter does not toggle on and off
-    # The best way to get around this is to save a named test profile with
-    # Auto Save Report selected and not use the --toggle_auto_save flag.
+    # Use --enable_auto_save report instead in most cases.
     parser.add_argument("--toggle_auto_save", default=False, action="store_true",
                         help="This toggles the Auto Save Report checkbox. If your test profile was "
                              "saved with Auto Save Report selected, when the test starts, the DEFAULT test "
                              "profile will save with Auto Save Report *unselected*. The consequence is that"
                              "every time you load test profile DEFAULT, Auto Save Report will be enabled "
                              "every second time.")
+    parser.add_argument("--enable_auto_save", default=False, action="store_true",
+                        help="Enable the Auto Save Report checkbox. ")
     parser.add_argument("--click_save", default=False, action="store_true",
                         help="Show the save-report dialog as if you clicked 'Save HTML'. "
                              "Both the HTML and PDF reports are created, "
@@ -402,8 +407,17 @@ This combination of parameters will not re-generate the present CV scenario:
 
     parser.add_argument("--report_file_name", "--report_file", type=str,
                         help="name of the report file")
+    parser.add_argument('--help_summary', action="store_true", help='Show summary of what this script does')
+
+    help_summary = '''\
+Chamber View testing script:  Load a Chamber View (CV) scenario, build it, and run a test.
+'''
 
     args = parser.parse_args()
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
+
     if args.lfmgr is not None:
         lfjson_host = args.lfmgr
     if args.port is not None:
@@ -411,8 +425,6 @@ This combination of parameters will not re-generate the present CV scenario:
     debug = False
     if args.debug is not None:
         debug = args.debug
-
-
 
     report_file_n = "untitled_report"
     if args.report_file_name:
@@ -441,6 +453,8 @@ This combination of parameters will not re-generate the present CV scenario:
         run_cv_scenario.leave_test_open = True
     if args.toggle_auto_save:
         run_cv_scenario.toggle_autosave = True
+    if args.enable_auto_save:
+        run_cv_scenario.set_autosave = "true"
     if args.click_save:
         run_cv_scenario.click_save
     if args.test_profile is not None:

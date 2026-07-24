@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 Library to Run Dataplane Test: Using lf_cv_base class
 

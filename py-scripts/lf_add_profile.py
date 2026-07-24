@@ -1,85 +1,75 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
-NAME: lf_add_profile.py
+NAME:       lf_add_profile.py
 
-PURPOSE:    Add a LANforge device profile. This can give a high level description of how the LANforge system should act.
-            The profile can then be selected in higher-level test cases to auto-generate lower level configuration.
+PURPOSE:    Create and configure a template LANforge device profile for use in
+            Chamber View Scenario automation.
 
-EXAMPLE:
-
-lf_add_profile.py , the --name refers to the profile name
-
-    vscode sample:
-            "args":[
-            "--mgr","192.168.0.104",
-            "--mgr_port","8080",
-            "--lf_user","lanforge",
-            "--lf_passwd","lanforge",
-            "--antenna","4",
-            "--instance_count","1",
-            // see http://www.candelatech.com/lfcli_ug.php#add_profile for the profile flags
-            //"--profile_flags","DHCP_SERVER,SKIP_DHCP_ROAM,NAT,ENABLE_POWERSAVE",
-            "--profile_flags","4105",
-            "--name","Routed-AP-QA13",
-            "--profile_type","routed_ap",
-            "--ssid","vap",
-            "--passwd","hello123",
-            "--dut","Routed-AP-13",
-            "--text","Making a Routed-AP-13",
-            "--log_level","debug",
-            "--debug"]
-
-    Command line:
-    see http://www.candelatech.com/lfcli_ug.php#add_profile for the profile flags:
-    ./lf_add_profile.py --mgr 192.168.0.104 --mgr_port 8080 --lf_user lanforge --lf_passwd lanforge --antenna 4
-        --instance_count 1 --profile_flags 4105 --name Routed-AP-QA13 --profile_type routed_ap
-        --ssid vap --passwd hello123 --dut Routed-AP-13 --text 'Making a Routed-AP-13 profile'
-        --log_level debug --debug
-
-    Once the profile is created a chamberview scenario needs to be created based off that profile:
-    ./create_chamberview.py --lfmgr 192.168.0.104 --port 8080 --create_scenario QA13-2
-    --raw_line 'profile_link 1.1 Routed-AP-QA13 1 NA NA wiphy1,AUTO -1 NA' --raw_line 'resource 1.1.0 0'
-
-    The --raw_line are determined by applying the profile above
+NOTES:      The profile is not made active on the system until  it is configured into
+            a Chamber View Scenario (e.g. via 'create_chamberview.py') and the
+            Chamber View Scenario is built.
 
 
-NOTES:
+EXAMPLE:    # Add routed vAP with following configuration:
+            #   - DHCP server
+            #   - NAT enabled (when configured in virtual router)
+            #   - Admin up on creation (active)
+            #   - WPA2 security
+            #
+            # Note that the '--profile_flags' are specified in hexadecimal format
+            # See http://www.candelatech.com/lfcli_ug.php#add_profile for profile flags
+            ./lf_add_profile.py \
+                --instance_count    1 \
+                --profile_flags     4109 \
+                --name              "routed-AP-custom" \
+                --profile_type      routed_ap \
+                --freq              2412 \
+                --ssid              LF-routed-AP \
+                --passwd            lanforge
 
-Tested on 02/20/2023:
-         kernel version: 5.19.17+
-         gui version: 5.4.6
+            # Same example but using VSCode launch.json to specify CLI
+            # As this will likely be run from a secondary system, you'll
+            # need to add the "--mgr" argument and IP in that case
+            "args": [
+                "instance_count",   "1",
+                "profile_flags"     "4109",
+                "name",             "routed-AP-custom",
+                "profile_type",     "routed_ap",
+                "freq",             "2412",
+                "ssid",             "LF-routed-AP",
+                "passwd",           "lanforge",
+            ]
 
-TO DO NOTES:
+            # This configuration can be made active in a Chamber View Scenario as follows
+            # This example uses 'wiphy0' on LANforge resource 1
+            ./create_chamberview.py \
+                --create_scenario   "LF-routed-AP-scenario" \
+                --raw_line          'profile_link 1.1 LF-routed-AP 1 NA NA wiphy1,AUTO -1 NA' \
+                --raw_line          'resource 1.1.0 0'
 
+LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
+            Copyright 2025 Candela Technologies Inc
 """
 
+import argparse
+import importlib
+import logging
+import os
 import sys
 
 if sys.version_info[0] != 3:
     print("This script requires Python3")
     exit()
 
-import importlib
-import argparse
-from pprint import pformat
-import os
-import logging
-
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 lanforge_api = importlib.import_module("lanforge_client.lanforge_api")
 LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
-from lanforge_client.lanforge_api import LFSession
-from lanforge_client.lanforge_api import LFJsonCommand
-from lanforge_client.lanforge_api import LFJsonQuery
-
+from lanforge_client.lanforge_api import LFSession  # noqa: E402
+from lanforge_client.lanforge_api import LFJsonCommand  # noqa: E402
+from lanforge_client.lanforge_api import LFJsonQuery  # noqa: E402
 
 lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
-
 logger = logging.getLogger(__name__)
-
-# add_wanpath
-# http://www.candelatech.com/lfcli_ug.php#add_wanpath
 
 
 class lf_add_profile():
@@ -123,7 +113,7 @@ class lf_add_profile():
                     _name: str = None,                         # Profile Name. [R]
                     _passwd: str = None,                       # WiFi Password to be used (AP Mode), [BLANK] means no password.
                     _profile_flags: str = None,                # Flags for this profile, see above.
-                    _profile_flags_list: list = [],            # Flags for the profile passed as list
+                    _profile_flags_list: list = None,          # Flags for the profile passed as list
                     _profile_type: str = None,                 # Profile type: See above. [W]
                     _ssid: str = None,                         # WiFi SSID to be used, [BLANK] means any.
                     _vid: str = None,                          # Vlan-ID (only valid for vlan profiles).
@@ -131,6 +121,8 @@ class lf_add_profile():
                     _response_json_list: list = None,
                     _errors_warnings: list = None,
                     _suppress_related_commands: bool = False):
+        if not _profile_flags_list:
+            _profile_flags_list = []
 
         flag_val = 0
         if _profile_flags is not None:
@@ -170,7 +162,6 @@ class lf_add_profile():
 
     # This text will be added to the end of the notes field for Profiles.
     # The text must be entered one line at a time, primarily due to CLI parsing limitations.
-
     # http://www.candelatech.com/lfcli_ug.php#add_profile_notes
     def add_profile_notes(self,
                           _dut: str = None,                          # Profile Name. [R]
@@ -188,51 +179,62 @@ class lf_add_profile():
             suppress_related_commands=_suppress_related_commands)
 
 
-# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- #
-
-# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- #
-
-
 def main():
-    help_summary='''\
-     This script is helpful to create profiles on the lanforge device
-    '''
+    help_summary = "This script is helpful to create profiles on the lanforge device"
+
     parser = argparse.ArgumentParser(
         prog=__file__,
         formatter_class=argparse.RawTextHelpFormatter,
-        description='''\
-            adds a chamberview profile
+        description=r'''\
+NAME:       lf_add_profile.py
 
-            add_profile Routed-AP-QA Routed-AP 0 4 1 0 vap hello123 4105
+PURPOSE:    Create and configure a template LANforge device profile for use in
+            Chamber View Scenario automation.
 
-            profile flags
-            4105 = 0x1009
+NOTES:      The profile is not made active on the system until  it is configured into
+            a Chamber View Scenario (e.g. via 'create_chamberview.py') and the
+            Chamber View Scenario is built.
 
-            DHCP_SERVER = 0x1           # This should provide DHCP server.
-            WPA2        = 0x8
-            ENABLE_POWERSAVE = 0x1000   # Enable power-save when creating stations.
 
-            pass in --profile_flags 'DHCP_SERVER,WPA2,ENABLE_POWERSAVE'
+EXAMPLE:    # Add routed vAP with following configuration:
+            #   - DHCP server
+            #   - NAT enabled (when configured in virtual router)
+            #   - Admin up on creation (active)
+            #   - WPA2 security
+            #
+            # Note that the '--profile_flags' are specified in hexadecimal format
+            # See http://www.candelatech.com/lfcli_ug.php#add_profile for profile flags
+            ./lf_add_profile.py \
+                --instance_count    1 \
+                --profile_flags     4109 \
+                --name              "routed-AP-custom" \
+                --profile_type      routed_ap \
+                --freq              2412 \
+                --ssid              LF-routed-AP \
+                --passwd            lanforge
 
-    Example:
-        Command line:
-        see http://www.candelatech.com/lfcli_ug.php#add_profile for the profile flags:
-        ./lf_add_profile.py --mgr 192.168.0.104 --mgr_port 8080 --lf_user lanforge --lf_passwd lanforge --antenna 4\
-            --instance_count 1 --profile_flags 4105 --name Routed-AP-QA13 --profile_type routed_ap\
-            --ssid vap --passwd hello123 --dut Routed-AP-13 --text 'Making a Routed-AP-13 profile'\
-            --log_level debug --debug
+            # Same example but using VSCode launch.json to specify CLI
+            # As this will likely be run from a secondary system, you'll
+            # need to add the "--mgr" argument and IP in that case
+            "args": [
+                "instance_count",   "1",
+                "profile_flags"     "4109",
+                "name",             "routed-AP-custom",
+                "profile_type",     "routed_ap",
+                "freq",             "2412",
+                "ssid",             "LF-routed-AP",
+                "passwd",           "lanforge",
+            ]
 
-        Once the profile is created a chamberview scenario needs to be created based off that profile:
-        ./create_chamberview.py --lfmgr 192.168.0.104 --port 8080 --delete_scenario --create_scenario QA13-2\
-        --raw_line 'profile_link 1.1 Routed-AP-QA13 1 NA NA wiphy1,AUTO -1 NA' --raw_line 'resource 1.1.0 0'\
+            # This configuration can be made active in a Chamber View Scenario as follows
+            # This example uses 'wiphy0' on LANforge resource 1
+            ./create_chamberview.py \
+                --create_scenario   "LF-routed-AP-scenario" \
+                --raw_line          'profile_link 1.1 LF-routed-AP 1 NA NA wiphy1,AUTO -1 NA' \
+                --raw_line          'resource 1.1.0 0'
 
-        The --raw_line are determined by applying the profile above
-
-    NOTES:
-        Tested on 02/20/2023:
-        kernel version: 5.19.17+
-        gui version: 5.4.6
-
+LICENSE:    Free to distribute and modify. LANforge systems must be licensed.
+            Copyright 2025 Candela Technologies Inc
             ''')
     # http://www.candelatech.com/lfcli_ug.php#add_profile
     parser.add_argument("--host", "--mgr", dest='mgr', help='specify the GUI to connect to')
@@ -246,7 +248,7 @@ def main():
     parser.add_argument('--bandwidth', help="(add profile) 0 (auto), 20, 40, 80 or 160")
     parser.add_argument("--eap_id", help="(add profile) EAP Identifier")
     parser.add_argument("--flags_mask", help="(add profile) Specify what flags to set.")
-    parser.add_argument("--freq", help="(add profile)WiFi frequency to be used, 0 means default.")
+    parser.add_argument("--freq", help="(add profile)WiFi frequency to be used, -1 means AUTO.")
     parser.add_argument("--instance_count", help="(add profile) Number of devices (stations, vdevs, etc)")
     parser.add_argument("--mac_pattern", help="(add profile) Optional MAC-Address pattern, for instance:  xx:xx:xx:*:*:xx")
     parser.add_argument("--name", help="(add profile) Profile Name. [R] ")
@@ -350,23 +352,21 @@ def main():
     parser.add_argument('--log_level', default=None, help='Set logging level: debug | info | warning | error | critical')
     parser.add_argument("--lf_logger_config_json", help="--lf_logger_config_json <json file> , json configuration of logger")
     parser.add_argument('--debug', help='Legacy debug flag', action='store_true')
-    parser.add_argument('--help_summary',help='shows summary of the script',action='store_true')
+    parser.add_argument('--help_summary', help='shows summary of the script', action='store_true')
 
     args = parser.parse_args()
     if args.help_summary:
         print(help_summary)
         exit(0)
 
-    # set up logger
+    # Configure logging
     logger_config = lf_logger_config.lf_logger_config()
 
-    # set the logger level to debug
     if args.log_level:
         logger_config.set_level(level=args.log_level)
 
-    # lf_logger_config_json will take presidence to changing debug levels
+    # Logger JSON config takes precedence over command line
     if args.lf_logger_config_json:
-        # logger_config.lf_logger_config_json = "lf_logger_config.json"
         logger_config.lf_logger_config_json = args.lf_logger_config_json
         logger_config.load_lf_logger_config()
 
@@ -382,10 +382,8 @@ def main():
     else:
         profile_flags_list = []
 
-    # parameters for add_profile
-    # alias
-    # create side A
-    print("args.alias_prefix {}".format(args.alias_prefix))
+    logger.info(f"Adding profile '{args.name}' to LANforge manager '{args.mgr}'")
+    logger.debug("args.alias_prefix {}".format(args.alias_prefix))
     profile.add_profile(
         _alias_prefix=args.alias_prefix,                    # Port alias prefix, aka hostname prefix.
         _antenna=args.antenna,                              # Antenna count for this profile.
@@ -409,6 +407,7 @@ def main():
         for text in args.text:
             profile.add_profile_notes(_dut=args.name,
                                       _text=text)
+    logger.info(f"Added profile '{args.name}'")
 
 
 if __name__ == "__main__":

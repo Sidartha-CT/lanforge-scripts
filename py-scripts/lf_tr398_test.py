@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 Note: To Run this script gui should be opened with
 
@@ -10,7 +9,8 @@ Note: To Run this script gui should be opened with
 This script is used to automate running TR398 tests.  You
 may need to view a TR398 test configured through the GUI to understand
 the options and how best to input data.
-    
+(Issue 1)
+
     ./lf_tr398_test.py --mgr localhost --port 8080 --lf_user lanforge --lf_password lanforge \
       --instance_name tr398-instance --config_name test_con \
       --upstream 1.2.eth2 \
@@ -72,7 +72,7 @@ skip_tri: 1
 selected_dut5: TR398-DUT ruckus750-5 4c:b1:cd:18:e8:ec (1)
 selected_dut2: TR398-DUT ruckus750-2 4c:b1:cd:18:e8:e8 (2)
 upstream_port: 1.2.2 eth2
-operator: 
+operator:
 mconn: 5
 band2_freq: 2437
 band5_freq: 5180
@@ -160,14 +160,11 @@ import os
 import importlib
 import argparse
 import time
-import json
-from os import path
 
 if sys.version_info[0] != 3:
     print("This script requires Python 3")
     exit(1)
 
- 
 sys.path.append(os.path.join(os.path.abspath(__file__ + "../../../")))
 
 cv_test_manager = importlib.import_module("py-json.cv_test_manager")
@@ -192,17 +189,27 @@ class TR398Test(cvtest):
                  raw_lines_file="",
                  dut5="",
                  dut2="",
-                 enables=[],
-                 disables=[],
-                 raw_lines=[],
-                 sets=[],
-                 ):
+                 enables=None,
+                 disables=None,
+                 raw_lines=None,
+                 sets=None):
         super().__init__(lfclient_host=lf_host, lfclient_port=lf_port)
+
+        # NOTE: Do not make default arguments lists, as they are stateful
+        #       across calls to the same initializer (effectively static, in C terms)
+        if not enables:
+            enables = []
+        if not disables:
+            enables = []
+        if not raw_lines:
+            enables = []
+        if not sets:
+            enables = []
 
         self.lf_host = lf_host
         self.lf_port = lf_port
         self.lf_user = lf_user
-        self.lf_password =lf_password
+        self.lf_password = lf_password
         self.instance_name = instance_name
         self.config_name = config_name
         self.dut5 = dut5
@@ -223,13 +230,12 @@ class TR398Test(cvtest):
         # Nothing to do at this time.
         return
 
-
     def run(self):
         self.sync_cv()
         time.sleep(2)
         self.sync_cv()
 
-        blob_test = "%s-"%(self.test_name)
+        blob_test = "%s-" % (self.test_name)
 
         self.rm_text_blob(self.config_name, blob_test)  # To delete old config with same name
         self.show_text_blob(None, None, False)
@@ -313,30 +319,39 @@ def main():
     parser.add_argument("--local_lf_report_dir",
                         help="--local_lf_report_dir <where to pull reports to>  default '' means put in current working directory",
                         default="")
+    parser.add_argument('--help_summary', action="store_true", help='Show summary of what this script does')
 
+    help_summary = '''\
+This script is used to automate running TR398 tests.  You
+may need to view a TR398 test configured through the GUI to understand
+the options and how best to input data.
+(Issue 1)
+'''
     args = parser.parse_args()
+    if args.help_summary:
+        print(help_summary)
+        exit(0)
 
     cv_base_adjust_parser(args)
 
-    CV_Test = TR398Test(lf_host = args.mgr,
-                        lf_port = args.port,
-                        lf_user = args.lf_user,
-                        lf_password = args.lf_password,
-                        instance_name = args.instance_name,
-                        config_name = args.config_name,
-                        upstream = args.upstream,
-                        pull_report = args.pull_report,
-                        local_lf_report_dir = args.local_lf_report_dir,
-                        load_old_cfg = args.load_old_cfg,
-                        dut2 = args.dut2,
-                        dut5 = args.dut5,
-                        raw_lines_file = args.raw_lines_file,
-                        enables = args.enable,
-                        disables = args.disable,
-                        raw_lines = args.raw_line,
-                        sets = args.set,
-                        test_rig=args.test_rig
-                        )
+    CV_Test = TR398Test(lf_host=args.mgr,
+                        lf_port=args.port,
+                        lf_user=args.lf_user,
+                        lf_password=args.lf_password,
+                        instance_name=args.instance_name,
+                        config_name=args.config_name,
+                        upstream=args.upstream,
+                        pull_report=args.pull_report,
+                        local_lf_report_dir=args.local_lf_report_dir,
+                        load_old_cfg=args.load_old_cfg,
+                        dut2=args.dut2,
+                        dut5=args.dut5,
+                        raw_lines_file=args.raw_lines_file,
+                        enables=args.enable,
+                        disables=args.disable,
+                        raw_lines=args.raw_line,
+                        sets=args.set,
+                        test_rig=args.test_rig)
     CV_Test.setup()
     CV_Test.run()
 

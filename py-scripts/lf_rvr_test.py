@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa
 """
 TEST NAME        :   Rate vs Range Test
 
@@ -114,11 +113,11 @@ NOTES:
 
 STATUS: BETA RELEASE
 
-VERIFIED_ON: 
+VERIFIED_ON:
             12th May 2023
             GUI Version    : 5.4.6
             Kernel Version : 5.19.17+
- 
+
 LICENSE:
     Free to distribute and modify. LANforge systems must be licensed.
     Copyright 2022 Candela Technologies Inc
@@ -134,11 +133,9 @@ import os
 import importlib
 import argparse
 import time
-import json
 import logging
 import subprocess
 from time import sleep
-from os import path
 
 
 if sys.version_info[0] != 3:
@@ -160,32 +157,43 @@ lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 
 
 class RvrTest(cvtest):
+    # TODO: Move defaults to argparse to match other scripts
     def __init__(self,
-                 lf_host="localhost",
-                 lf_port=8080,
-                 ssh_port=22,
-                 local_lf_report_dir="",
+                 lf_host: str = "localhost",
+                 lf_port: int = 8080,
+                 ssh_port: int = 22,
+                 local_lf_report_dir: str = "",
                  graph_groups=None,
-                 lf_user="lanforge",
-                 lf_password="lanforge",
-                 instance_name="rvr_instance",
-                 config_name="rvr_config",
-                 upstream="1.1.eth1",
-                 pull_report=False,
-                 load_old_cfg=False,
-                 upload_speed="0",
-                 download_speed="85%",
-                 duration="15s",
-                 station="1.1.wlan0",
-                 dut="NA",
-                 enables=[],
-                 disables=[],
-                 raw_lines=[],
-                 raw_lines_file="",
-                 sets=[],
-                 verbosity='5'
-                 ):
+                 lf_user: str = "lanforge",
+                 lf_password: str = "lanforge",
+                 instance_name: str = "rvr_instance",
+                 config_name: str = "rvr_config",
+                 upstream: str = "1.1.eth1",
+                 pull_report: bool = False,
+                 load_old_cfg: bool = False,
+                 upload_speed: str = "0",
+                 download_speed: str = "85%",
+                 duration: str = "15s",
+                 station: str = "1.1.wlan0",
+                 dut: str = "NA",
+                 enables: list = None,
+                 disables: list = None,
+                 raw_lines: list = None,
+                 raw_lines_file: str = "",
+                 sets: list = None,
+                 verbosity: str = "5"):
         super().__init__(lfclient_host=lf_host, lfclient_port=lf_port)
+
+        # NOTE: Do not make default arguments lists, as they are stateful
+        #       across calls to the same initializer (effectively static, in C terms)
+        if not enables:
+            enables = []
+        if not disables:
+            enables = []
+        if not raw_lines:
+            enables = []
+        if not sets:
+            enables = []
 
         self.lf_host = lf_host
         self.lf_port = lf_port
@@ -202,8 +210,8 @@ class RvrTest(cvtest):
         self.load_old_cfg = load_old_cfg
         self.test_name = "Rate vs Range"
         self.upload_speed = upload_speed
-        self.download_speed = download_speed        
-    
+        self.download_speed = download_speed
+
         self.enables = enables
         self.disables = disables
         self.raw_lines = raw_lines
@@ -230,7 +238,6 @@ class RvrTest(cvtest):
         # Test related settings
         cfg_options = []
 
-        ### HERE###
         self.apply_cfg_options(cfg_options, self.enables, self.disables, self.raw_lines, self.raw_lines_file)
 
         # cmd line args take precedence and so come last in the cfg array.
@@ -253,7 +260,7 @@ class RvrTest(cvtest):
 
         cv_cmds = []
 
-        cmd = "cv set '%s' 'VERBOSITY' '%s'" % (self.instance_name,self.verbosity)
+        cmd = "cv set '%s' 'VERBOSITY' '%s'" % (self.instance_name, self.verbosity)
         cv_cmds.append(cmd)
 
         logger.info("verbosity is : {verbosity}".format(verbosity=self.verbosity))
@@ -268,12 +275,10 @@ class RvrTest(cvtest):
 
 def main():
 
-    help_summary='''\
-The Candela Rate vs Range Test measures the performance over distance of the Device Under Test. 
-Distance is emulated using programmable attenuation and a throughput test is run 
-at each distance/RSSI step and plotted on a chart. The test allows the user to plot 
-RSSI curves both upstream and downstream for different types of traffic and different station types.
-    '''
+    help_summary = "The Candela Rate vs Range Test measures the performance over distance of the Device Under Test. " \
+                   "Distance is emulated using programmable attenuation and a throughput test is run " \
+                   "at each distance/RSSI step and plotted on a chart. The test allows the user to plot " \
+                   "RSSI curves both upstream and downstream for different types of traffic and different station types."
 
     parser = argparse.ArgumentParser(
         prog="lf_rvr_test.py",
@@ -393,11 +398,11 @@ RSSI curves both upstream and downstream for different types of traffic and diff
 
     STATUS: BETA RELEASE
 
-    VERIFIED_ON: 
+    VERIFIED_ON:
                 12th May 2023
                 GUI Version    : 5.4.6
                 Kernel Version : 5.19.17+
- 
+
     LICENSE:
         Free to distribute and modify. LANforge systems must be licensed.
         Copyright 2022 Candela Technologies Inc
@@ -425,7 +430,9 @@ RSSI curves both upstream and downstream for different types of traffic and diff
     parser.add_argument("--security", type=str, help="[station configuration] security type open wpa wpa2 wpa3")
     parser.add_argument("--wifi_mode", type=str, help="[station configuration] --wifi_mode auto  types auto|a|abg|abgn|abgnAC|abgnAX|an|anAC|anAX|b|bg|bgn|bgnAC|bgnAX|g ", default='auto')
     parser.add_argument("--vht160", action='store_true', help="[station configuration] --vht160 , Enable VHT160 in lanforge ")
-    parser.add_argument("--ieee80211w", type=str, help="[station configuration] --ieee80211w 0 (Disabled) 1 (Optional) 2 (Required) (Required needs to be set to Required for 6g and wpa3 default Optional ", default='1')
+    parser.add_argument("--ieee80211w", type=str,
+                        help="[station configuration] --ieee80211w 0 (Disabled) 1 (Optional) 2 (Required) (Required needs to be set to Required for 6g and wpa3 default Optional ",
+                        default='1')
 
     parser.add_argument("--dut", default="",
                         help="Specify DUT used by this test, example: linksys-8450")
@@ -435,15 +442,15 @@ RSSI curves both upstream and downstream for different types of traffic and diff
                         help="Specify requested upload speed.  Percentage of theoretical is also supported.  Default: 0")
     parser.add_argument("--duration", default="",
                         help="Specify duration of each traffic run")
-    parser.add_argument("--verbosity", default="5",help="Specify verbosity of the report values 1 - 11 default 5")
+    parser.add_argument("--verbosity", default="5", help="Specify verbosity of the report values 1 - 11 default 5")
     parser.add_argument("--graph_groups", help="File to save graph_groups to", default=None)
     parser.add_argument("--report_dir", default="")
     parser.add_argument("--local_lf_report_dir", help="--local_lf_report_dir <where to pull reports to>  default '' put where dataplane script run from", default="")
     parser.add_argument('--log_level', default=None, help='Set logging level: debug | info | warning | error | critical')
+
     # logging configuration
     parser.add_argument("--lf_logger_config_json", help="--lf_logger_config_json <json file> , json configuration of logger")
-    parser.add_argument('--help_summary', default=None, action="store_true", help='Show summary of what this script does')    
-
+    parser.add_argument('--help_summary', default=None, action="store_true", help='Show summary of what this script does')
 
     args = parser.parse_args()
 
@@ -477,15 +484,17 @@ RSSI curves both upstream and downstream for different types of traffic and diff
 
         if (args.radio is None):
             logger.info("WARNING --create needs a radio")
-            close_workbook(workbook)
             exit(1)
         if (args.band == '6g' or args.band == 'dual_band_6g'):
             if (args.vht160):
                 logger.info("creating station with VHT160 set: {} on radio {}".format(station_name, args.radio))
                 logger.info("cwd lf_associate_ap.pl: {dir}".format(dir=os.getcwd()))
-                subprocess.run(["./lf_associate_ap.pl", "--mgr", args.mgr, "--radio", args.radio, "--ssid", args.ssid, "--passphrase", args.ssidpw, "--bssid", args.bssid,
+                subprocess.run(["./lf_associate_ap.pl", "--mgr", args.mgr,
+                                "--radio", args.radio, "--ssid", args.ssid, "--passphrase", args.ssidpw, "--bssid", args.bssid,
                                 "--security", args.security, "--upstream", args.upstream, "--first_ip", "DHCP",
-                                "--first_sta", station_name, "--ieee80211w", args.ieee80211w, "--wifi_mode", args.wifi_mode, "--action", "add", "--xsec", "ht160_enable"], timeout=20, capture_output=True)
+                                "--first_sta", station_name, "--ieee80211w", args.ieee80211w,
+                                "--wifi_mode", args.wifi_mode, "--action", "add", "--xsec", "ht160_enable"],
+                               timeout=20, capture_output=True)
                 sleep(3)
             else:
                 logger.info("creating station: {} on radio {}".format(station_name, args.radio))
@@ -498,7 +507,9 @@ RSSI curves both upstream and downstream for different types of traffic and diff
                 logger.info("creating station with VHT160 set: {} on radio {}".format(station_name, args.radio))
                 subprocess.run(["./lf_associate_ap.pl", "--mgr", args.mgr, "--radio", args.radio, "--ssid", args.ssid, "--passphrase", args.ssidpw, "--bssid", args.bssid,
                                 "--security", args.security, "--upstream", args.upstream, "--first_ip", "DHCP",
-                                "--first_sta", station_name, "--ieee80211w", args.ieee80211w, "--wifi_mode", args.wifi_mode, "--action", "add", "--xsec", "ht160_enable"], timeout=20, capture_output=False)
+                                "--first_sta", station_name, "--ieee80211w", args.ieee80211w,
+                                "--wifi_mode", args.wifi_mode, "--action", "add", "--xsec", "ht160_enable"],
+                               timeout=20, capture_output=False)
                 sleep(3)
             else:
                 logger.info("creating station: {} on radio {}".format(station_name, args.radio))

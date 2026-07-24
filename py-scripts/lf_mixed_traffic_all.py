@@ -15,6 +15,13 @@ PURPOSE:
             wpa3_aes_sae    --> WPA3 SAE with AES/CCMP ciphers (previously lf_mixed_traffic-wpa3_aes_sae.py)
             wpa3_gcmp_sae   --> WPA3 SAE-EXT-KEY with GCMP-256 ciphers (previously lf_mixed_traffic_wpa3_gcmp_sae.py)
 
+        Use --port_reset to run a Port Reset test in its own process, in parallel with the selected tests
+        (regardless of whether those tests run serially or via --parallel). When run via --parallel, Port
+        Reset waits until every selected test has signaled that its CXs are up (plus an additional
+        duration_min wait) before starting, so it overlaps steady-state traffic rather than connection setup.
+        Tune it with --pr_duration/--duration_min/--duration_max/--batch_size and pull the generated report
+        with --pull_report.
+
 EXAMPLE:
 
         # CLI for Mixed Traffic Test: Run with Real Clients without connecting to a specified SSID
@@ -40,6 +47,14 @@ EXAMPLE:
             python3 lf_mixed_traffic_all.py --mgr 192.168.212.100 --scenario <scenario_name> --security_config 1x
             --eap_method EAP-PEAP --eap_identity user --eap_password pass --key_mgmt WPA-EAP
             --tests 1 2 3 4 5 --target 10.0.0.10 --ping_interval 5 --upstream_port 1.1.eth1 --virtual
+
+        # CLI for Mixed Traffic Test: Run with Virtual Clients built from a Chamber View Scenario, with Port Reset
+        # running in parallel with the traffic tests, and pull the generated report when finished.
+
+            python3 lf_mixed_traffic_all.py --mgr 192.168.204.71 --scenario cisco --tests 1 2 3 4 5 --target 127.0.0.1 --ping_interval 1
+            --upstream_port 1.1.eth2 --side_b_min_bps 10000000 --side_a_min 0 --side_b_min 100000000 --traffic_type lf_tcp --tos "VO"
+            --ftp_file_sizes 5MB --http_file_size 5MB --direction Download --mc_tos "BK" --virtual --test_duration 2m --parallel
+            --port_reset --pr_duration 130s --duration_min 30s --duration_max 30s --pull_report
 
         # CLI for Mixed Traffic Test: Run with Real Clients with parallel execution of tests
 
@@ -124,10 +139,11 @@ import logging
 import platform
 import sys
 import os
+import shutil
 import time
 import datetime
 import pandas as pd
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Event
 
 import requests
 # import traceback
@@ -147,6 +163,7 @@ LFUtils = importlib.import_module("py-json.LANforge.LFUtils")
 lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 lf_base_interop_profile = importlib.import_module("py-scripts.lf_base_interop_profile")
 cv_test_manager = importlib.import_module("py-json.cv_test_manager")
+lf_port_reset_test = importlib.import_module("py-scripts.lf_port_reset_test")
 
 # importing scripts
 ping_test = importlib.import_module("py-scripts.lf_interop_ping")
@@ -157,6 +174,25 @@ http_test = importlib.import_module("py-scripts.lf_webpage")
 multicast_test = importlib.import_module("py-scripts.test_l3")
 
 logger = logging.getLogger(__name__)
+
+
+def convert_duration_to_ms(value):
+    """Convert a duration value into milliseconds.
+
+    Accepts a plain number of milliseconds (int or numeric string), or a string
+    with a unit suffix like 10s, 5m, 1h, matching how --test_duration is parsed.
+    """
+    duration_suffixes = {'s': 1000, 'S': 1000, 'm': 60000, 'M': 60000, 'h': 3600000, 'H': 3600000}
+    value = str(value)
+    if value.endswith(tuple(duration_suffixes.keys())):
+        return int(value[:-1]) * duration_suffixes[value[-1]]
+    return int(value)
+
+
+def add_ports_in_port_reset_args(sta_list, port_reset_args):
+    for idx in range(len(sta_list)):
+        port_reset_args["sel_port-{}".format(idx + 1)] = sta_list[idx]
+    return port_reset_args
 
 
 class Mixed_Traffic(Realm):
@@ -217,10 +253,13 @@ class Mixed_Traffic(Realm):
                  ftp_test_duration="",
                  http_test_duration="",
                  multicast_test_duration="",
+                 ip_wait_time="-1",
                  qos_serial=False,
                  path='',
                  configure=True,
                  parallel=False,
+                 pull_report=False,
+                 port_reset=False,
                  target='192.168.1.3',
                  multicast_endp_types=None,
                  multicast_tos=None,
@@ -254,6 +293,11 @@ class Mixed_Traffic(Realm):
         self.ftp_test_obj = None
         self.http_obj = None
         self.multicast_test_obj = None
+        self.port_reset_test_obj = None
+        self.port_reset_test_status = None
+        # set True once mixed_obj.pre_cleanup() has run, so per-test precleanup steps
+        # (e.g. FtpTest.precleanup()) can skip redoing the same cx/station cleanup.
+        self.pre_cleanup_done = False
         self.interval = ""
         self.target = ""
         self.eid_list = []
@@ -329,6 +373,14 @@ class Mixed_Traffic(Realm):
         self.ftp_test_duration = ftp_test_duration
         self.http_test_duration = http_test_duration
         self.multicast_test_duration = multicast_test_duration
+        # -1 means auto (num_stations * 5 + 60 sec, computed by Realm.wait_for_ip); any "m"/"s"/"h"
+        # suffixed value is converted to an int number of seconds here.
+        ip_wait_suffixes = {'s': 1, 'S': 1, 'm': 60, 'M': 60, 'h': 3600, 'H': 3600}
+        ip_wait_time = str(ip_wait_time)
+        if ip_wait_time.endswith(tuple(ip_wait_suffixes.keys())):
+            self.ip_wait_time = int(ip_wait_time[:-1]) * ip_wait_suffixes[ip_wait_time[-1]]
+        else:
+            self.ip_wait_time = int(ip_wait_time)
         self.path = path
         self.station_profile = self.new_station_profile()
         self.generic_endps_profile = self.new_generic_endp_profile()
@@ -350,7 +402,10 @@ class Mixed_Traffic(Realm):
         self.qos_serial_run = qos_serial
 
         self.parallel = parallel
-        
+        self.pull_report = pull_report
+        self.port_reset = port_reset
+        self.port_reset_args = None
+
         self.target = target
         self.multicast_endp_types = multicast_endp_types
         self.multicast_tos = multicast_tos
@@ -516,7 +571,7 @@ class Mixed_Traffic(Realm):
             self._fail("Unable to bring all stations up")
             return
         logger.info("Waiting to get IP for all stations...")
-        if Realm.wait_for_ip(self=self, station_list=station_list, timeout_sec=-1):
+        if Realm.wait_for_ip(self=self, station_list=station_list, timeout_sec=self.ip_wait_time):
             self._pass("All stations got IPs", print_=True)
             self._pass("Station build finished", print_=True)
         else:
@@ -636,7 +691,7 @@ class Mixed_Traffic(Realm):
         return self.user_query
 
     def ping_test(self, ssid='', password='', security='', target='', interval='', _ping_test=ping_test,
-                  all_bands=False, conn=None):
+                  all_bands=False, conn=None, checkpoint_event=None, resume_event=None):
         try:
             # setting ping test duration & converting sec into minutes passing it float values for ping test
             if self.test_duration:
@@ -681,6 +736,12 @@ class Mixed_Traffic(Realm):
             logger.info('Starting Running the Ping Test for {} minutes'.format(ping_test_duration))
             # start generate endpoint
             self.ping_test_obj.start_generic()
+            # ping checkpoint
+            print("ping checkpoint reached at {}".format(datetime.datetime.now()))
+            if checkpoint_event is not None:
+                checkpoint_event.set()
+            if resume_event is not None:
+                resume_event.wait()
             ports_data_dict = self.ping_test_obj.json_get('/ports/all/')['interfaces']
             ports_data = {}
             for ports in ports_data_dict:
@@ -872,7 +933,7 @@ class Mixed_Traffic(Realm):
                 conn.send(['', False])
 
     def qos_test(self, ssid, password, security, ap_name, upstream, tos, traffic_type, side_a_min=0, side_b_min=0,
-                 side_a_max=0, side_b_max=0, _qos_test=qos_test, _qos_test_virtual=qos_test_virtual, all_bands=False, conn=None):
+                 side_a_max=0, side_b_max=0, _qos_test=qos_test, _qos_test_virtual=qos_test_virtual, all_bands=False, conn=None, checkpoint_event=None, resume_event=None):
         try:
             if self.test_duration:
                 self.qos_test_duration = self.test_duration
@@ -910,6 +971,12 @@ class Mixed_Traffic(Realm):
                 self.qos_test_obj.build()
                 self.qos_test_obj.start()
                 time.sleep(10)
+                # qos checkpoint (real clients)
+                print("qos checkpoint reached at {}".format(datetime.datetime.now()))
+                if checkpoint_event is not None:
+                    checkpoint_event.set()
+                if resume_event is not None:
+                    resume_event.wait()
                 try:
                     connections_download, connections_upload, drop_a_per, drop_b_per = self.qos_test_obj.monitor()
                 except Exception as e:
@@ -1008,6 +1075,12 @@ class Mixed_Traffic(Realm):
 
                 self.throughput_qos_obj.start(False, False)
                 time.sleep(10)
+                # qos checkpoint (virtual clients)
+                print("qos checkpoint reached at {}".format(datetime.datetime.now()))
+                if checkpoint_event is not None:
+                    checkpoint_event.set()
+                if resume_event is not None:
+                    resume_event.wait()
                 try:
                     connections_download, connections_upload, drop_a_per, drop_b_per = self.throughput_qos_obj.monitor()
                 except Exception as e:
@@ -1094,7 +1167,7 @@ class Mixed_Traffic(Realm):
             if(conn):
                 conn.send(['', '', '', '', False])
 
-    def ftp_test(self, ssid, password, security, bands, directions, file_sizes, ftp_test=ftp_test, all_bands=False, conn=None):
+    def ftp_test(self, ssid, password, security, bands, directions, file_sizes, ftp_test=ftp_test, all_bands=False, conn=None, checkpoint_event=None, resume_event=None):
         try:
             if self.test_duration:
                 self.ftp_test_duration = self.test_duration
@@ -1137,7 +1210,11 @@ class Mixed_Traffic(Realm):
                         self.ftp_test_obj.mac_id_list = self.user_query[2]
                         self.ftp_test_obj.windows_ports = self.windows_ports
                         self.ftp_test_obj.set_values()
-                        self.ftp_test_obj.precleanup()
+                        if not self.pre_cleanup_done:
+                            self.ftp_test_obj.precleanup()
+                        else:
+                            logger.info("Skipping FTP precleanup(); mixed_obj.pre_cleanup() already "
+                                       "cleaned cx/station state for this run.")
                         self.ftp_test_obj.build()
                     if self.virtual:
                         self.ftp_test_obj.station_profile.station_names = self.station_list
@@ -1160,7 +1237,13 @@ class Mixed_Traffic(Realm):
                     else:
                         for _ in self.sta_info['radio_list']:
                             self.ftp_test_obj.cx_profile.start_cx()
-                    if self.dowebgui:    
+                    # ftp checkpoint
+                    print("ftp checkpoint reached at {}".format(datetime.datetime.now()))
+                    if checkpoint_event is not None:
+                        checkpoint_event.set()
+                    if resume_event is not None:
+                        resume_event.wait()
+                    if self.dowebgui:
                         self.ftp_test_obj.monitor_for_runtime_csv()
                     else:
                         time.sleep(self.ftp_test_duration)
@@ -1190,7 +1273,7 @@ class Mixed_Traffic(Realm):
             if(conn):
                 conn.send(['', False])
 
-    def http_test(self, ssid, password, security, http_file_size, target_per_ten, http_test=http_test, all_bands=False, conn=None):
+    def http_test(self, ssid, password, security, http_file_size, target_per_ten, http_test=http_test, all_bands=False, conn=None, checkpoint_event=None, resume_event=None):
         try:
             if self.test_duration:
                 self.http_test_duration = self.test_duration
@@ -1275,16 +1358,21 @@ class Mixed_Traffic(Realm):
                 # print(self.station_list)
                 # self.http_obj.station_list = [[self.station_list]]
                 # self.cleanup.layer4_endp_clean()
-                self.station_profile.admin_up()
-                logger.info("Waiting until the all station ports are up. Max time out is 300 seconds.")
-                if not LFUtils.wait_until_ports_admin_up(base_url=self.lfclient_url,
-                                                            port_list=self.station_list,
-                                                            debug_=self.debug):
-                    self._fail("Unable to bring all stations up")
-                    return
-                logger.info("Waiting to get IP for all stations...")
-                logger.info("Admin up all the stations...")
-                Realm.wait_for_ip(self=self, station_list=self.station_list, timeout_sec=-1)
+                # Stations are already admin-up with IPs by this point (via virtual_client_creation() or
+                # the --scenario flow), so this is normally duplicate work. It's skipped when
+                # --port_reset is running in parallel, since the extra time spent here was delaying this
+                # test's checkpoint relative to the others and pushing Port Reset's start out too late.
+                if not self.port_reset:
+                    self.station_profile.admin_up()
+                    logger.info("Waiting until the all station ports are up. Max time out is 300 seconds.")
+                    if not LFUtils.wait_until_ports_admin_up(base_url=self.lfclient_url,
+                                                                port_list=self.station_list,
+                                                                debug_=self.debug):
+                        self._fail("Unable to bring all stations up")
+                        return
+                    logger.info("Waiting to get IP for all stations...")
+                    logger.info("Admin up all the stations...")
+                    Realm.wait_for_ip(self=self, station_list=self.station_list, timeout_sec=self.ip_wait_time)
 
                 # building layer4   #Todo: Since the lf_webpage script itself only support "download", so need to add upload functionality in future
                 self.http_obj.http_profile.direction = 'dl'
@@ -1308,6 +1396,12 @@ class Mixed_Traffic(Realm):
             test_time = datetime.datetime.now().strftime("%b %d %H:%M:%S")
             logger.info("HTTP Test started at {}".format(test_time))
             self.http_obj.start()
+            # http checkpoint
+            print("http checkpoint reached at {}".format(datetime.datetime.now()))
+            if checkpoint_event is not None:
+                checkpoint_event.set()
+            if resume_event is not None:
+                resume_event.wait()
             if self.dowebgui:
                 self.http_obj.monitor_for_runtime_csv(self.http_test_duration)
             else:    
@@ -1458,7 +1552,7 @@ class Mixed_Traffic(Realm):
                 )
 
     def multicast_test(self, endp_types=None, mc_tos=None, side_a_min=0, side_b_min=0, side_a_pdu=0, side_b_pdu=0,
-                       _multicast_test=multicast_test, all_bands=False, conn=None):
+                       _multicast_test=multicast_test, all_bands=False, conn=None, checkpoint_event=None, resume_event=None):
         try:
             # use for creating multicast dictionary
             if self.test_duration:
@@ -1609,7 +1703,7 @@ class Mixed_Traffic(Realm):
                 exit(1)
             logger.info("Start the test and run for a duration")
             # TODO: Check return value of start()
-            self.multicast_test_obj.start(False)
+            self.multicast_test_obj.start(False, checkpoint_event=checkpoint_event, resume_event=resume_event)
             csv_results_file = self.multicast_test_obj.get_results_csv()
             report.set_title("Multicast Test")
             report.build_banner_cover()
@@ -1662,6 +1756,40 @@ class Mixed_Traffic(Realm):
                         False
                     ]
                 )
+
+    def post_checkpoint_function(self):
+        clr_enp_data = {"endp_name": "all"}
+        clr_cx_data = {"cx_name": "all"}
+        logger.info("clearing CXs data")
+        self.json_post("cli-json/clear_cx_counters", clr_cx_data)
+        self.json_post("cli-json/clear_endp_counters", clr_enp_data)
+
+    def port_reset_test(self, port_reset_args=None, conn=None):
+        try:
+            self.port_reset_test_obj = lf_port_reset_test.PortResetTest(lf_host=self.host,
+                                                                         lf_port=self.port,
+                                                                         lf_user=self.lf_username,
+                                                                         lf_password=self.lf_password,
+                                                                         instance_name="mt_port_reset_inst",
+                                                                         config_name="mt_port_reset_cfg",
+                                                                         upstream="",
+                                                                         duration="",
+                                                                         upload_speed="",
+                                                                         download_speed="",
+                                                                         dut=self.dut_model,
+                                                                         pull_report=self.pull_report,
+                                                                         local_lf_report_dir=self.report_path,
+                                                                         port_reset_args=port_reset_args)
+            self.port_reset_test_obj.setup()
+            self.port_reset_test_obj.run()
+            self.port_reset_test_status = True
+            if conn:
+                conn.send([self.port_reset_test_obj, True])
+        except Exception as e:
+            logging.exception(e)
+            self.port_reset_test_status = False
+            if conn:
+                conn.send(['', False])
 
     def station_info(self):
         self.sta_info = {
@@ -1731,6 +1859,11 @@ class Mixed_Traffic(Realm):
             # "Security": self.security,
             "No of Devices": f"{len(self.user_query[0]) if self.real else len(self.station_list)} (Virtual Clients: {virtual_sta_count}, Windows: {windows_count}, Linux: {linux_count}, Mac: {mac_count}, Android: {android_count})",
             "Test Duration (HH:MM:SS)": self.time_formate}
+        if self.port_reset and self.port_reset_args:
+            test_setup_info["Port Reset Duration (ms)"] = self.port_reset_args.get("duration")
+            test_setup_info["Port Reset Duration Min (ms)"] = self.port_reset_args.get("duration_min")
+            test_setup_info["Port Reset Duration Max (ms)"] = self.port_reset_args.get("duration_max")
+            test_setup_info["Port Reset Batch Size"] = self.port_reset_args.get("batch_size")
         self.lf_report_mt.set_table_title("Test Setup Information")
         self.lf_report_mt.build_table_title()
         self.lf_report_mt.test_setup_table(test_setup_data=test_setup_info, value="Overall Setup Info For all Tests")
@@ -1829,6 +1962,28 @@ class Mixed_Traffic(Realm):
                             })
             self.lf_report_mt.set_table_dataframe(df)
             self.lf_report_mt.build_table()
+
+            if self.port_reset and self.port_reset_test_status and self.port_reset_test_obj is not None:
+                # Port Reset stats image reporting in mixed traffic, shown before the individual test reports
+                port_reset_report_dir = os.path.join(self.report_path,
+                                                     os.path.basename(self.port_reset_test_obj.lf_report_dir))
+                port_reset_kpi_image = None
+                if os.path.isdir(port_reset_report_dir):
+                    for fname in sorted(os.listdir(port_reset_report_dir)):
+                        if fname.lower().endswith(".png") and "kpi" in fname.lower() and "print" not in fname.lower():
+                            port_reset_kpi_image = os.path.join(port_reset_report_dir, fname)
+                            break
+                if port_reset_kpi_image:
+                    self.lf_report_mt.set_obj_html(_obj_title="Port Reset Test", _obj="")
+                    self.lf_report_mt.build_objective()
+                    self.lf_report_mt.set_table_title("Port Reset Stats")
+                    self.lf_report_mt.build_table_title()
+                    port_reset_image_name = os.path.basename(port_reset_kpi_image)
+                    shutil.copy(port_reset_kpi_image, os.path.join(self.report_path, port_reset_image_name))
+                    self.lf_report_mt.set_graph_image(port_reset_image_name)
+                    self.lf_report_mt.build_graph()
+                else:
+                    logger.warning("Port Reset KPI image not found in {}".format(port_reset_report_dir))
 
             if "1" in self.tests and self.ping_test_status:
                 # 1.Ping test reporting in mixed traffic
@@ -2450,6 +2605,12 @@ INCLUDE_IN_README: False
                                           'eg: --tests 1 2 3 4 5', nargs="+", default=["1 2 3 4 5"])
     optional.add_argument('--parallel', action='store_true',
                           help='Use --parallel to run the all the traffics (ftp,http,qos,ping,multicast..) simultaeneously')
+    optional.add_argument('--port_reset', action='store_true',
+                          help='Use --port_reset to run a Port Reset test in parallel with the selected tests, '
+                               'regardless of whether those tests run serially or via --parallel. See Port Reset '
+                               'Test arguments to tune batch_size, duration, duration_min, duration_max, etc.')
+    optional.add_argument('-pull_report', '--pull_report', default=False, action='store_true',
+                          help='pull the Port Reset report from lanforge (by default: False)')
     # virtual stations
     # optional.add_argument('--start_id',
     #                       help='Specify the station starting id \n e.g: --start_id <value> default 0',
@@ -2609,6 +2770,9 @@ INCLUDE_IN_README: False
     optional.add_argument('--ftp_test_duration', help='--test_duration sets the duration for ftp tests', default="3m")
     optional.add_argument('--http_test_duration', help='--test_duration sets the duration for http tests', default="3m")
     optional.add_argument('--multicast_test_duration', help='--test_duration sets the duration for multicast tests', default="5m")
+    optional.add_argument('--ip_wait_time', help='Max time to wait for stations to get an IP. Accepts a suffix of '
+                          's/m/h (e.g. 30s, 5m, 2h). Default -1 means auto (num_stations * 5 + 60 seconds).',
+                          default="-1")
     # qos args
     optional.add_argument('--tos', help='Enter the tos. Example1 : "BK,BE,VI,VO" , Example2 : "BK,VO", Example3 : "VI" ', default="VO")
     optional.add_argument('--side_a_min', help='Endpoint-a Min Cx Rate', default=6200000)
@@ -2666,7 +2830,108 @@ INCLUDE_IN_README: False
     parser.add_argument('--help_summary', help='Show summary of what this script does', default=None,
                         action="store_true")
 
-    args = parser.parse_args()
+    # Port Reset Test arguments (used with --port_reset to run a Port Reset test in parallel with the
+    # other selected tests). Kept as a separate parser (like create_station.py's port_reset args) so these
+    # field names don't have to be threaded through the main parser.
+    port_reset_args = {}
+    port_reset_parser = argparse.ArgumentParser(add_help=False)
+    port_reset_parser.add_argument("--saved_at_ms", type=int, dest="__saved_at_ms", default=1783420011611)
+    port_reset_parser.add_argument("--pre_post_anon", type=int, default=0)
+    port_reset_parser.add_argument("--pre_post_inline", type=int, default=0)
+    port_reset_parser.add_argument("--do_pre_post", type=int, default=1)
+    port_reset_parser.add_argument("--anonymize_ap", type=int, default=0)
+    port_reset_parser.add_argument("--show_events", type=int, default=1)
+    port_reset_parser.add_argument("--show_log", type=int, default=0)
+    port_reset_parser.add_argument("--log_stdout", type=int, default=0)
+    port_reset_parser.add_argument("--port_sorting", type=int, default=2)
+    port_reset_parser.add_argument("--kpi_id", default="Port Reset")
+    port_reset_parser.add_argument("--get_csv_cb", type=int, default=0)
+    port_reset_parser.add_argument("--auto_save", type=int, default=0)
+    port_reset_parser.add_argument("--rpt_path", default="")
+    port_reset_parser.add_argument("--rpt_path_make_subdir", type=int, default=1)
+    port_reset_parser.add_argument("--show_inline_logs", type=int, default=1)
+    port_reset_parser.add_argument("--rpt_name", default="")
+    port_reset_parser.add_argument("--rpt_dir_prefix_textfield", default="")
+    port_reset_parser.add_argument("--bg", default="0xE0ECF8")
+    port_reset_parser.add_argument("--dut_info_override", default="")
+    port_reset_parser.add_argument("--dut_info_cmd", default="")
+    port_reset_parser.add_argument("--test_rig", default="")
+    port_reset_parser.add_argument("--test_tag", default="")
+    port_reset_parser.add_argument("--show_scan", type=int, default=1)
+    port_reset_parser.add_argument("--show_link_graphs", type=int, default=1)
+    port_reset_parser.add_argument("--auto_helper", type=int, default=1)
+    port_reset_parser.add_argument("--pause_on_failure", type=int, default=0)
+    port_reset_parser.add_argument("--allow_11w", type=int, default=0)
+    port_reset_parser.add_argument("--use_mcs_histograms", type=int, default=1)
+    port_reset_parser.add_argument("--use_mlo_histograms", type=int, default=1)
+    port_reset_parser.add_argument("--disable_mlo", type=int, default=0)
+    port_reset_parser.add_argument("--extra_tx_status", type=int, default=0)
+    port_reset_parser.add_argument("--extra_rx_status", type=int, default=0)
+    port_reset_parser.add_argument("--txs_all_status", type=int, default=0)
+    port_reset_parser.add_argument("--sae_pwe", type=int, default=2)
+    port_reset_parser.add_argument("--multi_cx", type=int, default=1)
+    port_reset_parser.add_argument("--skip_ac", type=int, default=0)
+    port_reset_parser.add_argument("--skip_be", type=int, default=0)
+    port_reset_parser.add_argument("--skip_ax", type=int, default=0)
+    port_reset_parser.add_argument("--skip_2", type=int, default=0)
+    port_reset_parser.add_argument("--skip_5", type=int, default=0)
+    port_reset_parser.add_argument("--skip_5b", type=int, default=1)
+    port_reset_parser.add_argument("--skip_6", type=int, default=0)
+    port_reset_parser.add_argument("--skip_mlo", type=int, default=0)
+    port_reset_parser.add_argument("--skip_dual", type=int, default=0)
+    port_reset_parser.add_argument("--skip_tri", type=int, default=1)
+    port_reset_parser.add_argument("--skip_tri_5b", type=int, default=1)
+    port_reset_parser.add_argument("--skip_rebuild", type=int, default=0)
+    port_reset_parser.add_argument("--udp_gro", type=int, default=0)
+    port_reset_parser.add_argument("--udp_burst", type=int, default=0)
+    port_reset_parser.add_argument("--show_mcs_unidirectional", type=int, default=0)
+    port_reset_parser.add_argument("--default_verbosity_cb", type=int, default=-1)
+    port_reset_parser.add_argument("--report_limit_cb", type=int, default=20)
+    port_reset_parser.add_argument("--payload_pattern", default="0")
+    port_reset_parser.add_argument("--sndbuf_tcp", default="0")
+    port_reset_parser.add_argument("--sndbuf_udp", default="0")
+    port_reset_parser.add_argument("--rcvbuf_tcp", default="0")
+    port_reset_parser.add_argument("--rcvbuf_udp", default="0")
+    port_reset_parser.add_argument("--show_per_loop_totals", type=int, default=1)
+    port_reset_parser.add_argument("--clear_ports_too", type=int, default=0)
+    port_reset_parser.add_argument("--show_lat_distrib", type=int, default=1)
+    port_reset_parser.add_argument("--show_log_scale", type=int, default=0)
+    port_reset_parser.add_argument("--show_adv_lat_graph", type=int, default=0)
+    port_reset_parser.add_argument("--realtime_per_port", type=int, default=0)
+    port_reset_parser.add_argument("--realtime_per_cx", type=int, default=0)
+    port_reset_parser.add_argument("--batch_size", type=int, default=None,
+                                   help='Number of ports to reset per batch. Defaults to the number of stations '
+                                        'created for the test when not specified.')
+    # Named --pr_duration (not --port_reset_duration) so it can't be abbreviation-matched against the
+    # main parser's --port_reset flag, same reasoning as --pr_traffic_type below. dest stays "duration"
+    # since that's the raw config key the underlying LANforge Port Reset test expects.
+    port_reset_parser.add_argument("--duration", "--pr_duration", dest="duration", default="600000",
+                                   help='Port Reset traffic duration in ms, or with a unit suffix like 10m, 30s, 1h')
+    port_reset_parser.add_argument("--duration_min", default="180000",
+                                   help='Port Reset minimum duration in ms, or with a unit suffix like 10m, 30s, 1h')
+    port_reset_parser.add_argument("--duration_max", default="180000",
+                                   help='Port Reset maximum duration in ms, or with a unit suffix like 10m, 30s, 1h')
+    port_reset_parser.add_argument("--downtime", type=int, default=0)
+    port_reset_parser.add_argument("--random_sel", type=int, default=0)
+    port_reset_parser.add_argument("--change_mac", type=int, default=0)
+    port_reset_parser.add_argument("--no_deauth", type=int, default=0)
+    port_reset_parser.add_argument("--run_traffic", type=int, default=0)
+    # --traffic_type is already claimed by the main parser (QOS test traffic type), so the Port Reset
+    # traffic type is exposed as --pr_traffic_type but stored into the "traffic_type" field Port Reset expects.
+    port_reset_parser.add_argument("--pr_traffic_type", dest="traffic_type", default="UDP")
+    port_reset_parser.add_argument("--dl_rate", type=int, default=10000000)
+    port_reset_parser.add_argument("--ul_rate", type=int, default=0)
+
+    port_reset_arguments, remaining = port_reset_parser.parse_known_args()
+    port_reset_args.update(vars(port_reset_arguments))
+    # duration, duration_min, duration_max are in ms, but may also be given with a unit
+    # suffix (s/m/h), matching how --test_duration and friends accept units elsewhere.
+    for duration_key in ("duration", "duration_min", "duration_max"):
+        port_reset_args[duration_key] = convert_duration_to_ms(port_reset_args[duration_key])
+
+    args = parser.parse_args(remaining)
+    # Port Reset shares the same upstream port as the rest of the mixed traffic test.
+    port_reset_args["upstream_port"] = args.upstream_port
 
     # help summary
     if args.help_summary:
@@ -2872,8 +3137,11 @@ INCLUDE_IN_README: False
                               ftp_test_duration=args.ftp_test_duration,
                               http_test_duration=args.http_test_duration,
                               multicast_test_duration=args.multicast_test_duration,
+                              ip_wait_time=args.ip_wait_time,
                               configure=configure,
                               parallel=args.parallel,
+                              pull_report=args.pull_report,
+                              port_reset=args.port_reset,
                               cv_scenario=args.scenario,
                               target=args.target,
                               multicast_endp_types=args.mc_traffic_type,
@@ -2890,6 +3158,7 @@ INCLUDE_IN_README: False
     twog_selected_devices, fiveg_selected_devices, sixg_selected_devices = None, None, None
     if args.pre_cleanup:
         mixed_obj.pre_cleanup()
+        mixed_obj.pre_cleanup_done = True
     if (args.scenario):
         # Load Scenario and Build 
         cv_test_obj = cv_test_manager.cv_test(lfclient_host=args.mgr)
@@ -3032,7 +3301,7 @@ INCLUDE_IN_README: False
             mixed_obj.admin_up(sta)
 
         # Wait for IP and then start Tests
-        if Realm.wait_for_ip(self=mixed_obj, station_list=mixed_obj.station_list, timeout_sec=-1):
+        if Realm.wait_for_ip(self=mixed_obj, station_list=mixed_obj.station_list, timeout_sec=mixed_obj.ip_wait_time):
             mixed_obj._pass("All stations got IPs", print_=True)
             mixed_obj._pass("Station build finished", print_=True)
         else:
@@ -3116,25 +3385,63 @@ INCLUDE_IN_README: False
 
                 logger.info(f"Selected Tests List: {args.tests}")
                 if args.tests:
+                    # Port Reset is started in its own process so it runs in parallel with the selected
+                    # tests, regardless of whether those tests run serially or via --parallel. When the
+                    # tests run via --parallel, Port Reset is held back until every selected test has
+                    # signaled its checkpoint (CXs started) and an additional duration_min wait has
+                    # elapsed, so Port Reset overlaps steady-state traffic rather than connection setup.
+                    port_reset_process = None
+                    checkpoint_events = {}
+                    resume_event = None
+                    test_processes = {}
+                    if args.port_reset:
+                        if port_reset_args.get("batch_size") is None:
+                            port_reset_args["batch_size"] = len(mixed_obj.station_list)
+                        elif port_reset_args["batch_size"] > len(mixed_obj.station_list):
+                            logger.info("Port Reset batch_size ({}) is greater than the number of stations ({}); "
+                                       "capping batch_size to the number of stations".format(
+                                           port_reset_args["batch_size"], len(mixed_obj.station_list)))
+                            port_reset_args["batch_size"] = len(mixed_obj.station_list)
+                        port_reset_args = add_ports_in_port_reset_args(mixed_obj.station_list, port_reset_args)
+                        mixed_obj.port_reset_args = port_reset_args
+                        port_reset_parent, port_reset_child = Pipe()
+                        port_reset_process = Process(target=mixed_obj.port_reset_test,
+                                                     kwargs={
+                                                         'port_reset_args': port_reset_args,
+                                                         'conn': port_reset_child
+                                                     }
+                                                     )
+                        if args.parallel:
+                            for test_id in ("1", "2", "3", "4", "5"):
+                                if test_id in args.tests:
+                                    checkpoint_events[test_id] = Event()
+                            resume_event = Event()
+                        else:
+                            # Tests run one at a time when not parallel, so there is no set of
+                            # concurrent CXs to wait on; start Port Reset right away.
+                            port_reset_process.start()
                     if args.parallel:
                         if "1" in args.tests:
                             t1_parent, t1_child = Pipe()
-                            t1 = Process(target=mixed_obj.ping_test, 
+                            t1 = Process(target=mixed_obj.ping_test,
                                         kwargs={
                                             'ssid': ssid,
                                             'password': password,
                                             'security': security,
                                             'target': args.target,
                                             'interval': args.ping_interval,
-                                            'conn': t1_child
+                                            'conn': t1_child,
+                                            'checkpoint_event': checkpoint_events.get("1"),
+                                            'resume_event': resume_event
                                         }
                                     )
                             t1.start()
+                            test_processes["1"] = t1
                             # mixed_obj.ping_test(ssid=ssid, password=password, security=security, target=args.target,
                             #                     interval=args.ping_interval)
                         if "2" in args.tests:
                             t2_parent, t2_child = Pipe()
-                            t2 = Process(target=mixed_obj.qos_test, 
+                            t2 = Process(target=mixed_obj.qos_test,
                                         kwargs={
                                             'ssid': ssid,
                                             'password': password,
@@ -3147,17 +3454,20 @@ INCLUDE_IN_README: False
                                             'side_b_min': args.side_b_min,
                                             'side_a_max': args.side_a_max,
                                             'side_b_max': args.side_b_min,
-                                            'conn': t2_child
+                                            'conn': t2_child,
+                                            'checkpoint_event': checkpoint_events.get("2"),
+                                            'resume_event': resume_event
                                         }
                                     )
                             t2.start()
+                            test_processes["2"] = t2
                             # mixed_obj.qos_test(ssid=ssid, password=password, security=security, ap_name=args.dut_model,
                             #                 upstream=args.upstream_port, tos=args.tos, traffic_type=args.traffic_type,
                             #                 side_a_min=args.side_a_min, side_b_min=args.side_b_min,
                             #                 side_a_max=args.side_a_max, side_b_max=args.side_b_min)
                         if "3" in args.tests:
                             t3_parent, t3_child = Pipe()
-                            t3 = Process(target=mixed_obj.ftp_test, 
+                            t3 = Process(target=mixed_obj.ftp_test,
                                         kwargs={
                                             'ssid': ssid,
                                             'password': password,
@@ -3165,44 +3475,76 @@ INCLUDE_IN_README: False
                                             'bands': mixed_obj.sta_info['band_list'] if args.scenario else band,
                                             'directions': args.direction,
                                             'file_sizes': args.ftp_file_sizes,
-                                            'conn': t3_child
+                                            'conn': t3_child,
+                                            'checkpoint_event': checkpoint_events.get("3"),
+                                            'resume_event': resume_event
                                         }
                                     )
                             t3.start()
+                            test_processes["3"] = t3
                             # mixed_obj.ftp_test(ssid=ssid, password=password, security=security, bands=band,
                             #                 directions=args.direction, file_sizes=args.ftp_file_sizes)
                         if "4" in args.tests:
                             t4_parent, t4_child = Pipe()
-                            t4 = Process(target=mixed_obj.http_test, 
+                            t4 = Process(target=mixed_obj.http_test,
                                         kwargs={
-                                            'ssid': ssid, 
-                                            'password': password, 
+                                            'ssid': ssid,
+                                            'password': password,
                                             'security': security,
-                                            'http_file_size': args.http_file_size, 
+                                            'http_file_size': args.http_file_size,
                                             'target_per_ten': args.target_per_ten,
-                                            'conn': t4_child
+                                            'conn': t4_child,
+                                            'checkpoint_event': checkpoint_events.get("4"),
+                                            'resume_event': resume_event
                                         }
                                     )
                             t4.start()
+                            test_processes["4"] = t4
                             # mixed_obj.http_test(ssid=ssid, password=password, security=security,
                             #                     http_file_size=args.http_file_size, target_per_ten=args.target_per_ten)
                         if "5" in args.tests:
                             t5_parent, t5_child = Pipe()
-                            t5 = Process(target=mixed_obj.multicast_test, 
+                            t5 = Process(target=mixed_obj.multicast_test,
                                         kwargs={
-                                            'endp_types': args.mc_traffic_type, 
+                                            'endp_types': args.mc_traffic_type,
                                             'mc_tos': args.mc_tos,
-                                            'side_a_min': args.side_a_min_bps, 
+                                            'side_a_min': args.side_a_min_bps,
                                             'side_b_min': args.side_b_min_bps,
-                                            'side_a_pdu': args.side_a_min_pdu, 
+                                            'side_a_pdu': args.side_a_min_pdu,
                                             'side_b_pdu': args.side_b_min_pdu,
-                                            'conn': t5_child
+                                            'conn': t5_child,
+                                            'checkpoint_event': checkpoint_events.get("5"),
+                                            'resume_event': resume_event
                                         }
                                     )
                             t5.start()
+                            test_processes["5"] = t5
                             # mixed_obj.multicast_test(endp_types=args.mc_traffic_type, mc_tos=args.mc_tos,
                             #                         side_a_min=args.side_a_min_bps, side_b_min=args.side_b_min_bps,
                             #                         side_a_pdu=args.side_a_min_pdu, side_b_pdu=args.side_b_min_pdu)
+
+                        if port_reset_process is not None and checkpoint_events:
+                            logger.info("Waiting for all parallel tests to start their CXs before starting Port Reset")
+                            pending_checkpoints = dict(checkpoint_events)
+                            while pending_checkpoints:
+                                for test_id in list(pending_checkpoints):
+                                    event = pending_checkpoints[test_id]
+                                    if event.is_set():
+                                        logger.info(f"Test {test_id} reached its checkpoint")
+                                        del pending_checkpoints[test_id]
+                                    elif not test_processes[test_id].is_alive():
+                                        logger.warning(f"Test {test_id} exited before reaching its checkpoint; "
+                                                       "skipping it while waiting for the remaining checkpoints")
+                                        del pending_checkpoints[test_id]
+                                if pending_checkpoints:
+                                    time.sleep(0.5)
+                            logger.info("All parallel tests reached their checkpoint (or exited). Running post-checkpoint function.")
+                            mixed_obj.post_checkpoint_function()
+                            resume_event.set()
+                            logger.info("Waiting duration_min "
+                                       "({} ms) before starting Port Reset".format(port_reset_args["duration_min"]))
+                            time.sleep(port_reset_args["duration_min"] / 1000.0)
+                            port_reset_process.start()
 
                         if "1" in args.tests:
                             mixed_obj.ping_test_obj, mixed_obj.ping_test_status = t1_parent.recv()
@@ -3247,6 +3589,9 @@ INCLUDE_IN_README: False
                             mixed_obj.multicast_test(endp_types=args.mc_traffic_type, mc_tos=args.mc_tos,
                                                     side_a_min=args.side_a_min_bps, side_b_min=args.side_b_min_bps,
                                                     side_a_pdu=args.side_a_min_pdu, side_b_pdu=args.side_b_min_pdu)
+                    if port_reset_process is not None:
+                        mixed_obj.port_reset_test_obj, mixed_obj.port_reset_test_status = port_reset_parent.recv()
+                        port_reset_process.join()
                     # generating overall report
                     mixed_obj.generate_all_report()
                 else:
@@ -3303,26 +3648,64 @@ INCLUDE_IN_README: False
             # tests will run with respect to bands
             logger.info("Selected Tests List: ".format(args.tests))
             if args.tests:
+                # Port Reset is started in its own process so it runs in parallel with the selected
+                # tests, regardless of whether those tests run serially or via --parallel. When the
+                # tests run via --parallel, Port Reset is held back until every selected test has
+                # signaled its checkpoint (CXs started) and an additional duration_min wait has
+                # elapsed, so Port Reset overlaps steady-state traffic rather than connection setup.
+                port_reset_process = None
+                checkpoint_events = {}
+                resume_event = None
+                test_processes = {}
+                if args.port_reset:
+                    if port_reset_args.get("batch_size") is None:
+                        port_reset_args["batch_size"] = len(mixed_obj.station_list)
+                    elif port_reset_args["batch_size"] > len(mixed_obj.station_list):
+                        logger.info("Port Reset batch_size ({}) is greater than the number of stations ({}); "
+                                   "capping batch_size to the number of stations".format(
+                                       port_reset_args["batch_size"], len(mixed_obj.station_list)))
+                        port_reset_args["batch_size"] = len(mixed_obj.station_list)
+                    port_reset_args = add_ports_in_port_reset_args(mixed_obj.station_list, port_reset_args)
+                    mixed_obj.port_reset_args = port_reset_args
+                    port_reset_parent, port_reset_child = Pipe()
+                    port_reset_process = Process(target=mixed_obj.port_reset_test,
+                                                 kwargs={
+                                                     'port_reset_args': port_reset_args,
+                                                     'conn': port_reset_child
+                                                 }
+                                                 )
+                    if args.parallel:
+                        for test_id in ("1", "2", "3", "4", "5"):
+                            if test_id in args.tests:
+                                checkpoint_events[test_id] = Event()
+                        resume_event = Event()
+                    else:
+                        # Tests run one at a time when not parallel, so there is no set of
+                        # concurrent CXs to wait on; start Port Reset right away.
+                        port_reset_process.start()
                 if args.parallel:
                     if "1" in args.tests:
                         t1_parent, t1_child = Pipe()
-                        t1 = Process(target=mixed_obj.ping_test, 
+                        t1 = Process(target=mixed_obj.ping_test,
                                     kwargs={
                                         'ssid': ssid,
                                         'password': password,
                                         'security': security,
                                         'target': args.target,
                                         'interval': args.ping_interval,
-                                        'conn': t1_child, 
-                                        'all_bands': True
+                                        'conn': t1_child,
+                                        'all_bands': True,
+                                        'checkpoint_event': checkpoint_events.get("1"),
+                                        'resume_event': resume_event
                                     }
                                 )
                         t1.start()
+                        test_processes["1"] = t1
                         # mixed_obj.ping_test(ssid=ssid, password=password, security=security, target=args.target,
                         #                     interval=args.ping_interval)
                     if "2" in args.tests:
                         t2_parent, t2_child = Pipe()
-                        t2 = Process(target=mixed_obj.qos_test, 
+                        t2 = Process(target=mixed_obj.qos_test,
                                     kwargs={
                                         'ssid': ssid,
                                         'password': password,
@@ -3335,18 +3718,21 @@ INCLUDE_IN_README: False
                                         'side_b_min': args.side_b_min,
                                         'side_a_max': args.side_a_max,
                                         'side_b_max': args.side_b_min,
-                                        'conn': t2_child, 
-                                        'all_bands': True
+                                        'conn': t2_child,
+                                        'all_bands': True,
+                                        'checkpoint_event': checkpoint_events.get("2"),
+                                        'resume_event': resume_event
                                     }
                                 )
                         t2.start()
+                        test_processes["2"] = t2
                         # mixed_obj.qos_test(ssid=ssid, password=password, security=security, ap_name=args.dut_model,
                         #                 upstream=args.upstream_port, tos=args.tos, traffic_type=args.traffic_type,
                         #                 side_a_min=args.side_a_min, side_b_min=args.side_b_min,
                         #                 side_a_max=args.side_a_max, side_b_max=args.side_b_min)
                     if "3" in args.tests:
                         t3_parent, t3_child = Pipe()
-                        t3 = Process(target=mixed_obj.ftp_test, 
+                        t3 = Process(target=mixed_obj.ftp_test,
                                     kwargs={
                                         'ssid': ssid,
                                         'password': password,
@@ -3354,44 +3740,53 @@ INCLUDE_IN_README: False
                                         'bands': Bands,
                                         'directions': args.direction,
                                         'file_sizes': args.ftp_file_sizes,
-                                        'conn': t3_child, 
-                                        'all_bands': True
+                                        'conn': t3_child,
+                                        'all_bands': True,
+                                        'checkpoint_event': checkpoint_events.get("3"),
+                                        'resume_event': resume_event
                                     }
                                 )
                         t3.start()
+                        test_processes["3"] = t3
                         # mixed_obj.ftp_test(ssid=ssid, password=password, security=security, bands=band,
                         #                 directions=args.direction, file_sizes=args.ftp_file_sizes)
                     if "4" in args.tests:
                         t4_parent, t4_child = Pipe()
-                        t4 = Process(target=mixed_obj.http_test, 
+                        t4 = Process(target=mixed_obj.http_test,
                                     kwargs={
-                                        'ssid': ssid, 
-                                        'password': password, 
+                                        'ssid': ssid,
+                                        'password': password,
                                         'security': security,
-                                        'http_file_size': args.http_file_size, 
+                                        'http_file_size': args.http_file_size,
                                         'target_per_ten': args.target_per_ten,
-                                        'conn': t4_child, 
-                                        'all_bands': True
+                                        'conn': t4_child,
+                                        'all_bands': True,
+                                        'checkpoint_event': checkpoint_events.get("4"),
+                                        'resume_event': resume_event
                                     }
                                 )
                         t4.start()
+                        test_processes["4"] = t4
                         # mixed_obj.http_test(ssid=ssid, password=password, security=security,
                         #                     http_file_size=args.http_file_size, target_per_ten=args.target_per_ten)
                     if "5" in args.tests:
                         t5_parent, t5_child = Pipe()
-                        t5 = Process(target=mixed_obj.multicast_test, 
+                        t5 = Process(target=mixed_obj.multicast_test,
                                     kwargs={
-                                        'endp_types': args.mc_traffic_type, 
+                                        'endp_types': args.mc_traffic_type,
                                         'mc_tos': args.mc_tos,
-                                        'side_a_min': args.side_a_min_bps, 
+                                        'side_a_min': args.side_a_min_bps,
                                         'side_b_min': args.side_b_min_bps,
-                                        'side_a_pdu': args.side_a_min_pdu, 
+                                        'side_a_pdu': args.side_a_min_pdu,
                                         'side_b_pdu': args.side_b_min_pdu,
-                                        'conn': t5_child, 
-                                        'all_bands': True
+                                        'conn': t5_child,
+                                        'all_bands': True,
+                                        'checkpoint_event': checkpoint_events.get("5"),
+                                        'resume_event': resume_event
                                     }
                                 )
                         t5.start()
+                        test_processes["5"] = t5
                         # mixed_obj.multicast_test(endp_types=args.mc_traffic_type, mc_tos=args.mc_tos,
                         #                         side_a_min=args.side_a_min_bps, side_b_min=args.side_b_min_bps,
                         #                         side_a_pdu=args.side_a_min_pdu, side_b_pdu=args.side_b_min_pdu)
@@ -3407,6 +3802,29 @@ INCLUDE_IN_README: False
                     #     t2.start()
                     # if "1" in args.tests:
                     #     t1.start()
+
+                    if port_reset_process is not None and checkpoint_events:
+                        logger.info("Waiting for all parallel tests to start their CXs before starting Port Reset")
+                        pending_checkpoints = dict(checkpoint_events)
+                        while pending_checkpoints:
+                            for test_id in list(pending_checkpoints):
+                                event = pending_checkpoints[test_id]
+                                if event.is_set():
+                                    logger.info(f"Test {test_id} reached its checkpoint")
+                                    del pending_checkpoints[test_id]
+                                elif not test_processes[test_id].is_alive():
+                                    logger.warning(f"Test {test_id} exited before reaching its checkpoint; "
+                                                   "skipping it while waiting for the remaining checkpoints")
+                                    del pending_checkpoints[test_id]
+                            if pending_checkpoints:
+                                time.sleep(0.5)
+                        logger.info("All parallel tests reached their checkpoint (or exited). Running post-checkpoint function.")
+                        mixed_obj.post_checkpoint_function()
+                        resume_event.set()
+                        logger.info("Waiting duration_min "
+                                   "({} ms) before starting Port Reset".format(port_reset_args["duration_min"]))
+                        time.sleep(port_reset_args["duration_min"] / 1000.0)
+                        port_reset_process.start()
 
                     if "1" in args.tests:
                         mixed_obj.ping_test_obj, mixed_obj.ping_test_status = t1_parent.recv()
@@ -3610,6 +4028,9 @@ INCLUDE_IN_README: False
                                                     side_a_min=args.side_a_min_bps, side_b_min=args.side_b_min_bps,
                                                     side_a_pdu=args.side_a_min_pdu, side_b_pdu=args.side_b_min_pdu,
                                                     all_bands=True)
+                if port_reset_process is not None:
+                    mixed_obj.port_reset_test_obj, mixed_obj.port_reset_test_status = port_reset_parent.recv()
+                    port_reset_process.join()
                 # generating overall report
                 mixed_obj.generate_all_report()
                 if mixed_obj.dowebgui:
