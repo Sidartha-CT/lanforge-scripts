@@ -705,15 +705,16 @@ class Mixed_Traffic(Realm):
             # starting part of the ping test
             self.ping_test_obj = ping_test.Ping(host=self.host, port=self.port, ssid=ssid, security=security,
                                                 password=password, lanforge_password="lanforge", target=self.target,
-                                                interval=self.interval, sta_list=[], virtual=self.virtual, real=self.real,
+                                                interval=self.interval, sta_list=[], virtual=self.virtual,
+                                                real=self.real,
                                                 duration=ping_test_duration)
             if not self.ping_test_obj.check_tab_exists():
                 print('Generic Tab is not available for Ping Test.\nAborting the test.')
                 exit(0)
             if self.real:
                 self.ping_test_obj.select_real_devices(real_devices=self.base_interop_profile,
-                                                    real_sta_list=self.user_query[0],
-                                                    base_interop_obj=self.base_interop_profile)
+                                                       real_sta_list=self.user_query[0],
+                                                       base_interop_obj=self.base_interop_profile)
                 # removing the existing generic endpoints & cxs
                 self.ping_test_obj.cleanup()
                 self.ping_test_obj.sta_list = self.user_query[0]
@@ -749,26 +750,26 @@ class Mixed_Traffic(Realm):
                 ports_data[port] = port_data
             if self.dowebgui:
                 start_time = datetime.datetime.now()
-                end_time = start_time+datetime.timedelta(seconds=ping_test_duration*60)
+                end_time = start_time + datetime.timedelta(seconds=ping_test_duration * 60)
                 temp_json = []
-                while(datetime.datetime.now()<end_time):
+                while (datetime.datetime.now() < end_time):
                     temp_json = []
-                    temp_checked_sta=[]
+                    temp_checked_sta = []
                     temp_result_data = self.ping_test_obj.get_results()
-                    if(type(temp_result_data) == dict):
+                    if (type(temp_result_data) == dict):
                         for station in self.ping_test_obj.real_sta_list:
                             current_device_data = ports_data[station]
                             if (station in temp_result_data['name']):
                                 temp_json.append({
-                                'device':station,
-                                'sent': temp_result_data['tx pkts'],
-                                'recv': temp_result_data['rx pkts'],
-                                'dropped': temp_result_data['dropped'],
-                                'status':"Running",
-                                'start_time':start_time.strftime("%d/%m %I:%M:%S %p"),
-                                'end_time':end_time.strftime("%d/%m %I:%M:%S %p"),
-                                "remaining_time":""
-                            })
+                                    'device': station,
+                                    'sent': temp_result_data['tx pkts'],
+                                    'recv': temp_result_data['rx pkts'],
+                                    'dropped': temp_result_data['dropped'],
+                                    'status': "Running",
+                                    'start_time': start_time.strftime("%d/%m %I:%M:%S %p"),
+                                    'end_time': end_time.strftime("%d/%m %I:%M:%S %p"),
+                                    "remaining_time": ""
+                                })
                     else:
                         for station in self.ping_test_obj.real_sta_list:
                             current_device_data = ports_data[station]
@@ -776,20 +777,22 @@ class Mixed_Traffic(Realm):
                                 ping_endp, ping_data = list(ping_device.keys())[0], list(ping_device.values())[0]
                                 if station.split('-')[-1] in ping_endp and station not in temp_checked_sta:
                                     temp_checked_sta.append(station)
-                                    temp_json.append ({
-                                            'device':station,
-                                            'sent': ping_data['tx pkts'],
-                                            'recv': ping_data['rx pkts'],
-                                            'dropped': ping_data['dropped'],
-                                            'status':"Running",
-                                            'start_time':start_time.strftime("%d/%m %I:%M:%S %p"),
-                                            'end_time':end_time.strftime("%d/%m %I:%M:%S %p"),
-                                            "remaining_time":""
-                                        })       
-                    df1=pd.DataFrame(temp_json)
-                    df1.to_csv('{}/ping_datavalues.csv'.format(self.result_dir),index=False)
+                                    temp_json.append({
+                                        'device': station,
+                                        'sent': ping_data['tx pkts'],
+                                        'recv': ping_data['rx pkts'],
+                                        'dropped': ping_data['dropped'],
+                                        'status': "Running",
+                                        'start_time': start_time.strftime("%d/%m %I:%M:%S %p"),
+                                        'end_time': end_time.strftime("%d/%m %I:%M:%S %p"),
+                                        "remaining_time": ""
+                                    })
+                    df1 = pd.DataFrame(temp_json)
+                    df1.to_csv('{}/ping_datavalues.csv'.format(self.result_dir), index=False)
                     try:
-                        with open(self.result_dir+"/../../Running_instances/{}_{}_running.json".format(self.host,self.test_name), 'r') as file:
+                        with open(self.result_dir + "/../../Running_instances/{}_{}_running.json".format(self.host,
+                                                                                                         self.test_name),
+                                  'r') as file:
                             data = json.load(file)
                             if data["status"] != "Running":
                                 logging.info('Test is stopped by the user')
@@ -814,17 +817,34 @@ class Mixed_Traffic(Realm):
                                 'sent': result_data['tx pkts'],
                                 'recv': result_data['rx pkts'],
                                 'dropped': result_data['dropped'],
-                                'min_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[0] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
-                                'avg_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[1] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
-                                'max_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[2] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
+                                'min_rtt': [
+                                    result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                        0] if len(result_data['last results']) != 0 and 'min/avg/max' in
+                                              result_data['last results'].split('\n')[-2] else '0'][0],
+                                'avg_rtt': [
+                                    result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                        1] if len(result_data['last results']) != 0 and 'min/avg/max' in
+                                              result_data['last results'].split('\n')[-2] else '0'][0],
+                                'max_rtt': [
+                                    result_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                        2] if len(result_data['last results']) != 0 and 'min/avg/max' in
+                                              result_data['last results'].split('\n')[-2] else '0'][0],
                                 'mac': current_device_data['mac'],
                                 'channel': current_device_data['channel'],
                                 'ssid': current_device_data['ssid'],
                                 'mode': current_device_data['mode'],
-                                'name': [current_device_data['user'] if current_device_data['user'] != '' else current_device_data['hostname']][0],
-                                'os': ['Windows' if 'Win' in current_device_data['hw version'] else 'Linux' if 'Linux' in current_device_data['hw version'] else 'Mac' if 'Apple' in current_device_data['hw version'] else 'Android'][0],
+                                'name': [current_device_data['user'] if current_device_data['user'] != '' else
+                                         current_device_data['hostname']][0],
+                                'os': [
+                                    'Windows' if 'Win' in current_device_data['hw version'] else 'Linux' if 'Linux' in
+                                                                                                            current_device_data[
+                                                                                                                'hw version'] else 'Mac' if 'Apple' in
+                                                                                                                                            current_device_data[
+                                                                                                                                                'hw version'] else 'Android'][
+                                    0],
                                 'remarks': [],
-                                'last_result': [result_data['last results'].split('\n')[-2] if len(result_data['last results']) != 0 else ""][0]}
+                                'last_result': [result_data['last results'].split('\n')[-2] if len(
+                                    result_data['last results']) != 0 else ""][0]}
                             result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(result_json[station])
                 else:
                     for station in self.ping_test_obj.sta_list:
@@ -837,18 +857,33 @@ class Mixed_Traffic(Realm):
                                     'sent': ping_data['tx pkts'],
                                     'recv': ping_data['rx pkts'],
                                     'dropped': ping_data['dropped'],
-                                    'min_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[0] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
-                                    'avg_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[1] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
-                                    'max_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[2] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
+                                    'min_rtt': [
+                                        ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                            0] if len(ping_data['last results']) != 0 and 'min/avg/max' in
+                                                  ping_data['last results'].split('\n')[-2] else '0'][0],
+                                    'avg_rtt': [
+                                        ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                            1] if len(ping_data['last results']) != 0 and 'min/avg/max' in
+                                                  ping_data['last results'].split('\n')[-2] else '0'][0],
+                                    'max_rtt': [
+                                        ping_data['last results'].split('\n')[-2].split()[-1].split(':')[-1].split('/')[
+                                            2] if len(ping_data['last results']) != 0 and 'min/avg/max' in
+                                                  ping_data['last results'].split('\n')[-2] else '0'][0],
                                     'mac': current_device_data['mac'],
                                     'channel': current_device_data['channel'],
                                     'ssid': current_device_data['ssid'],
                                     'mode': current_device_data['mode'],
-                                    'name': [current_device_data['user'] if current_device_data['user'] != '' else current_device_data['hostname']][0],
-                                    'os': ['Windows' if 'Win' in current_device_data['hw version'] else 'Linux' if 'Linux' in current_device_data['hw version'] else 'Mac' if 'Apple' in current_device_data['hw version'] else 'Android'][0],
+                                    'name': [current_device_data['user'] if current_device_data['user'] != '' else
+                                             current_device_data['hostname']][0],
+                                    'os': ['Windows' if 'Win' in current_device_data[
+                                        'hw version'] else 'Linux' if 'Linux' in current_device_data[
+                                        'hw version'] else 'Mac' if 'Apple' in current_device_data[
+                                        'hw version'] else 'Android'][0],
                                     'remarks': [],
-                                    'last_result': [ping_data['last results'].split('\n')[-2] if len(ping_data['last results']) != 0 else ""][0]}
-                                result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(result_json[station])
+                                    'last_result': [ping_data['last results'].split('\n')[-2] if len(
+                                        ping_data['last results']) != 0 else ""][0]}
+                                result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(
+                                    result_json[station])
             if self.virtual:
                 ports_data_dict = self.ping_test_obj.json_get('/ports/all/')['interfaces']
                 ports_data = {}
@@ -865,9 +900,21 @@ class Mixed_Traffic(Realm):
                                     'sent': result_data['tx pkts'],
                                     'recv': result_data['rx pkts'],
                                     'dropped': result_data['dropped'],
-                                    'min_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split('/')[0] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
-                                    'avg_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split('/')[1] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
-                                    'max_rtt': [result_data['last results'].split('\n')[-2].split()[-1].split('/')[2] if len(result_data['last results']) != 0 and 'min/avg/max' in result_data['last results'].split('\n')[-2] else '0'][0],
+                                    'min_rtt': [
+                                        result_data['last results'].split('\n')[-2].split()[-1].split('/')[0] if len(
+                                            result_data['last results']) != 0 and 'min/avg/max' in result_data[
+                                                                                                                     'last results'].split(
+                                            '\n')[-2] else '0'][0],
+                                    'avg_rtt': [
+                                        result_data['last results'].split('\n')[-2].split()[-1].split('/')[1] if len(
+                                            result_data['last results']) != 0 and 'min/avg/max' in result_data[
+                                                                                                                     'last results'].split(
+                                            '\n')[-2] else '0'][0],
+                                    'max_rtt': [
+                                        result_data['last results'].split('\n')[-2].split()[-1].split('/')[2] if len(
+                                            result_data['last results']) != 0 and 'min/avg/max' in result_data[
+                                                                                                                     'last results'].split(
+                                            '\n')[-2] else '0'][0],
                                     'mac': current_device_data['mac'],
                                     'channel': current_device_data['channel'],
                                     'ssid': current_device_data['ssid'],
@@ -875,8 +922,10 @@ class Mixed_Traffic(Realm):
                                     'name': station,
                                     'os': 'Virtual',
                                     'remarks': [],
-                                    'last_result': [result_data['last results'].split('\n')[-2] if len(result_data['last results']) != 0 else ""][0]}
-                                result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(result_json[station])
+                                    'last_result': [result_data['last results'].split('\n')[-2] if len(
+                                        result_data['last results']) != 0 else ""][0]}
+                                result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(
+                                    result_json[station])
                 else:
                     for station in self.ping_test_obj.sta_list:
                         if station not in self.ping_test_obj.real_sta_list:
@@ -889,9 +938,21 @@ class Mixed_Traffic(Realm):
                                         'sent': ping_data['tx pkts'],
                                         'recv': ping_data['rx pkts'],
                                         'dropped': ping_data['dropped'],
-                                        'min_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split('/')[0] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
-                                        'avg_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split('/')[1] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
-                                        'max_rtt': [ping_data['last results'].split('\n')[-2].split()[-1].split('/')[2] if len(ping_data['last results']) != 0 and 'min/avg/max' in ping_data['last results'].split('\n')[-2] else '0'][0],
+                                        'min_rtt': [
+                                            ping_data['last results'].split('\n')[-2].split()[-1].split('/')[0] if len(
+                                                ping_data['last results']) != 0 and 'min/avg/max' in ping_data[
+                                                                                                                       'last results'].split(
+                                                '\n')[-2] else '0'][0],
+                                        'avg_rtt': [
+                                            ping_data['last results'].split('\n')[-2].split()[-1].split('/')[1] if len(
+                                                ping_data['last results']) != 0 and 'min/avg/max' in ping_data[
+                                                                                                                       'last results'].split(
+                                                '\n')[-2] else '0'][0],
+                                        'max_rtt': [
+                                            ping_data['last results'].split('\n')[-2].split()[-1].split('/')[2] if len(
+                                                ping_data['last results']) != 0 and 'min/avg/max' in ping_data[
+                                                                                                                       'last results'].split(
+                                                '\n')[-2] else '0'][0],
                                         'mac': current_device_data['mac'],
                                         'channel': current_device_data['channel'],
                                         'ssid': current_device_data['ssid'],
@@ -899,22 +960,24 @@ class Mixed_Traffic(Realm):
                                         'name': station,
                                         'os': 'Virtual',
                                         'remarks': [],
-                                        'last_result': [ping_data['last results'].split('\n')[-2] if len(ping_data['last results']) != 0 else ""][0]}
-                                    result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(result_json[station])
+                                        'last_result': [ping_data['last results'].split('\n')[-2] if len(
+                                            ping_data['last results']) != 0 else ""][0]}
+                                    result_json[station]['remarks'] = self.ping_test_obj.generate_remarks(
+                                        result_json[station])
             if self.dowebgui:
                 temp_json = []
                 for station in result_json:
-                    logging.debug('{} {}'.format(station,result_json[station]))
-                    temp_json.append({'device':station,
-                                        'sent': result_json[station]['sent'],
-                                        'recv': result_json[station]['recv'],
-                                        'dropped': result_json[station]['dropped'],
-                                        'status':"Stopped",
-                                        'start_time':start_time.strftime("%d/%m %I:%M:%S %p"),
-                                        'end_time':end_time.strftime("%d/%m %I:%M:%S %p"),
-                                        "remaining_time":""})
-                df1=pd.DataFrame(temp_json)
-                df1.to_csv('{}/ping_datavalues.csv'.format(self.result_dir),index=False)
+                    logging.debug('{} {}'.format(station, result_json[station]))
+                    temp_json.append({'device': station,
+                                      'sent': result_json[station]['sent'],
+                                      'recv': result_json[station]['recv'],
+                                      'dropped': result_json[station]['dropped'],
+                                      'status': "Stopped",
+                                      'start_time': start_time.strftime("%d/%m %I:%M:%S %p"),
+                                      'end_time': end_time.strftime("%d/%m %I:%M:%S %p"),
+                                      "remaining_time": ""})
+                df1 = pd.DataFrame(temp_json)
+                df1.to_csv('{}/ping_datavalues.csv'.format(self.result_dir), index=False)
             else:
                 logger.info("Final Result Json For Ping Test: {}".format(result_json))
             if all_bands:
@@ -922,14 +985,14 @@ class Mixed_Traffic(Realm):
             else:
                 band = '_' + self.band
             self.ping_test_obj.generate_report(result_json=result_json, result_dir=f'Ping_Test_Report',
-                                            report_path=self.report_path)
+                                               report_path=self.report_path)
             self.ping_test_status = True
-            if(conn):
+            if (conn):
                 conn.send([self.ping_test_obj, True])
         except Exception as e:
             # traceback.print_exc()
             logging.exception(e)
-            if(conn):
+            if (conn):
                 conn.send(['', False])
 
     def qos_test(self, ssid, password, security, ap_name, upstream, tos, traffic_type, side_a_min=0, side_b_min=0,
@@ -1514,7 +1577,9 @@ class Mixed_Traffic(Realm):
                 self.dataset = result_data[i]['dl_time']
                 self.dataset2 = result_data[i]['url_times']
                 self.bytes_rd = result_data[i]['bytes_rd']
+                self.rx_rate = result_data[i]['speed']
             self.dataset1 = [float(f"{(i / 1000000): .4f}") for i in self.bytes_rd]
+            self.rx_rate = [round(x / 1000000, 4) for x in self.rx_rate]  # converting bps to mbps
             logger.info("data sets {} {}".format(self.dataset, self.dataset2))
             if self.band == "Both":
                 for i in range(1, len(http_sta_list) * 2 + 1):
@@ -1534,7 +1599,7 @@ class Mixed_Traffic(Realm):
                                         test_setup_info=test_setup_info, dataset=self.dataset, lis=self.lis,
                                         bands=Bands, threshold_2g="", threshold_5g="", threshold_both="",
                                         dataset1=self.dataset1,
-                                        dataset2=self.dataset2, result_data=result_data, test_rig="", test_tag="",
+                                        dataset2=self.dataset2, result_data=result_data, rx_rate=self.rx_rate, test_rig="", test_tag="",
                                         dut_hw_version="", dut_sw_version="", dut_model_num="", dut_serial_num="",
                                         test_id="", test_input_infor="", csv_outfile="",
                                         _results_dir_name=f'Webpage_Test_Report',
@@ -3219,7 +3284,7 @@ INCLUDE_IN_README: False
                 # 'mac': "xx:xx:xx:**:**xx"
                 }
                 response = mixed_obj.json_post("cli-json/add_sta", add_sta_data, debug_=mixed_obj.debug)
-                logger.info("Response from add_sta: {}".format(response))
+                # logger.info("Response from add_sta: {}".format(response))
                 set_wifi_extra_data = None
                 if not eap_method:
                     if args.key_mgmt:
@@ -3294,8 +3359,9 @@ INCLUDE_IN_README: False
                                                cmd=args.custom_wifi_cmd)
                 response = mixed_obj.json_post("cli-json/set_wifi_extra", set_wifi_extra_data)
                 time.sleep(3)
-                logger.info(set_wifi_extra_data)
-                logger.info("Response from add_sta: {}".format(response))
+                if set_wifi_extra_data:
+                    logger.info(set_wifi_extra_data)
+                # logger.info("Response from add_sta: {}".format(response))
         # TO Admin up the stations
         for sta in mixed_obj.station_list:
             mixed_obj.admin_up(sta)
