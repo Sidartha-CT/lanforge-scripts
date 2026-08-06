@@ -109,7 +109,7 @@ EXAMPLE:
             --side_b_min_bps 3000000 --side_a_min 1000000 --side_b_min 1000000 --traffic_type lf_tcp --tos "VI"
             --ftp_file_sizes 10MB --http_file_size 5MB --direction Download --mc_tos "BE" --virtual --qos_serial --mixed_traffic_loop 1
             --ping_test_duration 1m --qos_test_duration 30s --ftp_test_duration 30s --http_test_duration 30s --multicast_test_duration 30s
-            --all_bands --pre_cleanup
+            --all_bands --pre_cleanup   
 
 SCRIPT_CLASSIFICATION:  Multiples Tests, Creation, Report Generation (Both individual & Overall)
 
@@ -164,6 +164,7 @@ lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 lf_base_interop_profile = importlib.import_module("py-scripts.lf_base_interop_profile")
 cv_test_manager = importlib.import_module("py-json.cv_test_manager")
 lf_port_reset_test = importlib.import_module("py-scripts.lf_port_reset_test")
+add_sta = importlib.import_module("py-json.LANforge.add_sta")
 
 # importing scripts
 ping_test = importlib.import_module("py-scripts.lf_interop_ping")
@@ -3270,6 +3271,13 @@ INCLUDE_IN_README: False
                     time.sleep(3)
                     logger.info(response)
         else:  # args.security_config == '1x' : 802.1x / EAP based station security
+            # Enable 8021x_radius and explicitly clear any PSK/SAE security flags the scenario's
+            # original build may have set (e.g. wpa2_enable), otherwise those stale bits are left
+            # in place since add_sta only changes bits covered by flags_mask.
+            eap_flags_on = ["8021x_radius"]
+            eap_flags_touched = ["8021x_radius", "wpa_enable", "wpa2_enable", "wep_enable", "use-wpa3"]
+            eap_flags_value = sum(add_sta.add_sta_flags[name] for name in eap_flags_on)
+            eap_flags_mask_value = sum(add_sta.add_sta_flags[name] for name in eap_flags_touched)
             for (stat,rad,ssids) in zip(mixed_obj.sta_info['station_list'],mixed_obj.sta_info['radio_list'],mixed_obj.sta_info['ssid_list']):
                 add_sta_data = {
                 'shelf': stat.split('.')[0],
@@ -3304,9 +3312,10 @@ INCLUDE_IN_README: False
                             'resource': stat.split('.')[1],
                             'sta_name': stat.split('.')[2],
                             'radio': rad,
-                            'flags': 33554432,
+                            'flags': eap_flags_value,
+                            'flags_mask': eap_flags_mask_value,
                         }
-                        # response = mixed_obj.json_post("cli-json/add_sta", set_8021x_radius, debug_=mixed_obj.debug)
+                        response = mixed_obj.json_post("cli-json/add_sta", set_8021x_radius, debug_=mixed_obj.debug)
                 else:
                     if eap_method == 'TLS':
                         set_wifi_extra_data = {
@@ -3348,7 +3357,8 @@ INCLUDE_IN_README: False
                         'resource': stat.split('.')[1],
                         'sta_name': stat.split('.')[2],
                         'radio': rad,
-                        'flags': 33554432, #802.1x enabled
+                        'flags': eap_flags_value, #802.1x enabled
+                        'flags_mask': eap_flags_mask_value,
                     }
                     response = mixed_obj.json_post("cli-json/add_sta", set_8021x_radius, debug_=mixed_obj.debug)
 
