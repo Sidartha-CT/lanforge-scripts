@@ -164,7 +164,6 @@ lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 lf_base_interop_profile = importlib.import_module("py-scripts.lf_base_interop_profile")
 cv_test_manager = importlib.import_module("py-json.cv_test_manager")
 lf_port_reset_test = importlib.import_module("py-scripts.lf_port_reset_test")
-add_sta = importlib.import_module("py-json.LANforge.add_sta")
 
 # importing scripts
 ping_test = importlib.import_module("py-scripts.lf_interop_ping")
@@ -1863,52 +1862,49 @@ class Mixed_Traffic(Realm):
             'radio_list': list(),
             'ssid_list': list(),
             'key_list' : list(),
-            'band_list': list()  
+            'security_list': list(),
+            'band_list': list()
         }
-        # list?fields=_links,parent+dev,ssid,alias,device,port+type,key/phrase
-        response = super().json_get("/port/list?fields=_links,parent+dev,ssid,alias,device,port+type,key/phrase")
+        # list?fields=_links,parent+dev,ssid,alias,device,port+type,key/phrase,security
+        response = super().json_get("/port/list?fields=_links,parent+dev,ssid,alias,device,port+type,key/phrase,security")
         if response and 'interfaces' in response:
             for x in range(len(response['interfaces'])):
                 for interface_name, interface_details in response['interfaces'][x].items():
-                    if isinstance(interface_details, dict):
-                        alias = interface_details.get('alias')
-                        if interface_details.get('port type') == "WIFI-STA" and alias:
-                            self.sta_info['station_list'].append(interface_name)
-                        ssid = interface_details.get('ssid')
-                        if ssid:
-                            self.sta_info['ssid_list'].append(ssid)
-                            if '2G' in ssid or '2g' in ssid:
-                                self.sta_info['band_list'].append('2.4G')
-                                # self.sta_info['band_list'].append('2G')
-                            elif '5G' in ssid or '5g' in ssid:
-                                self.sta_info['band_list'].append('5G')
-                            elif '6G' in ssid or '6g' in ssid:
-                                self.sta_info['band_list'].append('6G')
-                            else:
-                                self.sta_info['band_list'].append('-')
-
-                        key = interface_details.get('key/phrase')
-                        if key:
-                            self.sta_info['key_list'].append(key)
-                        parent_dev = interface_details.get('parent dev')
-                        if parent_dev:
-                            self.sta_info['radio_list'].append(parent_dev)
-                    else:
+                    if not isinstance(interface_details, dict):
                         print(f"Non-dictionary entry: {interface_name}")
+                        continue
+                    alias = interface_details.get('alias')
+                    if interface_details.get('port type') != "WIFI-STA" or not alias:
+                        continue
+                    # Appending every field together (instead of conditionally per-field)
+                    # keeps station_list/ssid_list/key_list/security_list index-aligned;
+                    # a station with a blank key/ssid used to silently desync the lists.
+                    ssid = interface_details.get('ssid') or ''
+                    self.sta_info['station_list'].append(interface_name)
+                    self.sta_info['ssid_list'].append(ssid)
+                    self.sta_info['key_list'].append(interface_details.get('key/phrase') or '')
+                    self.sta_info['security_list'].append(interface_details.get('security') or '')
+                    self.sta_info['radio_list'].append(interface_details.get('parent dev') or '')
+                    if '2G' in ssid or '2g' in ssid:
+                        self.sta_info['band_list'].append('2.4G')
+                    elif '5G' in ssid or '5g' in ssid:
+                        self.sta_info['band_list'].append('5G')
+                    elif '6G' in ssid or '6g' in ssid:
+                        self.sta_info['band_list'].append('6G')
+                    else:
+                        self.sta_info['band_list'].append('-')
 
-        # Convert sets back to lists for final output
-        # self.sta_info['station_list'] = list(self.sta_info['station_list'])
-        # self.sta_info['radio_list'] = list(self.sta_info['radio_list'])
-        # self.sta_info['ssid_list'] = list(self.sta_info['ssid_list'])
-        self.sta_info['band_list'] = list(self.sta_info['band_list'])[0]  
+        self.sta_info['band_list'] = self.sta_info['band_list'][0] if self.sta_info['band_list'] else '-'
 
         logger.info(self.sta_info['station_list'])
         logger.info(self.sta_info['radio_list'])
         logger.info(self.sta_info['ssid_list'])
         logger.info(self.sta_info['key_list'])
+        logger.info(self.sta_info['security_list'])
         logger.info(self.sta_info['band_list'])
 
         return self.sta_info
+
     def generate_all_report(self):
         logger.info("To generate the Mixed Traffic report with all tests")
         self.lf_report_mt.set_title("Mixed Traffic Test ({})".format('Parallel' if self.parallel else 'Serial'))
@@ -3271,25 +3267,29 @@ INCLUDE_IN_README: False
                     time.sleep(3)
                     logger.info(response)
         else:  # args.security_config == '1x' : 802.1x / EAP based station security
-            # Enable 8021x_radius and explicitly clear any PSK/SAE security flags the scenario's
-            # original build may have set (e.g. wpa2_enable), otherwise those stale bits are left
-            # in place since add_sta only changes bits covered by flags_mask.
-            eap_flags_on = ["8021x_radius"]
-            eap_flags_touched = ["8021x_radius", "wpa_enable", "wpa2_enable", "wep_enable", "use-wpa3"]
-            eap_flags_value = sum(add_sta.add_sta_flags[name] for name in eap_flags_on)
-            eap_flags_mask_value = sum(add_sta.add_sta_flags[name] for name in eap_flags_touched)
-            for (stat,rad,ssids) in zip(mixed_obj.sta_info['station_list'],mixed_obj.sta_info['radio_list'],mixed_obj.sta_info['ssid_list']):
+            for (stat,rad,ssids,sta_security) in zip(mixed_obj.sta_info['station_list'],
+                                                      mixed_obj.sta_info['radio_list'],
+                                                      mixed_obj.sta_info['ssid_list'],
+                                                      mixed_obj.sta_info['security_list']):
+                # The scenario/DUT profile built in Chamber View is assumed to already have
+                # these stations (and the AP) set up for 802.1x - we don't touch add_sta's
+                # security flags here at all. Only the EAP identity/cert/phase details are
+                # pushed below via set_wifi_extra.
+                logger.info(f"Station {stat}: current security='{sta_security}', leaving add_sta flags untouched")
                 add_sta_data = {
                 'shelf': stat.split('.')[0],
                 'resource': stat.split('.')[1],
                 'sta_name': stat.split('.')[2],
                 'radio': rad,
                 'ssid': ssids,
-                # 'key': pass_key,
+                # LANforge add_sta treats omitted fields as "reset to blank" on an
+                # existing station, not "leave unchanged" - 'NA' is the sentinel for
+                # "don't touch this field" (see StationProfile.modify()).
+                'key': 'NA',
                 'mode': 0,
-                # 'flags': 1099511627776, # Disable wpa3 flag
+                'ap': 'NA',
+                'mac': 'NA',
                 'ieee80211w': 2 if args.security == 'wpa3' else 1
-                # 'mac': "xx:xx:xx:**:**xx"
                 }
                 response = mixed_obj.json_post("cli-json/add_sta", add_sta_data, debug_=mixed_obj.debug)
                 # logger.info("Response from add_sta: {}".format(response))
@@ -3307,15 +3307,6 @@ INCLUDE_IN_README: False
                             'group': groupwise_cipher,
                             'password': "[BLANK]"
                         }
-                        set_8021x_radius = {
-                            'shelf': stat.split('.')[0],
-                            'resource': stat.split('.')[1],
-                            'sta_name': stat.split('.')[2],
-                            'radio': rad,
-                            'flags': eap_flags_value,
-                            'flags_mask': eap_flags_mask_value,
-                        }
-                        response = mixed_obj.json_post("cli-json/add_sta", set_8021x_radius, debug_=mixed_obj.debug)
                 else:
                     if eap_method == 'TLS':
                         set_wifi_extra_data = {
@@ -3349,18 +3340,6 @@ INCLUDE_IN_README: False
                             'phase1': args.eap_phase1,
                             'phase2': args.eap_phase2
                         }
-
-                    mixed_obj.desired_add_sta_flags = []
-                    mixed_obj.desired_add_sta_flags_mask = []
-                    set_8021x_radius = {
-                        'shelf': stat.split('.')[0],
-                        'resource': stat.split('.')[1],
-                        'sta_name': stat.split('.')[2],
-                        'radio': rad,
-                        'flags': eap_flags_value, #802.1x enabled
-                        'flags_mask': eap_flags_mask_value,
-                    }
-                    response = mixed_obj.json_post("cli-json/add_sta", set_8021x_radius, debug_=mixed_obj.debug)
 
                 # Custom Wifi setting
                 if args.custom_wifi_cmd:
