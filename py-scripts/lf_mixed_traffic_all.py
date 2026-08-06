@@ -164,6 +164,7 @@ lf_logger_config = importlib.import_module("py-scripts.lf_logger_config")
 lf_base_interop_profile = importlib.import_module("py-scripts.lf_base_interop_profile")
 cv_test_manager = importlib.import_module("py-json.cv_test_manager")
 lf_port_reset_test = importlib.import_module("py-scripts.lf_port_reset_test")
+add_sta = importlib.import_module("py-json.LANforge.add_sta")
 
 # importing scripts
 ping_test = importlib.import_module("py-scripts.lf_interop_ping")
@@ -1905,6 +1906,26 @@ class Mixed_Traffic(Realm):
 
         return self.sta_info
 
+    @staticmethod
+    def security_flag_for(security_str):
+        """Map a /port/list 'security' string (e.g. "WPA2-PSK", "Open") to the
+        add_sta.add_sta_flags name currently governing that station's security,
+        so callers can clear that specific bit before enabling a different one."""
+        if not security_str:
+            return None
+        security_str = security_str.lower()
+        if 'wpa3' in security_str:
+            return 'use-wpa3'
+        if 'wpa2' in security_str:
+            return 'wpa2_enable'
+        if 'wep' in security_str:
+            return 'wep_enable'
+        if 'owe' in security_str:
+            return 'use-owe'
+        if 'wpa' in security_str:
+            return 'wpa_enable'
+        return None
+
     def generate_all_report(self):
         logger.info("To generate the Mixed Traffic report with all tests")
         self.lf_report_mt.set_title("Mixed Traffic Test ({})".format('Parallel' if self.parallel else 'Serial'))
@@ -3266,16 +3287,73 @@ INCLUDE_IN_README: False
                     response = mixed_obj.json_post("cli-json/set_wifi_extra", set_wifi_extra_data, debug_=mixed_obj.debug)
                     time.sleep(3)
                     logger.info(response)
+                elif args.security_config == 'wpa3_aes_sae':
+                    # Only include fields the user actually specified on the CLI; if nothing
+                    # was specified beyond the base add_sta above, don't call set_wifi_extra
+                    # at all.
+                    set_wifi_extra_data = {
+                        'shelf': stat.split('.')[0],
+                        'resource': stat.split('.')[1],
+                        'port': stat.split('.')[2],
+                    }
+                    if key_mgmt:
+                        set_wifi_extra_data['key_mgmt'] = key_mgmt
+                    if pairwise_cipher and pairwise_cipher != '[BLANK]':
+                        set_wifi_extra_data['pairwise'] = pairwise_cipher
+                    if groupwise_cipher and groupwise_cipher != '[BLANK]':
+                        set_wifi_extra_data['group'] = groupwise_cipher
+                    if eap_method:
+                        set_wifi_extra_data['eap'] = eap_method
+                        if args.eap_identity:
+                            set_wifi_extra_data['identity'] = args.eap_identity
+                        if args.eap_anonymous_identity and args.eap_anonymous_identity != '[BLANK]':
+                            set_wifi_extra_data['anonymous_identity'] = args.eap_anonymous_identity
+                        if args.eap_password:
+                            set_wifi_extra_data['password'] = args.eap_password
+                        if args.eap_phase1 and args.eap_phase1 != '[BLANK]':
+                            set_wifi_extra_data['phase1'] = args.eap_phase1
+                        if args.eap_phase2 and args.eap_phase2 != '[BLANK]':
+                            set_wifi_extra_data['phase2'] = args.eap_phase2
+                        if eap_method == 'TLS':
+                            if args.private_key:
+                                set_wifi_extra_data['private_key'] = args.private_key
+                            if args.ca_cert:
+                                set_wifi_extra_data['ca_cert'] = args.ca_cert
+                            if args.pk_passwd:
+                                set_wifi_extra_data['pk_passwd'] = args.pk_passwd
+
+                    if len(set_wifi_extra_data) > 3:  # more than just shelf/resource/port
+                        response = mixed_obj.json_post("cli-json/set_wifi_extra", set_wifi_extra_data, debug_=mixed_obj.debug)
+                        time.sleep(3)
+                        logger.info(response)
         else:  # args.security_config == '1x' : 802.1x / EAP based station security
             for (stat,rad,ssids,sta_security) in zip(mixed_obj.sta_info['station_list'],
                                                       mixed_obj.sta_info['radio_list'],
                                                       mixed_obj.sta_info['ssid_list'],
                                                       mixed_obj.sta_info['security_list']):
-                # The scenario/DUT profile built in Chamber View is assumed to already have
-                # these stations (and the AP) set up for 802.1x - we don't touch add_sta's
-                # security flags here at all. Only the EAP identity/cert/phase details are
-                # pushed below via set_wifi_extra.
-                logger.info(f"Station {stat}: current security='{sta_security}', leaving add_sta flags untouched")
+                # security_config == '1x' means 802.1x must be actively enabled on the
+                # station: clear whichever security bit the scenario build actually left
+                # set (read back via station_info()'s 'security' field) and turn on
+                # 8021x_radius. EAP identity/cert/phase details are pushed separately below
+                # via set_wifi_extra.
+                print("sta_security: {}".format(sta_security))
+                current_flag = mixed_obj.security_flag_for(sta_security)
+                # 8021x_radius alone only enables 802.1x authentication - it still needs a WPA
+                # tier flag (wpa2_enable or use-wpa3) set alongside it, the same way
+                # create_station.py's build() layers 8021x_radius on top of whatever
+                # use_security() already set, rather than replacing it. Without this, the
+                # station never reports WPA2 or WPA3 as its security type.
+                security_target = (args.security or sta_security or 'wpa2').lower()
+                wpa_tier_flag = 'use-wpa3' if 'wpa3' in security_target else 'wpa2_enable'
+                desired_flags = ["8021x_radius", wpa_tier_flag]
+                desired_flags_mask = {"8021x_radius", wpa_tier_flag} | ({current_flag} if current_flag else set())
+                flags_value = sum(add_sta.add_sta_flags[name] for name in desired_flags)
+                flags_mask_value = sum(add_sta.add_sta_flags[name] for name in desired_flags_mask)
+                logger.info(f"Station {stat}: current security='{sta_security}' -> enabling 8021x_radius + "
+                           f"{wpa_tier_flag} (flags={flags_value}, flags_mask={flags_mask_value})")
+                iee80211w_flag = 2 if args.security == 'wpa3' or (args.scenario and sta_security.lower() == 'wpa3') else 1
+                logger.info(f"Station {stat}: setting ieee80211w={iee80211w_flag} (args.security={args.security}, sta_security={sta_security})")
+
                 add_sta_data = {
                 'shelf': stat.split('.')[0],
                 'resource': stat.split('.')[1],
@@ -3289,7 +3367,9 @@ INCLUDE_IN_README: False
                 'mode': 0,
                 'ap': 'NA',
                 'mac': 'NA',
-                'ieee80211w': 2 if args.security == 'wpa3' else 1
+                'flags': flags_value,
+                'flags_mask': flags_mask_value,
+                'ieee80211w': iee80211w_flag,
                 }
                 response = mixed_obj.json_post("cli-json/add_sta", add_sta_data, debug_=mixed_obj.debug)
                 # logger.info("Response from add_sta: {}".format(response))
