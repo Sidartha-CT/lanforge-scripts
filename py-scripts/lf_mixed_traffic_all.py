@@ -1482,7 +1482,7 @@ class Mixed_Traffic(Realm):
                 list2G_speed.extend(rx_rate_val)
                 list2G_urltimes.extend(url_times)
                 final_dict['2.4G']['dl_time'] = list2G
-                min2.append(min(list2G), default=0)
+                min2.append(min(list2G, default=0))
                 final_dict['2.4G']['min'] = min2
                 max2.append(max(list2G))
                 final_dict['2.4G']['max'] = max2
@@ -1498,7 +1498,7 @@ class Mixed_Traffic(Realm):
                 list5G_urltimes.extend(url_times)
                 print(list5G, list5G_bytes, list5G_speed, list5G_urltimes)
                 final_dict['5G']['dl_time'] = list5G
-                min5.append(min(list5G), default=0)
+                min5.append(min(list5G, default=0))
                 final_dict['5G']['min'] = min5
                 max5.append(max(list5G))
                 final_dict['5G']['max'] = max5
@@ -1513,7 +1513,7 @@ class Mixed_Traffic(Realm):
                 list6G_speed.extend(rx_rate_val)
                 list6G_urltimes.extend(url_times)
                 final_dict['6G']['dl_time'] = list6G
-                min6.append(min(list6G), default=0)
+                min6.append(min(list6G, default=0))
                 final_dict['6G']['min'] = min6
                 max6.append(max(list6G))
                 final_dict['6G']['max'] = max6
