@@ -2758,8 +2758,9 @@ INCLUDE_IN_README: False
     optional.add_argument('--security_config',
                           type=str,
                           choices=['1x', 'wpa3_aes_sae', 'wpa3_gcmp_sae'],
-                          default='1x',
-                          help='Station security setup to apply when building stations from a --scenario:\n'
+                          default=None,
+                          help='Station security setup to apply when building stations from a --scenario.\n'
+                               'If omitted, the scenario\'s own station security is left untouched:\n'
                                '1x            --> 802.1x / EAP based station security\n'
                                'wpa3_aes_sae  --> WPA3 SAE with AES/CCMP ciphers\n'
                                'wpa3_gcmp_sae --> WPA3 SAE-EXT-KEY with GCMP-256 ciphers')
@@ -3326,7 +3327,7 @@ INCLUDE_IN_README: False
                         response = mixed_obj.json_post("cli-json/set_wifi_extra", set_wifi_extra_data, debug_=mixed_obj.debug)
                         time.sleep(3)
                         logger.info(response)
-        else:  # args.security_config == '1x' : 802.1x / EAP based station security
+        elif args.security_config == '1x':  # 802.1x / EAP based station security
             for (stat,rad,ssids,sta_security) in zip(mixed_obj.sta_info['station_list'],
                                                       mixed_obj.sta_info['radio_list'],
                                                       mixed_obj.sta_info['ssid_list'],
