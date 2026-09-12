@@ -557,7 +557,11 @@ class L3CXProfile(LFCliBase):
             for port_tuple in end_point_list:
                 if int(batch_quantity) > 1:
                     side_a_info = self.local_realm.name_to_eid(port_tuple[0])
+                    side_a_shelf = side_a_info[0]
+                    side_a_resource = side_a_info[1]
                     side_b_info = self.local_realm.name_to_eid(port_tuple[1])
+                    side_b_shelf = side_b_info[0]
+                    side_b_resource = side_b_info[1]
                 else:
                     side_a_info = self.local_realm.name_to_eid(port_tuple, debug=debug_)
                     side_a_shelf = side_a_info[0]
@@ -744,7 +748,11 @@ class L3CXProfile(LFCliBase):
             for port_tuple in end_point_list:
                 if int(batch_quantity) > 1:
                     side_b_info = self.local_realm.name_to_eid(port_tuple[1])
+                    side_b_shelf = side_b_info[0]
+                    side_b_resource = side_b_info[1]
                     side_a_info = self.local_realm.name_to_eid(port_tuple[0])
+                    side_a_shelf = side_a_info[0]
+                    side_a_resource = side_a_info[1]
                 else:
                     side_b_info = self.local_realm.name_to_eid(port_tuple, debug=debug_)
                     side_b_shelf = side_b_info[0]
@@ -858,7 +866,11 @@ class L3CXProfile(LFCliBase):
             # iterating the end points list
             for port_tuple in list(end_point_list):
                 side_a_info = self.local_realm.name_to_eid(port_tuple[0])
+                side_a_shelf = side_a_info[0]
+                side_a_resource = side_a_info[1]
                 side_b_info = self.local_realm.name_to_eid(port_tuple[1])
+                side_b_shelf = side_b_info[0]
+                side_b_resource = side_b_info[1]
                 cx_name = None
                 # pprint.pprint(["sideA", side_a_info, "sideB", side_b_info, "cxname", cx_name])
 

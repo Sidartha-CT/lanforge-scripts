@@ -564,10 +564,22 @@ class StationProfile:
             if debug:
                 logger.debug("CREATING MORE STA NAMES == == == == == == == == == == == == == == == == == == == == == == == ==")
         # list of EIDs being created
+        # Honor a shelf/resource already embedded in the station name (e.g. "1.2.sta0000")
+        # instead of blindly stamping every station with the radio's shelf/resource -- this
+        # matters when sta_names_ mixes stations that live on different resources. Bare
+        # names (e.g. "sta0000") still fall back to the radio's shelf/resource.
         my_sta_eids = list()
+        sta_shelf_resource = dict()
         for port in sta_names_:
             eid = LFUtils.name_to_eid(port)
-            my_sta_eids.append("%s.%s.%s" % (radio_shelf, radio_resource, eid[2]))
+            port_parts = str(port).split('.')
+            if len(port_parts) >= 3 and port_parts[0].isnumeric() and port_parts[1].isnumeric():
+                port_shelf, port_resource = eid[0], eid[1]
+            else:
+                port_shelf, port_resource = radio_shelf, radio_resource
+            eidn = "%s.%s.%s" % (port_shelf, port_resource, eid[2])
+            my_sta_eids.append(eidn)
+            sta_shelf_resource[eidn] = (port_shelf, port_resource)
 
         if (len(my_sta_eids) >= 15) or suppress_related_commands_:
             self.add_sta_data["suppress_preexec_cli"] = "yes"
@@ -599,14 +611,15 @@ class StationProfile:
 
             eid = self.local_realm.name_to_eid(eidn)
             name = eid[2]
+            sta_shelf, sta_resource = sta_shelf_resource.get(eidn, (radio_shelf, radio_resource))
             num += 1
-            self.add_sta_data["shelf"] = radio_shelf
-            self.add_sta_data["resource"] = radio_resource
+            self.add_sta_data["shelf"] = sta_shelf
+            self.add_sta_data["resource"] = sta_resource
             self.add_sta_data["radio"] = radio_port
             self.add_sta_data["sta_name"] = name  # for create station calls
             self.set_port_data["port"] = name  # for set_port calls.
-            self.set_port_data["shelf"] = radio_shelf
-            self.set_port_data["resource"] = radio_resource
+            self.set_port_data["shelf"] = sta_shelf
+            self.set_port_data["resource"] = sta_resource
 
             add_sta_r.addPostData(self.add_sta_data)
             if debug:
@@ -638,11 +651,11 @@ class StationProfile:
                 logger.debug("- ~3270 - {eidn} - set_port_r.jsonPost - - - - - - - - - - - - - - - - - - ".format(eidn=eidn))
             time.sleep(0.01)
 
-            self.wifi_extra_data["resource"] = radio_resource
+            self.wifi_extra_data["resource"] = sta_resource
             self.wifi_extra_data["port"] = name
-            self.wifi_extra2_data["resource"] = radio_resource
+            self.wifi_extra2_data["resource"] = sta_resource
             self.wifi_extra2_data["port"] = name
-            self.wifi_txo_data["resource"] = radio_resource
+            self.wifi_txo_data["resource"] = sta_resource
             self.wifi_txo_data["port"] = name
             if self.wifi_extra_data_modified:
                 wifi_extra_r.addPostData(self.wifi_extra_data)
@@ -655,7 +668,7 @@ class StationProfile:
                 wifi_txo_r.jsonPost(debug)
 
             # append created stations to self.station_names
-            self.station_names.append("%s.%s.%s" % (radio_shelf, radio_resource, name))
+            self.station_names.append("%s.%s.%s" % (sta_shelf, sta_resource, name))
             time.sleep(sleep_time)
 
         logger.debug('StationProfile.create debug: {port}'.format(port=pformat(self.local_realm.json_get('/port/'))))
